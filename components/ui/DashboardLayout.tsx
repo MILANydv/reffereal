@@ -1,6 +1,7 @@
 'use client';
 
 import { Sidebar } from './Sidebar';
+import { TopNavbar } from './TopNavbar';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -21,8 +22,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+        <div className="text-xl text-gray-600 dark:text-gray-400">Loading...</div>
       </div>
     );
   }
@@ -32,12 +33,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <div className="w-64 flex-shrink-0">
-        <Sidebar userRole={session.user.role} userEmail={session.user.email || ''} />
-      </div>
-      <div className="flex-1 overflow-auto">
-        <main className="p-8">{children}</main>
+    <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex flex-col">
+      <TopNavbar />
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-64 flex-shrink-0 hidden md:block">
+          <Sidebar userRole={session.user.role as 'SUPER_ADMIN' | 'PARTNER'} userEmail={session.user.email || ''} />
+        </aside>
+        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-zinc-950">
+          <div className="max-w-7xl mx-auto p-4 md:p-8">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

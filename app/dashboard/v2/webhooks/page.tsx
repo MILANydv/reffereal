@@ -4,8 +4,9 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Webhook as WebhookIcon, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { useAppStore } from '@/lib/store';
 
 interface Webhook {
   id: string;
@@ -23,19 +24,17 @@ interface Webhook {
 }
 
 export default function WebhooksPage() {
+  const { selectedApp } = useAppStore();
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
-  const [apps, setApps] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    loadWebhooks();
-    loadApps();
-  }, []);
-
-  const loadWebhooks = async () => {
+  const loadWebhooks = useCallback(async () => {
     try {
-      const response = await fetch('/api/partner/webhooks');
+      const url = selectedApp 
+        ? `/api/partner/webhooks?appId=${selectedApp.id}`
+        : '/api/partner/webhooks';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setWebhooks(data);
@@ -45,19 +44,11 @@ export default function WebhooksPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedApp]);
 
-  const loadApps = async () => {
-    try {
-      const response = await fetch('/api/partner/apps');
-      if (response.ok) {
-        const data = await response.json();
-        setApps(data);
-      }
-    } catch (error) {
-      console.error('Error loading apps:', error);
-    }
-  };
+  useEffect(() => {
+    loadWebhooks();
+  }, [loadWebhooks]);
 
   const handleCreateWebhook = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,10 +62,12 @@ export default function WebhooksPage() {
     if (formData.get('event_usage_limit_exceeded')) events.push('USAGE_LIMIT_EXCEEDED');
 
     const webhookData = {
-      appId: formData.get('appId') as string,
+      appId: selectedApp?.id,
       url: formData.get('url') as string,
       events,
     };
+
+    if (!webhookData.appId) return;
 
     try {
       const response = await fetch('/api/partner/webhooks', {
@@ -156,29 +149,20 @@ export default function WebhooksPage() {
             <CardBody>
               <form onSubmit={handleCreateWebhook} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Application</label>
-                  <select
-                    name="appId"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select Application</option>
-                    {apps.map((app) => (
-                      <option key={app.id} value={app.id}>
-                        {app.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Application</label>
+                  <div className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
+                    {selectedApp?.name || 'No application selected'}
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Webhook URL</label>
                   <input
                     type="url"
                     name="url"
                     placeholder="https://your-domain.com/webhook"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-900"
                   />
                 </div>
 
