@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  PARTNER
+}
+
+enum AppStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum ReferralType {
+  ONE_SIDED
+  TWO_SIDED
+}
+
+enum RewardModel {
+  FIXED_CURRENCY
+  PERCENTAGE
+}
+
+enum ReferralStatus {
+  PENDING
+  CLICKED
+  CONVERTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole
+  name      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partners  Partner[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apps      App[]
+
+  @@index([userId])
+}
+
+model App {
+  id            String    @id @default(cuid())
+  name          String
+  apiKey        String    @unique
+  partnerId     String
+  partner       Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  monthlyLimit  Int       @default(10000)
+  currentUsage  Int       @default(0)
+  status        AppStatus @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  campaigns     Campaign[]
+  apiUsageLogs  ApiUsageLog[]
+
+  @@index([partnerId])
+  @@index([apiKey])
+  @@index([status])
+}
+
+model Campaign {
+  id                  String         @id @default(cuid())
+  appId               String
+  app                 App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  name                String
+  status              CampaignStatus @default(ACTIVE)
+  referralType        ReferralType
+  rewardModel         RewardModel
+  rewardValue         Float
+  rewardCap           Float?
+  firstTimeUserOnly   Boolean        @default(true)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  referrals           Referral[]
+
+  @@index([appId])
+  @@index([status])
+}
+
+model Referral {
+  id              String          @id @default(cuid())
+  campaignId      String
+  campaign        Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  referralCode    String          @unique
+  referrerId      String
+  refereeId       String?
+  status          ReferralStatus  @default(PENDING)
+  clickedAt       DateTime?
+  convertedAt     DateTime?
+  rewardAmount    Float?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  conversions     Conversion[]
+
+  @@index([campaignId])
+  @@index([referralCode])
+  @@index([referrerId])
+  @@index([status])
+}
+
+model Conversion {
+  id              String   @id @default(cuid())
+  referralId      String
+  referral        Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  amount          Float?
+  metadata        String?
+  createdAt       DateTime @default(now())
+
+  @@index([referralId])
+}
+
+model ApiUsageLog {
+  id            String   @id @default(cuid())
+  appId         String
+  app           App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  endpoint      String
+  timestamp     DateTime @default(now())
+  ipAddress     String?
+  userAgent     String?
+
+  @@index([appId])
+  @@index([timestamp])
+}

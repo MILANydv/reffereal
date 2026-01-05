@@ -1,0 +1,97 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
+
+export async function POST(request: NextRequest) {
+  const authResult = await authenticateApiKey(request);
+  
+  if ('error' in authResult) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+  }
+
+  const { app } = authResult;
+
+  try {
+    const body = await request.json();
+    const { referralCode, refereeId, amount, metadata } = body;
+
+    if (!referralCode || !refereeId) {
+      return NextResponse.json(
+        { error: 'referralCode and refereeId are required' },
+        { status: 400 }
+      );
+    }
+
+    const referral = await prisma.referral.findUnique({
+      where: { referralCode },
+      include: {
+        campaign: {
+          include: { app: true },
+        },
+      },
+    });
+
+    if (!referral) {
+      return NextResponse.json({ error: 'Referral code not found' }, { status: 404 });
+    }
+
+    if (referral.campaign.appId !== app.id) {
+      return NextResponse.json(
+        { error: 'Referral does not belong to this app' },
+        { status: 403 }
+      );
+    }
+
+    if (referral.campaign.status !== 'ACTIVE') {
+      return NextResponse.json({ error: 'Campaign is not active' }, { status: 400 });
+    }
+
+    let rewardAmount = 0;
+    const campaign = referral.campaign;
+
+    if (campaign.rewardModel === 'FIXED_CURRENCY') {
+      rewardAmount = campaign.rewardValue;
+    } else if (campaign.rewardModel === 'PERCENTAGE' && amount) {
+      rewardAmount = (amount * campaign.rewardValue) / 100;
+    }
+
+    if (campaign.rewardCap && rewardAmount > campaign.rewardCap) {
+      rewardAmount = campaign.rewardCap;
+    }
+
+    const [updatedReferral, conversion] = await prisma.$transaction([
+      prisma.referral.update({
+        where: { id: referral.id },
+        data: {
+          status: 'CONVERTED',
+          refereeId,
+          convertedAt: new Date(),
+          rewardAmount,
+        },
+      }),
+      prisma.conversion.create({
+        data: {
+          referralId: referral.id,
+          amount,
+          metadata: metadata ? JSON.stringify(metadata) : null,
+        },
+      }),
+    ]);
+
+    await logApiUsage(app.id, '/api/v1/conversions', request);
+
+    return NextResponse.json({
+      success: true,
+      referralId: updatedReferral.id,
+      conversionId: conversion.id,
+      rewardAmount: updatedReferral.rewardAmount,
+      status: updatedReferral.status,
+    }, { status: 201 });
+  } catch (error) {
+    console.error('Error tracking conversion:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
