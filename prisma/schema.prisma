@@ -380,3 +380,16 @@ model FeatureFlag {
   @@index([key])
   @@index([isEnabled])
 }
+
+model SystemLog {
+  id          String   @id @default(cuid())
+  level       String   // INFO, WARN, ERROR, DEBUG
+  message     String
+  source      String?
+  metadata    String?  // JSON
+  createdAt   DateTime @default(now())
+
+  @@index([level])
+  @@index([source])
+  @@index([createdAt])
+}

@@ -18,6 +18,7 @@ import {
   Terminal,
   ShieldAlert,
   Flag,
+  Zap,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useAppStore } from '@/lib/store';
@@ -41,6 +42,7 @@ const getPartnerNavigation = (appId: string | null): NavSection[] => {
         items: [
           { name: 'Home', href: '/dashboard/v2', icon: <LayoutDashboard size={20} /> },
           { name: 'Applications', href: '/dashboard/v2/apps', icon: <Building2 size={20} /> },
+          { name: 'API Usage', href: '/dashboard/v2/usage', icon: <Zap size={20} /> },
           { name: 'Billing', href: '/dashboard/v2/billing', icon: <CreditCard size={20} /> },
           { name: 'Team', href: '/dashboard/v2/team', icon: <Users size={20} /> },
           { name: 'Settings', href: '/dashboard/v2/settings', icon: <Settings size={20} /> },
@@ -54,6 +56,7 @@ const getPartnerNavigation = (appId: string | null): NavSection[] => {
       title: 'App Context',
       items: [
         { name: 'Overview', href: `/dashboard/v2`, icon: <LayoutDashboard size={20} /> },
+        { name: 'API Usage', href: '/dashboard/v2/usage', icon: <Zap size={20} /> },
         { name: 'API & Keys', href: `/dashboard/v2/api-keys`, icon: <Code size={20} /> },
         { name: 'Campaigns', href: `/dashboard/v2/campaigns`, icon: <Megaphone size={20} /> },
         { name: 'Referrals', href: `/dashboard/v2/referrals`, icon: <UserPlus size={20} /> },

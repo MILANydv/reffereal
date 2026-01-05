@@ -217,7 +217,7 @@ export default function EnhancedDashboardPage() {
                   </div>
                   <div className="flex space-x-2">
                     <Button type="submit" size="sm">Create</Button>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => setShowNewAppForm(false)}>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewAppForm(false)}>
                       Cancel
                     </Button>
                   </div>
@@ -367,7 +367,7 @@ export default function EnhancedDashboardPage() {
                   </code>
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="ghost"
                     onClick={() => navigator.clipboard.writeText(selectedApp.apiKey)}
                   >
                     Copy
@@ -451,7 +451,7 @@ export default function EnhancedDashboardPage() {
                     </div>
                     <div className="flex space-x-2">
                       <Button type="submit" size="sm">Create Campaign</Button>
-                      <Button type="button" variant="secondary" size="sm" onClick={() => setShowNewCampaignForm(false)}>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowNewCampaignForm(false)}>
                         Cancel
                       </Button>
                     </div>

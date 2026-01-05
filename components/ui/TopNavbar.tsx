@@ -19,6 +19,8 @@ export function TopNavbar() {
     return 'light';
   });
 
+  const isAdmin = session?.user?.role === 'SUPER_ADMIN';
+
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
@@ -62,16 +64,19 @@ export function TopNavbar() {
   return (
     <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black flex items-center justify-between px-4 sticky top-0 z-30">
       <div className="flex items-center space-x-4">
-        <Link href="/dashboard/v2" className="flex items-center space-x-2 mr-4">
+        <Link href={isAdmin ? "/admin/v2" : "/dashboard/v2"} className="flex items-center space-x-2 mr-4">
           <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">
             R
           </div>
           <span className="font-bold text-lg hidden md:block">Referral</span>
         </Link>
 
-        <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block" />
-
-        <AppSwitcher />
+        {!isAdmin && (
+          <>
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block" />
+            <AppSwitcher />
+          </>
+        )}
 
         <div className="hidden lg:flex items-center relative ml-4">
           <Search size={16} className="absolute left-3 text-gray-400" />
@@ -84,7 +89,7 @@ export function TopNavbar() {
       </div>
 
       <div className="flex items-center space-x-2 md:space-x-4">
-        {selectedApp && (
+        {!isAdmin && selectedApp && (
           <div className="hidden md:flex flex-col items-end mr-2">
             <div className="flex items-center text-xs text-gray-500 mb-1">
               <Zap size={12} className="mr-1 text-yellow-500 fill-yellow-500" />
@@ -95,6 +100,15 @@ export function TopNavbar() {
                 className={`h-full rounded-full ${usagePercentage > 90 ? 'bg-red-500' : 'bg-blue-500'}`}
                 style={{ width: `${usagePercentage}%` }}
               />
+            </div>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <div className="flex items-center text-xs text-gray-500">
+              <Zap size={12} className="mr-1 text-yellow-500 fill-yellow-500" />
+              <span>Platform API Usage</span>
             </div>
           </div>
         )}

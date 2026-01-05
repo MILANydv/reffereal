@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth();
 
   if (!session || session.user.role !== 'SUPER_ADMIN') {
@@ -10,7 +10,21 @@ export async function GET() {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search');
+
+    const where: Record<string, unknown> = {};
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { partner: { companyName: { contains: search } } },
+        { partner: { user: { email: { contains: search } } } },
+      ];
+    }
+
     const apps = await prisma.app.findMany({
+      where,
       include: {
         partner: {
           include: {

@@ -155,17 +155,17 @@ export default function AdminPartnersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant="secondary">{partner.subscription?.plan?.type || 'FREE'}</Badge>
+                        <Badge variant="default">{partner.subscription?.plan?.type || 'FREE'}</Badge>
                       </td>
                       <td className="px-6 py-4 font-medium">{partner._count.apps}</td>
                       <td className="px-6 py-4 text-xs font-mono">
-                        {partner.apps.reduce((acc: number, app: { currentUsage: number }) => acc + app.currentUsage, 0).toLocaleString()} hits
+                        {partner.apps?.reduce((acc: number, app: { currentUsage: number }) => acc + (app.currentUsage || 0), 0).toLocaleString()} hits
                       </td>
                       <td className="px-6 py-4 font-medium">
-                        ${partner.invoices.reduce((acc: number, inv: { status: string, amount: number }) => acc + (inv.status === 'paid' ? inv.amount : 0), 0).toLocaleString()}
+                        ${partner.invoices?.reduce((acc: number, inv: { status: string, amount: number }) => acc + (inv.status === 'paid' ? (inv.amount || 0) : 0), 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant={partner.active ? 'success' : 'danger'}>
+                        <Badge variant={partner.active ? 'success' : 'error'}>
                           {partner.active ? 'ACTIVE' : 'SUSPENDED'}
                         </Badge>
                       </td>

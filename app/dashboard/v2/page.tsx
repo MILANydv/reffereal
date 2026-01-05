@@ -267,7 +267,7 @@ export default function DashboardV2Page() {
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>
                         <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
                       </div>
-                      <Badge variant="secondary" size="sm">{activity.type}</Badge>
+                      <Badge variant="default" size="sm">{activity.type}</Badge>
                     </div>
                   ))}
                 </div>

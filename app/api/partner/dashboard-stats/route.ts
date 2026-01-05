@@ -51,16 +51,16 @@ export async function GET() {
     let totalConversions = 0;
     let totalRewards = 0;
 
-    for (const app of partner.apps) {
-      for (const campaign of app.campaigns) {
-        totalReferrals += campaign.referrals.length;
-        totalClicks += campaign.referrals.filter((r) => r.clickedAt).length;
-        totalConversions += campaign.referrals.filter((r) => r.convertedAt).length;
-        totalRewards += campaign.referrals.reduce((sum, r) => sum + (r.rewardAmount || 0), 0);
+    for (const app of partner.apps || []) {
+      for (const campaign of app.campaigns || []) {
+        totalReferrals += campaign.referrals?.length || 0;
+        totalClicks += (campaign.referrals?.filter((r) => r.clickedAt) || []).length;
+        totalConversions += (campaign.referrals?.filter((r) => r.convertedAt) || []).length;
+        totalRewards += campaign.referrals?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0;
       }
     }
 
-    const apiUsageCurrent = partner.apps.reduce((sum, app) => sum + app.apiUsageLogs.length, 0);
+    const apiUsageCurrent = partner.apps?.reduce((sum, app) => sum + (app.apiUsageLogs?.length || 0), 0) || 0;
     const apiUsageLimit = partner.subscription?.plan.apiLimit || 10000;
     const apiUsagePercentage = (apiUsageCurrent / apiUsageLimit) * 100;
 

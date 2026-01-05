@@ -85,21 +85,21 @@ export default function FraudPage() {
 
         <div className="flex space-x-2">
           <Button
-            variant={filter === 'unresolved' ? 'primary' : 'secondary'}
+            variant={filter === 'unresolved' ? 'primary' : 'ghost'}
             onClick={() => setFilter('unresolved')}
             size="sm"
           >
             Unresolved
           </Button>
           <Button
-            variant={filter === 'resolved' ? 'primary' : 'secondary'}
+            variant={filter === 'resolved' ? 'primary' : 'ghost'}
             onClick={() => setFilter('resolved')}
             size="sm"
           >
             Resolved
           </Button>
           <Button
-            variant={filter === 'all' ? 'primary' : 'secondary'}
+            variant={filter === 'all' ? 'primary' : 'ghost'}
             onClick={() => setFilter('all')}
             size="sm"
           >
