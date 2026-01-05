@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
+import { triggerWebhook } from '@/lib/webhooks';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -79,6 +80,22 @@ export async function POST(request: NextRequest) {
     ]);
 
     await logApiUsage(app.id, '/api/v1/conversions', request);
+
+    await triggerWebhook(app.id, 'REFERRAL_CONVERTED', {
+      referralId: updatedReferral.id,
+      referralCode: updatedReferral.referralCode,
+      conversionId: conversion.id,
+      rewardAmount: updatedReferral.rewardAmount,
+      convertedAt: updatedReferral.convertedAt,
+      campaignId: referral.campaignId,
+    });
+
+    await triggerWebhook(app.id, 'REWARD_CREATED', {
+      referralId: updatedReferral.id,
+      referrerId: referral.referrerId,
+      rewardAmount: updatedReferral.rewardAmount,
+      campaignId: referral.campaignId,
+    });
 
     return NextResponse.json({
       success: true,
