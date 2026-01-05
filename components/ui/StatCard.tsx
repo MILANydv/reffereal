@@ -8,10 +8,11 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
+  change?: string;
   className?: string;
 }
 
-export function StatCard({ title, value, icon, trend, className = '' }: StatCardProps) {
+export function StatCard({ title, value, icon, trend, change, className = '' }: StatCardProps) {
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
       <div className="flex items-center justify-between">
@@ -22,6 +23,9 @@ export function StatCard({ title, value, icon, trend, className = '' }: StatCard
             <p className={`mt-2 text-sm ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
             </p>
+          )}
+          {change && (
+            <p className="mt-2 text-sm text-gray-600">{change}</p>
           )}
         </div>
         {icon && (
