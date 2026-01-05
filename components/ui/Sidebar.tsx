@@ -9,13 +9,18 @@ import {
   Webhook,
   Users,
   BarChart3,
-  AlertTriangle,
   Code,
-  FileText,
   Building2,
   LogOut,
+  Megaphone,
+  UserPlus,
+  Box,
+  Terminal,
+  ShieldAlert,
+  Flag,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { useAppStore } from '@/lib/store';
 
 interface NavItem {
   name: string;
@@ -28,48 +33,52 @@ interface NavSection {
   items: NavItem[];
 }
 
-const partnerNavigation: NavSection[] = [
-  {
-    title: 'Overview',
-    items: [
-      { name: 'Dashboard', href: '/dashboard/v2', icon: <LayoutDashboard size={20} /> },
-      { name: 'Analytics', href: '/dashboard/v2/analytics', icon: <BarChart3 size={20} /> },
-    ],
-  },
-  {
-    title: 'Platform',
-    items: [
-      { name: 'Applications', href: '/dashboard/v2/apps', icon: <Building2 size={20} /> },
-      { name: 'Webhooks', href: '/dashboard/v2/webhooks', icon: <Webhook size={20} /> },
-      { name: 'Fraud Alerts', href: '/dashboard/v2/fraud', icon: <AlertTriangle size={20} /> },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { name: 'Billing', href: '/dashboard/v2/billing', icon: <CreditCard size={20} /> },
-      { name: 'Team', href: '/dashboard/v2/team', icon: <Users size={20} /> },
-      { name: 'Settings', href: '/dashboard/v2/settings', icon: <Settings size={20} /> },
-    ],
-  },
-  {
-    title: 'Developer',
-    items: [
-      { name: 'API Keys', href: '/dashboard/v2/api-keys', icon: <Code size={20} /> },
-      { name: 'Documentation', href: '/docs', icon: <FileText size={20} /> },
-    ],
-  },
-];
+const getPartnerNavigation = (appId: string | null): NavSection[] => {
+  if (!appId) {
+    return [
+      {
+        title: 'Global',
+        items: [
+          { name: 'Home', href: '/dashboard/v2', icon: <LayoutDashboard size={20} /> },
+          { name: 'Applications', href: '/dashboard/v2/apps', icon: <Building2 size={20} /> },
+          { name: 'Billing', href: '/dashboard/v2/billing', icon: <CreditCard size={20} /> },
+          { name: 'Team', href: '/dashboard/v2/team', icon: <Users size={20} /> },
+          { name: 'Settings', href: '/dashboard/v2/settings', icon: <Settings size={20} /> },
+        ],
+      },
+    ];
+  }
+
+  return [
+    {
+      title: 'App Context',
+      items: [
+        { name: 'Overview', href: `/dashboard/v2`, icon: <LayoutDashboard size={20} /> },
+        { name: 'API & Keys', href: `/dashboard/v2/api-keys`, icon: <Code size={20} /> },
+        { name: 'Campaigns', href: `/dashboard/v2/campaigns`, icon: <Megaphone size={20} /> },
+        { name: 'Referrals', href: `/dashboard/v2/referrals`, icon: <UserPlus size={20} /> },
+        { name: 'Analytics', href: `/dashboard/v2/analytics`, icon: <BarChart3 size={20} /> },
+        { name: 'Webhooks', href: `/dashboard/v2/webhooks`, icon: <Webhook size={20} /> },
+        { name: 'UI Bundles', href: `/dashboard/v2/ui-bundles`, icon: <Box size={20} /> },
+        { name: 'Billing', href: `/dashboard/v2/billing`, icon: <CreditCard size={20} /> },
+        { name: 'Settings', href: `/dashboard/v2/settings`, icon: <Settings size={20} /> },
+      ],
+    },
+  ];
+};
 
 const adminNavigation: NavSection[] = [
   {
     title: 'Admin',
     items: [
-      { name: 'Dashboard', href: '/admin/v2', icon: <LayoutDashboard size={20} /> },
+      { name: 'Platform Overview', href: '/admin/v2', icon: <LayoutDashboard size={20} /> },
       { name: 'Partners', href: '/admin/v2/partners', icon: <Users size={20} /> },
-      { name: 'Pricing Plans', href: '/admin/v2/pricing', icon: <CreditCard size={20} /> },
-      { name: 'Feature Flags', href: '/admin/v2/features', icon: <Settings size={20} /> },
-      { name: 'Fraud Monitoring', href: '/admin/v2/fraud', icon: <AlertTriangle size={20} /> },
+      { name: 'Apps', href: '/admin/v2/apps', icon: <Building2 size={20} /> },
+      { name: 'Usage & Billing', href: '/admin/v2/billing', icon: <CreditCard size={20} /> },
+      { name: 'Pricing Plans', href: '/admin/v2/pricing', icon: <Box size={20} /> },
+      { name: 'Abuse & Fraud', href: '/admin/v2/fraud', icon: <ShieldAlert size={20} /> },
+      { name: 'Feature Flags', href: '/admin/v2/features', icon: <Flag size={20} /> },
+      { name: 'System Logs', href: '/admin/v2/logs', icon: <Terminal size={20} /> },
     ],
   },
 ];
@@ -81,23 +90,20 @@ interface SidebarProps {
 
 export function Sidebar({ userRole, userEmail }: SidebarProps) {
   const pathname = usePathname();
-  const navigation = userRole === 'SUPER_ADMIN' ? adminNavigation : partnerNavigation;
+  const { selectedAppId } = useAppStore();
+  const navigation = userRole === 'SUPER_ADMIN' ? adminNavigation : getPartnerNavigation(selectedAppId);
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
-      <div className="flex items-center h-16 px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-blue-600">Referral Platform</h1>
-      </div>
-
+    <div className="flex flex-col h-full bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800">
       <div className="flex-1 overflow-y-auto py-4">
         {navigation.map((section) => (
           <div key={section.title} className="mb-6">
-            <h3 className="px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <h3 className="px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
               {section.title}
             </h3>
             <nav className="space-y-1">
               {section.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.name}
@@ -106,8 +112,8 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
                       flex items-center px-6 py-2 text-sm font-medium transition-colors
                       ${
                         isActive
-                          ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-4 border-blue-600'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -121,13 +127,15 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
         ))}
       </div>
 
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm text-gray-700 truncate">{userEmail}</div>
+      <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-900/50">
+        <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 px-2">Account</div>
+        <div className="px-2 mb-4">
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{userEmail}</div>
+          <div className="text-xs text-gray-500 capitalize">{userRole.toLowerCase().replace('_', ' ')}</div>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+          className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
         >
           <LogOut size={16} className="mr-2" />
           Sign Out
