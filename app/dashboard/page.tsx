@@ -1,5 +1,26 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+export default function DashboardPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push('/dashboard/enhanced');
+  }, [router]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-xl">Redirecting...</div>
+    </div>
+  );
+}
+
+/*
+// Legacy dashboard - kept for reference
+'use client';
+
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -387,3 +408,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+*/

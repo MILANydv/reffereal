@@ -2,48 +2,86 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <span className="text-2xl font-bold text-blue-600">Referral Engine</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/docs" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                Documentation
+              </Link>
+              <Link href="/login" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Referral Infrastructure MVP
+          <h1 className="text-6xl font-bold text-gray-900 mb-6">
+            Enterprise Referral Engine
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Developer-focused referral platform for building reward programs
+          <p className="text-2xl text-gray-600 mb-4">
+            Developer-focused referral platform for building powerful reward programs
+          </p>
+          <p className="text-lg text-gray-500 mb-10 max-w-3xl mx-auto">
+            Track referrals, clicks, and conversions with a simple API. Enterprise-grade analytics and usage metering included.
           </p>
           <div className="flex justify-center space-x-4">
             <Link
               href="/signup"
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+              className="px-8 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
             >
-              Get Started
+              Get Started Free
             </Link>
             <Link
-              href="/login"
-              className="px-6 py-3 bg-white text-blue-600 font-medium rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition"
+              href="/docs"
+              className="px-8 py-4 bg-white text-blue-600 font-semibold text-lg rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition shadow-lg hover:shadow-xl"
             >
-              Sign In
+              View API Docs
             </Link>
           </div>
         </div>
 
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow">
+        <div className="mt-24 grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition">
+            <div className="text-4xl mb-4">⚡</div>
             <h3 className="text-xl font-semibold mb-3">Simple API</h3>
             <p className="text-gray-600">
               Integrate referral tracking with just a few API calls. Generate codes, track clicks, and record conversions.
             </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition">
+            <div className="text-4xl mb-4">📊</div>
+            <h3 className="text-xl font-semibold mb-3">Real-time Analytics</h3>
+            <p className="text-gray-600">
+              Track referrals, clicks, conversions, and rewards with accurate real-time analytics and KPIs.
+            </p>
+          </div>
+          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition">
+            <div className="text-4xl mb-4">🎯</div>
             <h3 className="text-xl font-semibold mb-3">Multi-Campaign</h3>
             <p className="text-gray-600">
               Create multiple campaigns per app with different reward models and configurations.
             </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-semibold mb-3">Analytics</h3>
+          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition">
+            <div className="text-4xl mb-4">🔐</div>
+            <h3 className="text-xl font-semibold mb-3">Usage Metering</h3>
             <p className="text-gray-600">
-              Track referrals, clicks, conversions, and rewards with accurate real-time analytics.
+              Built-in API usage tracking and soft limits with enterprise-grade authentication.
             </p>
           </div>
         </div>
