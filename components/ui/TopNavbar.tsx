@@ -1,9 +1,9 @@
 'use client';
 
 import { AppSwitcher } from './AppSwitcher';
-import { Search, Bell, User, LayoutGrid, Zap, Sun, Moon } from 'lucide-react';
+import { Search, Bell, User, LayoutGrid, Zap, Sun, Moon, Settings, LogOut, UserCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useAppStore } from '@/lib/store';
 import { useEffect, useState, useCallback } from 'react';
 
@@ -11,6 +11,7 @@ export function TopNavbar() {
   const { data: session } = useSession();
   const { selectedApp } = useAppStore();
   const [usage, setUsage] = useState({ current: 0, limit: 10000 });
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -129,8 +130,52 @@ export function TopNavbar() {
           <LayoutGrid size={20} />
         </button>
 
-        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-          {session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+        <div className="relative">
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            {session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+          </button>
+
+          {showProfileMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowProfileMenu(false)}
+              />
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {session?.user?.email}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {session?.user?.role}
+                  </div>
+                </div>
+                <div className="py-1">
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <UserCircle size={16} className="mr-3" />
+                    Profile Settings
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      signOut({ callbackUrl: '/login' });
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <LogOut size={16} className="mr-3" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

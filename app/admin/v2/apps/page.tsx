@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Search, MoreHorizontal, Building2, Zap, Calendar } from 'lucide-react';
+import { Search, MoreHorizontal, Building2, Zap, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
 interface App {
@@ -32,6 +32,7 @@ export default function AdminAppsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [viewModal, setViewModal] = useState<App | null>(null);
 
   const fetchApps = useCallback(async () => {
     try {
@@ -66,6 +67,24 @@ export default function AdminAppsPage() {
       }
     } catch (error) {
       console.error('Error updating app status:', error);
+    }
+  };
+
+  const handleDelete = async (appId: string, appName: string) => {
+    if (!confirm(`Are you sure you want to delete app "${appName}"? This action cannot be undone and will delete all associated campaigns and data.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/apps?id=${appId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchApps();
+      }
+    } catch (error) {
+      console.error('Error deleting app:', error);
     }
   };
 
@@ -245,17 +264,29 @@ export default function AdminAppsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end space-x-1">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => setViewModal(app)}
+                            className="p-2 text-blue-600 hover:text-blue-700 transition-colors"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
                           <select
                             value={app.status}
                             onChange={(e) => handleStatusChange(app.id, e.target.value)}
                             className="text-xs px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            title="Change Status"
                           >
                             <option value="ACTIVE">Active</option>
                             <option value="SUSPENDED">Suspended</option>
                           </select>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                            <MoreHorizontal size={16} />
+                          <button
+                            onClick={() => handleDelete(app.id, app.name)}
+                            className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                            title="Delete App"
+                          >
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -267,6 +298,85 @@ export default function AdminAppsPage() {
           </div>
         </Card>
       </div>
+
+      {viewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold">App Details</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-500">App Name</label>
+                  <div className="text-lg font-medium">{viewModal.name}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Status</label>
+                  <div><Badge variant={getStatusColor(viewModal.status)}>{viewModal.status}</Badge></div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">API Key</label>
+                  <div className="text-sm font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded break-all">{viewModal.apiKey}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Created</label>
+                  <div className="text-lg font-medium">{new Date(viewModal.createdAt).toLocaleDateString()}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Monthly Limit</label>
+                  <div className="text-lg font-medium">{viewModal.monthlyLimit.toLocaleString()}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Current Usage</label>
+                  <div className="text-lg font-medium">{viewModal.currentUsage.toLocaleString()}</div>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm text-gray-500">Usage Progress</label>
+                  <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-2">
+                    <div
+                      className={`h-full rounded-full ${
+                        getUsagePercentage(viewModal) > 90 ? 'bg-red-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${getUsagePercentage(viewModal)}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">{getUsagePercentage(viewModal).toFixed(1)}% used</div>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold mb-3">Partner Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-500">Company</label>
+                    <div className="text-lg font-medium">{viewModal.partner.companyName || 'Unnamed'}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Email</label>
+                    <div className="text-lg font-medium">{viewModal.partner.user.email}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Campaigns</label>
+                    <div className="text-lg font-medium">{viewModal._count.campaigns}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Total API Calls</label>
+                    <div className="text-lg font-medium">{viewModal._count.apiUsageLogs.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+              <button
+                onClick={() => setViewModal(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

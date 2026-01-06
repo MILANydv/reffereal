@@ -3,7 +3,7 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Users, Search, Filter, MoreHorizontal, TrendingUp, Mail, ExternalLink } from 'lucide-react';
+import { Users, Search, Filter, Edit, Trash2, Eye, TrendingUp, Mail } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
 interface PartnerData {
@@ -30,9 +30,32 @@ interface PartnerData {
   };
 }
 
+interface ViewModalData extends PartnerData {
+  apps: Array<{
+    id: string;
+    name: string;
+    status: string;
+    currentUsage: number;
+    monthlyLimit: number;
+  }>;
+  invoices: Array<{
+    id: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+  }>;
+  _count: {
+    apps: number;
+    teamMembers: number;
+  };
+}
+
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<PartnerData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewModal, setViewModal] = useState<ViewModalData | null>(null);
+  const [editModal, setEditModal] = useState<PartnerData | null>(null);
+  const [editFormData, setEditFormData] = useState({ companyName: '', active: true });
 
   const fetchPartners = useCallback(async () => {
     try {
@@ -52,6 +75,67 @@ export default function AdminPartnersPage() {
     fetchPartners();
   }, [fetchPartners]);
 
+  const handleView = async (partnerId: string) => {
+    try {
+      const response = await fetch(`/api/admin/partners?id=${partnerId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setViewModal(data);
+      }
+    } catch (error) {
+      console.error('Error fetching partner details:', error);
+    }
+  };
+
+  const handleEdit = (partner: PartnerData) => {
+    setEditModal(partner);
+    setEditFormData({
+      companyName: partner.companyName || '',
+      active: partner.active,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editModal) return;
+
+    try {
+      const response = await fetch('/api/admin/partners', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partnerId: editModal.id,
+          companyName: editFormData.companyName,
+          active: editFormData.active,
+        }),
+      });
+
+      if (response.ok) {
+        setEditModal(null);
+        fetchPartners();
+      }
+    } catch (error) {
+      console.error('Error updating partner:', error);
+    }
+  };
+
+  const handleDelete = async (partnerId: string, email: string) => {
+    if (!confirm(`Are you sure you want to delete partner "${email}"? This action cannot be undone and will delete all associated data.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/partners?id=${partnerId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchPartners();
+      }
+    } catch (error) {
+      console.error('Error deleting partner:', error);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -60,9 +144,6 @@ export default function AdminPartnersPage() {
             <h1 className="text-3xl font-bold tracking-tight">Partners</h1>
             <p className="text-gray-500 mt-1">Manage all platform partners and their subscriptions.</p>
           </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm">
-            Invite Partner
-          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -83,8 +164,10 @@ export default function AdminPartnersPage() {
                 <TrendingUp size={20} />
               </div>
               <div>
-                <div className="text-2xl font-bold">85%</div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Active Rate</div>
+                <div className="text-2xl font-bold">
+                  {partners.filter(p => p.active).length}
+                </div>
+                <div className="text-xs text-gray-500 uppercase font-semibold">Active</div>
               </div>
             </CardBody>
           </Card>
@@ -94,8 +177,10 @@ export default function AdminPartnersPage() {
                 <Mail size={20} />
               </div>
               <div>
-                <div className="text-2xl font-bold">12</div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Pending Invites</div>
+                <div className="text-2xl font-bold">
+                  {partners.filter(p => !p.active).length}
+                </div>
+                <div className="text-xs text-gray-500 uppercase font-semibold">Suspended</div>
               </div>
             </CardBody>
           </Card>
@@ -171,11 +256,26 @@ export default function AdminPartnersPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                            <ExternalLink size={16} />
+                          <button
+                            onClick={() => handleView(partner.id)}
+                            className="p-2 text-blue-600 hover:text-blue-700 transition-colors"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                            <MoreHorizontal size={16} />
+                          <button
+                            onClick={() => handleEdit(partner)}
+                            className="p-2 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
+                            title="Edit Partner"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(partner.id, partner.user.email)}
+                            className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                            title="Delete Partner"
+                          >
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -187,6 +287,134 @@ export default function AdminPartnersPage() {
           </div>
         </Card>
       </div>
+
+      {viewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold">Partner Details</h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-500">Company Name</label>
+                  <div className="text-lg font-medium">{viewModal.companyName || 'Not set'}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Email</label>
+                  <div className="text-lg font-medium">{viewModal.user.email}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Plan</label>
+                  <div><Badge variant="default">{viewModal.subscription?.plan?.type || 'FREE'}</Badge></div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Status</label>
+                  <div><Badge variant={viewModal.active ? 'success' : 'error'}>{viewModal.active ? 'ACTIVE' : 'SUSPENDED'}</Badge></div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Total Apps</label>
+                  <div className="text-lg font-medium">{viewModal._count.apps}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Team Members</label>
+                  <div className="text-lg font-medium">{viewModal._count.teamMembers}</div>
+                </div>
+              </div>
+
+              {viewModal.apps && viewModal.apps.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Applications</h3>
+                  <div className="space-y-2">
+                    {viewModal.apps.map(app => (
+                      <div key={app.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">{app.name}</div>
+                          <div className="text-xs text-gray-500">{app.currentUsage} / {app.monthlyLimit} calls</div>
+                        </div>
+                        <Badge variant={app.status === 'ACTIVE' ? 'success' : 'error'}>{app.status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewModal.invoices && viewModal.invoices.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Recent Invoices</h3>
+                  <div className="space-y-2">
+                    {viewModal.invoices.map(invoice => (
+                      <div key={invoice.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">${invoice.amount}</div>
+                          <div className="text-xs text-gray-500">{new Date(invoice.createdAt).toLocaleDateString()}</div>
+                        </div>
+                        <Badge variant={invoice.status === 'paid' ? 'success' : invoice.status === 'pending' ? 'warning' : 'error'}>
+                          {invoice.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+              <button
+                onClick={() => setViewModal(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold">Edit Partner</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Company Name</label>
+                <input
+                  type="text"
+                  value={editFormData.companyName}
+                  onChange={(e) => setEditFormData({ ...editFormData, companyName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={editFormData.active}
+                    onChange={(e) => setEditFormData({ ...editFormData, active: e.target.checked })}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium">Active</span>
+                </label>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+              <button
+                onClick={() => setEditModal(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
