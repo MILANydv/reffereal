@@ -133,7 +133,7 @@ export default function AdminFraudPage() {
                         {flag.isResolved ? (
                           <Badge variant="success">RESOLVED</Badge>
                         ) : (
-                          <Badge variant="danger">PENDING</Badge>
+                          <Badge variant="error">PENDING</Badge>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">

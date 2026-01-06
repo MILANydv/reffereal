@@ -309,7 +309,7 @@ export default function EnhancedAdminPage() {
                           <td className="px-6 py-4">
                             <Button
                               size="sm"
-                              variant={partner.user.active ? 'danger' : 'secondary'}
+                              variant={partner.user.active ? 'danger' : 'primary'}
                               onClick={() => handleTogglePartnerStatus(partner.id, partner.user.active)}
                             >
                               {partner.user.active ? 'Suspend' : 'Activate'}
@@ -394,7 +394,7 @@ export default function EnhancedAdminPage() {
                                 <Button size="sm" onClick={() => handleUpdateLimit(app.id)}>
                                   Save
                                 </Button>
-                                <Button size="sm" variant="secondary" onClick={() => setEditingLimit(null)}>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingLimit(null)}>
                                   Cancel
                                 </Button>
                               </div>
@@ -424,7 +424,7 @@ export default function EnhancedAdminPage() {
                           <td className="px-6 py-4">
                             <Button
                               size="sm"
-                              variant={app.status === 'ACTIVE' ? 'danger' : 'secondary'}
+                              variant={app.status === 'ACTIVE' ? 'danger' : 'primary'}
                               onClick={() => handleToggleAppStatus(app.id, app.status)}
                             >
                               {app.status === 'ACTIVE' ? 'Suspend' : 'Activate'}

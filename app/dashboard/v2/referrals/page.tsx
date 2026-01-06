@@ -133,8 +133,8 @@ export default function ReferralsPage() {
                         <Badge 
                           variant={
                             referral.status === 'CONVERTED' ? 'success' : 
-                            referral.status === 'FLAGGED' ? 'danger' : 
-                            referral.status === 'PENDING' ? 'warning' : 'secondary'
+                            referral.status === 'FLAGGED' ? 'error' : 
+                            referral.status === 'PENDING' ? 'warning' : 'default'
                           }
                         >
                           {referral.status}
@@ -145,8 +145,14 @@ export default function ReferralsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3 text-gray-400">
-                          <MousePointerClick size={16} className={referral.clickedAt ? 'text-blue-500' : ''} title={referral.clickedAt ? `Clicked at ${new Date(referral.clickedAt).toLocaleString()}` : 'Not clicked'} />
-                          <CheckCircle size={16} className={referral.convertedAt ? 'text-green-500' : ''} title={referral.convertedAt ? `Converted at ${new Date(referral.convertedAt).toLocaleString()}` : 'Not converted'} />
+                          <MousePointerClick 
+                            size={16} 
+                            className={referral.clickedAt ? 'text-blue-500' : ''} 
+                          />
+                          <CheckCircle 
+                            size={16} 
+                            className={referral.convertedAt ? 'text-green-500' : ''} 
+                          />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-500">

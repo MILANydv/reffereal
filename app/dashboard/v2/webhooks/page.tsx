@@ -194,7 +194,7 @@ export default function WebhooksPage() {
 
                 <div className="flex space-x-2">
                   <Button type="submit">Create Webhook</Button>
-                  <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
+                  <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
                     Cancel
                   </Button>
                 </div>

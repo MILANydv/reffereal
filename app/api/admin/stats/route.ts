@@ -35,6 +35,30 @@ export async function GET() {
       },
     });
 
+    // Get API calls by day for rate tracking
+    const apiCallsByDay = await prisma.apiUsageLog.groupBy({
+      by: ['timestamp'],
+      where: {
+        timestamp: { gte: thirtyDaysAgo },
+      },
+      _count: { id: true },
+    });
+
+    // Calculate daily averages
+    const daysCount = 30;
+    const avgDailyCalls = Math.round(totalApiCalls / daysCount);
+
+    // Get top endpoints by usage
+    const endpointUsage = await prisma.apiUsageLog.groupBy({
+      by: ['endpoint'],
+      where: {
+        timestamp: { gte: thirtyDaysAgo },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 5,
+    });
+
     const unresolvedFraudFlags = await prisma.fraudFlag.count({
       where: { isResolved: false },
     });
@@ -56,11 +80,22 @@ export async function GET() {
       },
     });
 
+    // Get total apps usage
+    const totalAppsUsage = await prisma.app.aggregate({
+      _sum: { currentUsage: true },
+    });
+
     return NextResponse.json({
       totalPartners,
       totalApps,
       totalRevenue,
       totalApiCalls,
+      avgDailyCalls,
+      totalAppsUsage: totalAppsUsage._sum.currentUsage || 0,
+      endpointUsage: endpointUsage.map(e => ({
+        endpoint: e.endpoint,
+        count: e._count.id,
+      })),
       activeSubscriptions,
       unresolvedFraudFlags,
       recentPartners: recentPartners.map((p) => ({

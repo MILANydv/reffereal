@@ -97,7 +97,7 @@ export default function CampaignsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  {campaigns.reduce((acc, curr) => acc + curr._count.referrals, 0)}
+                  {campaigns?.reduce((acc, curr) => acc + (curr._count?.referrals || 0), 0) || 0}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Total Referrals</div>
               </div>
@@ -182,7 +182,7 @@ export default function CampaignsPage() {
                         {campaign.rewardModel === 'FIXED_CURRENCY' ? `$${campaign.rewardValue}` : `${campaign.rewardValue}%`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={campaign.status === 'ACTIVE' ? 'success' : 'secondary'}>
+                        <Badge variant={campaign.status === 'ACTIVE' ? 'success' : 'default'}>
                           {campaign.status}
                         </Badge>
                       </td>

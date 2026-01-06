@@ -26,10 +26,10 @@ export async function calculateMonthlyUsage(partnerId: string) {
     throw new Error('Partner or subscription not found');
   }
 
-  const totalApiCalls = partner.apps.reduce(
-    (sum, app) => sum + app.apiUsageLogs.length,
+  const totalApiCalls = partner.apps?.reduce(
+    (sum, app) => sum + (app.apiUsageLogs?.length || 0),
     0
-  );
+  ) || 0;
 
   const plan = partner.subscription.plan;
   const overage = Math.max(0, totalApiCalls - plan.apiLimit);
