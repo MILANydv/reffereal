@@ -110,6 +110,8 @@ export async function GET() {
       });
     }
 
+    const apiUsageChart = await generateApiUsageChart(partner.apps || []);
+
     return NextResponse.json({
       totalApps,
       totalReferrals,
@@ -121,6 +123,7 @@ export async function GET() {
         limit: apiUsageLimit,
         percentage: apiUsagePercentage,
       },
+      apiUsageChart,
       recentActivity,
       alerts,
     });
@@ -128,4 +131,39 @@ export async function GET() {
     console.error('Dashboard stats error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+async function generateApiUsageChart(apps: Array<{ id: string; apiUsageLogs?: Array<{ timestamp: Date }> }>) {
+  const dailyMap = new Map<string, number>();
+  
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    dailyMap.set(dateStr, 0);
+  }
+
+  const logs = await prisma.apiUsageLog.findMany({
+    where: {
+      appId: { in: apps.map(app => app.id) },
+      timestamp: {
+        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      },
+    },
+  });
+
+  logs.forEach(log => {
+    const dateStr = log.timestamp.toISOString().split('T')[0];
+    if (dailyMap.has(dateStr)) {
+      dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + 1);
+    }
+  });
+
+  return Array.from(dailyMap.entries()).map(([date, value]) => {
+    const d = new Date(date);
+    return {
+      name: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      value,
+    };
+  });
 }

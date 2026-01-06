@@ -5,7 +5,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
 import { useEffect, useState } from 'react';
-import { TrendingUp, Users, MousePointerClick, CheckCircle, DollarSign, AlertCircle, BarChart3, ArrowRight, Zap, Megaphone, Webhook } from 'lucide-react';
+import { TrendingUp, Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Zap, Webhook } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import Link from 'next/link';
@@ -21,6 +21,10 @@ interface DashboardStats {
     limit: number;
     percentage: number;
   };
+  apiUsageChart: Array<{
+    name: string;
+    value: number;
+  }>;
   recentActivity: Array<{
     id: string;
     type: string;
@@ -34,23 +38,44 @@ interface DashboardStats {
   }>;
 }
 
-const chartData = [
-  { name: 'Jan', value: 400 },
-  { name: 'Feb', value: 300 },
-  { name: 'Mar', value: 600 },
-  { name: 'Apr', value: 800 },
-  { name: 'May', value: 500 },
-  { name: 'Jun', value: 900 },
-  { name: 'Jul', value: 1100 },
-];
+interface ActiveCampaign {
+  id: string;
+  name: string;
+  status: string;
+  totalReferrals: number;
+  totalRewardCost: number;
+}
+
+interface WebhookDelivery {
+  id: string;
+  eventType: string;
+  url: string;
+  statusCode: number;
+  success: boolean;
+  timestamp: string;
+}
+
+interface MetricChanges {
+  referrals: number;
+  conversions: number;
+  revenue: number;
+  apiCalls: number;
+}
 
 export default function DashboardV2Page() {
   const { selectedApp } = useAppStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activeCampaigns, setActiveCampaigns] = useState<ActiveCampaign[]>([]);
+  const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDelivery[]>([]);
+  const [metricChanges, setMetricChanges] = useState<MetricChanges | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardStats();
+    loadActiveCampaigns();
+    loadWebhookDeliveries();
+    loadMetrics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedApp]);
 
   const loadDashboardStats = async () => {
@@ -67,6 +92,48 @@ export default function DashboardV2Page() {
       console.error('Error loading dashboard stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadActiveCampaigns = async () => {
+    try {
+      const url = selectedApp 
+        ? `/api/partner/active-campaigns?appId=${selectedApp.id}`
+        : '/api/partner/active-campaigns';
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setActiveCampaigns(data.campaigns || []);
+      }
+    } catch (error) {
+      console.error('Error loading active campaigns:', error);
+    }
+  };
+
+  const loadWebhookDeliveries = async () => {
+    try {
+      const url = selectedApp 
+        ? `/api/partner/webhook-deliveries?appId=${selectedApp.id}`
+        : '/api/partner/webhook-deliveries';
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setWebhookDeliveries(data.deliveries || []);
+      }
+    } catch (error) {
+      console.error('Error loading webhook deliveries:', error);
+    }
+  };
+
+  const loadMetrics = async () => {
+    try {
+      const response = await fetch('/api/partner/metrics?period=30');
+      if (response.ok) {
+        const data = await response.json();
+        setMetricChanges(data.changes);
+      }
+    } catch (error) {
+      console.error('Error loading metrics:', error);
     }
   };
 
@@ -146,25 +213,25 @@ export default function DashboardV2Page() {
             title={selectedApp ? "API Requests (30d)" : "Total Applications"}
             value={selectedApp ? (stats?.apiUsage.current.toLocaleString() || '0') : (stats?.totalApps.toString() || '0')}
             icon={selectedApp ? <Zap size={24} /> : <TrendingUp size={24} />}
-            change="+12.5%"
+            change={metricChanges?.apiCalls ? `${metricChanges.apiCalls > 0 ? '+' : ''}${metricChanges.apiCalls.toFixed(1)}%` : undefined}
           />
           <StatCard
             title="Referrals Created"
             value={stats?.totalReferrals.toLocaleString() || '0'}
             icon={<Users size={24} />}
-            change="+15.2%"
+            change={metricChanges?.referrals ? `${metricChanges.referrals > 0 ? '+' : ''}${metricChanges.referrals.toFixed(1)}%` : undefined}
           />
           <StatCard
             title="Conversions"
             value={stats?.totalConversions.toLocaleString() || '0'}
             icon={<CheckCircle size={24} />}
-            change="+8.3%"
+            change={metricChanges?.conversions ? `${metricChanges.conversions > 0 ? '+' : ''}${metricChanges.conversions.toFixed(1)}%` : undefined}
           />
           <StatCard
             title="Revenue Attributed"
             value={`${(stats?.totalConversions ? stats.totalConversions * 45 : 0).toLocaleString()}`}
             icon={<DollarSign size={24} />}
-            change="+24%"
+            change={metricChanges?.revenue ? `${metricChanges.revenue > 0 ? '+' : ''}${metricChanges.revenue.toFixed(1)}%` : undefined}
           />
         </div>
 
@@ -180,7 +247,7 @@ export default function DashboardV2Page() {
             <CardBody>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
+                  <AreaChart data={stats?.apiUsageChart || []}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -203,26 +270,37 @@ export default function DashboardV2Page() {
               <CardTitle className="text-lg">Active Campaigns</CardTitle>
             </CardHeader>
             <CardBody className="p-0">
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-sm">Summer Promo {i}</span>
-                      <Badge variant="success" size="sm">Active</Badge>
-                    </div>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Users size={12} className="mr-1" /> 124 referrals
-                      <span className="mx-2">•</span>
-                      <DollarSign size={12} className="mr-1" /> $1.2k reward cost
-                    </div>
+              {activeCampaigns.length > 0 ? (
+                <>
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {activeCampaigns.map((campaign) => (
+                      <div key={campaign.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-sm">{campaign.name}</span>
+                          <Badge variant="success" size="sm">Active</Badge>
+                        </div>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Users size={12} className="mr-1" /> {campaign.totalReferrals} referrals
+                          <span className="mx-2">•</span>
+                          <DollarSign size={12} className="mr-1" /> ${campaign.totalRewardCost.toFixed(2)} reward cost
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50">
-                <Link href="/dashboard/v2/campaigns" className="text-xs font-bold text-blue-600 hover:underline flex items-center justify-center">
-                  View all campaigns <ArrowRight size={14} className="ml-1" />
-                </Link>
-              </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900/50">
+                    <Link href="/dashboard/v2/campaigns" className="text-xs font-bold text-blue-600 hover:underline flex items-center justify-center">
+                      View all campaigns <ArrowRight size={14} className="ml-1" />
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="p-8 text-center text-sm text-gray-500">
+                  No active campaigns yet.
+                  <Link href="/dashboard/v2/campaigns/new" className="block mt-2 text-blue-600 hover:underline font-medium">
+                    Create your first campaign
+                  </Link>
+                </div>
+              )}
             </CardBody>
           </Card>
         </div>
@@ -237,20 +315,26 @@ export default function DashboardV2Page() {
               <Link href="/dashboard/v2/webhooks" className="text-xs text-blue-600 hover:underline font-bold">View logs</Link>
             </CardHeader>
             <CardBody className="p-0">
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${i % 3 === 0 ? 'bg-red-500' : 'bg-green-500'}`} />
-                      <div>
-                        <p className="text-sm font-medium">referral.converted</p>
-                        <p className="text-xs text-gray-500">https://api.myapp.com/webhooks</p>
+              {webhookDeliveries.length > 0 ? (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {webhookDeliveries.map((delivery) => (
+                    <div key={delivery.id} className="px-6 py-4 flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-2 h-2 rounded-full ${delivery.success ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <div>
+                          <p className="text-sm font-medium">{delivery.eventType}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[200px]">{delivery.url}</p>
+                        </div>
                       </div>
+                      <span className="text-xs font-mono text-gray-400">{delivery.statusCode}</span>
                     </div>
-                    <span className="text-xs font-mono text-gray-400">{i % 3 === 0 ? '500' : '200'} OK</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-gray-500">
+                  No webhook deliveries yet
+                </div>
+              )}
             </CardBody>
           </Card>
 

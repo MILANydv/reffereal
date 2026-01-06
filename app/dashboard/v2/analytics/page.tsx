@@ -3,26 +3,65 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
-import { BarChart3, TrendingUp, TrendingDown, Users, DollarSign, ArrowRight, Download, Calendar } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Download, Calendar } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  LineChart, Line, AreaChart, Area, PieChart, Pie, Cell 
+  PieChart, Pie, Cell 
 } from 'recharts';
-
-const data = [
-  { name: 'Mon', clicks: 400, conversions: 240 },
-  { name: 'Tue', clicks: 300, conversions: 139 },
-  { name: 'Wed', clicks: 200, conversions: 980 },
-  { name: 'Thu', clicks: 278, conversions: 390 },
-  { name: 'Fri', clicks: 189, conversions: 480 },
-  { name: 'Sat', clicks: 239, conversions: 380 },
-  { name: 'Sun', clicks: 349, conversions: 430 },
-];
+import { useEffect, useState } from 'react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+interface AnalyticsData {
+  appId: string;
+  appName: string;
+  appTotals: {
+    totalReferrals: number;
+    totalClicks: number;
+    totalConversions: number;
+    totalRewardValue: number;
+    clickRate: number;
+    conversionRate: number;
+  };
+  campaigns: Array<{
+    campaignId: string;
+    campaignName: string;
+    totalReferrals: number;
+    totalClicks: number;
+    totalConversions: number;
+    clickRate: number;
+    conversionRate: number;
+  }>;
+}
+
 export default function AnalyticsPage() {
   const { selectedApp } = useAppStore();
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedApp) {
+      loadAnalytics();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedApp]);
+
+  const loadAnalytics = async () => {
+    if (!selectedApp) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/partner/analytics?appId=${selectedApp.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAnalytics(data);
+      }
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!selectedApp) {
     return (
@@ -37,6 +76,27 @@ export default function AnalyticsPage() {
       </DashboardLayout>
     );
   }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-xl text-gray-600 dark:text-gray-400">Loading analytics...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const totals = analytics?.appTotals || {
+    totalReferrals: 0,
+    totalClicks: 0,
+    totalConversions: 0,
+    totalRewardValue: 0,
+    clickRate: 0,
+    conversionRate: 0,
+  };
+
+  const estimatedRevenue = totals.totalConversions * 45;
 
   return (
     <DashboardLayout>
@@ -63,9 +123,9 @@ export default function AnalyticsPage() {
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total Referrals</div>
               <div className="flex items-end justify-between">
-                <div className="text-2xl font-bold">2,543</div>
+                <div className="text-2xl font-bold">{totals.totalReferrals.toLocaleString()}</div>
                 <div className="text-green-600 text-xs font-bold flex items-center mb-1">
-                  <TrendingUp size={12} className="mr-0.5" /> 12%
+                  <TrendingUp size={12} className="mr-0.5" /> {totals.clickRate.toFixed(1)}%
                 </div>
               </div>
             </CardBody>
@@ -74,9 +134,9 @@ export default function AnalyticsPage() {
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Conversion Rate</div>
               <div className="flex items-end justify-between">
-                <div className="text-2xl font-bold">18.2%</div>
+                <div className="text-2xl font-bold">{totals.conversionRate.toFixed(1)}%</div>
                 <div className="text-green-600 text-xs font-bold flex items-center mb-1">
-                  <TrendingUp size={12} className="mr-0.5" /> 3.1%
+                  <TrendingUp size={12} className="mr-0.5" /> {totals.totalConversions}
                 </div>
               </div>
             </CardBody>
@@ -85,9 +145,9 @@ export default function AnalyticsPage() {
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total Revenue</div>
               <div className="flex items-end justify-between">
-                <div className="text-2xl font-bold">$45,200</div>
+                <div className="text-2xl font-bold">${estimatedRevenue.toLocaleString()}</div>
                 <div className="text-green-600 text-xs font-bold flex items-center mb-1">
-                  <TrendingUp size={12} className="mr-0.5" /> 24%
+                  <TrendingUp size={12} className="mr-0.5" /> {totals.totalConversions}
                 </div>
               </div>
             </CardBody>
@@ -96,9 +156,9 @@ export default function AnalyticsPage() {
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Reward Cost</div>
               <div className="flex items-end justify-between">
-                <div className="text-2xl font-bold">$4,820</div>
+                <div className="text-2xl font-bold">${totals.totalRewardValue.toLocaleString()}</div>
                 <div className="text-amber-600 text-xs font-bold flex items-center mb-1">
-                  <TrendingUp size={12} className="mr-0.5" /> 8%
+                  <DollarSign size={12} className="mr-0.5" /> Cost
                 </div>
               </div>
             </CardBody>
@@ -108,27 +168,21 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Conversion Funnel</CardTitle>
+              <CardTitle>Campaign Performance</CardTitle>
             </CardHeader>
             <CardBody>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data}>
-                    <defs>
-                      <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
+                  <BarChart data={analytics?.campaigns || []}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} dy={10} />
+                    <XAxis dataKey="campaignName" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#9ca3af'}} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
                     <Tooltip 
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     />
-                    <Area type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorClicks)" />
-                    <Area type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2} fillOpacity={0} />
-                  </AreaChart>
+                    <Bar dataKey="totalClicks" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="totalConversions" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardBody>
@@ -144,10 +198,9 @@ export default function AnalyticsPage() {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Converted', value: 450 },
-                        { name: 'Clicked', value: 300 },
-                        { name: 'Pending', value: 200 },
-                        { name: 'Flagged', value: 50 },
+                        { name: 'Converted', value: totals.totalConversions || 1 },
+                        { name: 'Clicked', value: Math.max(0, totals.totalClicks - totals.totalConversions) || 1 },
+                        { name: 'Pending', value: Math.max(0, totals.totalReferrals - totals.totalClicks) || 1 },
                       ]}
                       cx="50%"
                       cy="50%"
@@ -157,10 +210,9 @@ export default function AnalyticsPage() {
                       dataKey="value"
                     >
                       {[
-                        { name: 'Converted', value: 450 },
-                        { name: 'Clicked', value: 300 },
-                        { name: 'Pending', value: 200 },
-                        { name: 'Flagged', value: 50 },
+                        { name: 'Converted', value: totals.totalConversions },
+                        { name: 'Clicked', value: totals.totalClicks - totals.totalConversions },
+                        { name: 'Pending', value: totals.totalReferrals - totals.totalClicks },
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
@@ -175,21 +227,21 @@ export default function AnalyticsPage() {
                     <div className="w-3 h-3 rounded-full bg-blue-500 mr-2" />
                     <span className="text-gray-500">Converted</span>
                   </div>
-                  <span className="font-bold">45%</span>
+                  <span className="font-bold">{totals.totalReferrals > 0 ? ((totals.totalConversions / totals.totalReferrals) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-green-500 mr-2" />
                     <span className="text-gray-500">Clicked</span>
                   </div>
-                  <span className="font-bold">30%</span>
+                  <span className="font-bold">{totals.totalReferrals > 0 ? (((totals.totalClicks - totals.totalConversions) / totals.totalReferrals) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
                     <span className="text-gray-500">Pending</span>
                   </div>
-                  <span className="font-bold">20%</span>
+                  <span className="font-bold">{totals.totalReferrals > 0 ? (((totals.totalReferrals - totals.totalClicks) / totals.totalReferrals) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </CardBody>

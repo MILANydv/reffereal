@@ -19,8 +19,17 @@ interface UsageData {
   }>;
 }
 
+interface EndpointBreakdown {
+  byCategory: Array<{
+    category: string;
+    count: number;
+    percentage: string;
+  }>;
+}
+
 interface UsageStats {
   apiUsage: UsageData;
+  endpointBreakdown: EndpointBreakdown;
   recentLogs: Array<{
     id: string;
     endpoint: string;
@@ -29,48 +38,39 @@ interface UsageStats {
   }>;
 }
 
-const mockChartData = [
-  { date: 'Mon', calls: 120 },
-  { date: 'Tue', calls: 180 },
-  { date: 'Wed', calls: 150 },
-  { date: 'Thu', calls: 220 },
-  { date: 'Fri', calls: 190 },
-  { date: 'Sat', calls: 80 },
-  { date: 'Sun', calls: 60 },
-];
-
 export default function UsagePage() {
   const [stats, setStats] = useState<UsageStats | null>(null);
+  const [metricChanges, setMetricChanges] = useState<{ apiCalls: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadUsageStats();
+    loadMetrics();
   }, []);
 
   const loadUsageStats = async () => {
     try {
-      const response = await fetch('/api/partner/billing');
+      const response = await fetch('/api/partner/usage-stats');
       if (response.ok) {
         const data = await response.json();
-        setStats({
-          apiUsage: {
-            current: data.currentUsage?.apiCalls || 0,
-            limit: data.subscription?.plan?.apiLimit || 10000,
-            overage: data.currentUsage?.overage || 0,
-            estimatedCost: data.currentUsage?.estimatedCost || 0,
-            dailyUsage: mockChartData,
-          },
-          recentLogs: [
-            { id: '1', endpoint: 'POST /api/referrals', timestamp: new Date().toISOString(), status: '200' },
-            { id: '2', endpoint: 'GET /api/stats', timestamp: new Date().toISOString(), status: '200' },
-            { id: '3', endpoint: 'POST /api/conversions', timestamp: new Date().toISOString(), status: '201' },
-          ],
-        });
+        setStats(data);
       }
     } catch (error) {
       console.error('Error loading usage stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMetrics = async () => {
+    try {
+      const response = await fetch('/api/partner/metrics?period=30');
+      if (response.ok) {
+        const data = await response.json();
+        setMetricChanges(data.changes);
+      }
+    } catch (error) {
+      console.error('Error loading metrics:', error);
     }
   };
 
@@ -99,7 +99,7 @@ export default function UsagePage() {
             <AlertTriangle size={20} className="mr-3 mt-0.5 text-yellow-600" />
             <div>
               <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
-                You've used {usagePercentage.toFixed(1)}% of your monthly API limit
+                You&apos;ve used {usagePercentage.toFixed(1)}% of your monthly API limit
               </p>
               <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1">
                 Consider upgrading your plan to avoid overage charges.
@@ -113,7 +113,7 @@ export default function UsagePage() {
             title="API Calls (30d)"
             value={stats?.apiUsage.current.toLocaleString() || '0'}
             icon={<Zap size={24} />}
-            change="+12.5%"
+            change={metricChanges?.apiCalls ? `${metricChanges.apiCalls > 0 ? '+' : ''}${metricChanges.apiCalls.toFixed(1)}%` : undefined}
           />
           <StatCard
             title="API Limit"
@@ -127,7 +127,7 @@ export default function UsagePage() {
           />
           <StatCard
             title="Est. Overage Cost"
-            value={`$${stats?.apiUsage.estimatedCost.toFixed(2) || '0.00'}`}
+            value={`${stats?.apiUsage.estimatedCost.toFixed(2) || '0.00'}`}
             icon={<Calendar size={24} />}
           />
         </div>
@@ -140,7 +140,7 @@ export default function UsagePage() {
             <CardBody>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mockChartData}>
+                  <AreaChart data={stats?.apiUsage.dailyUsage || []}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -184,22 +184,15 @@ export default function UsagePage() {
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Referrals API</span>
-                    <span className="text-sm font-medium">45%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Analytics API</span>
-                    <span className="text-sm font-medium">30%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Webhooks</span>
-                    <span className="text-sm font-medium">15%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Other</span>
-                    <span className="text-sm font-medium">10%</span>
-                  </div>
+                  {stats?.endpointBreakdown?.byCategory.map((item) => (
+                    <div key={item.category} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{item.category}</span>
+                      <span className="text-sm font-medium">{item.percentage}%</span>
+                    </div>
+                  ))}
+                  {(!stats?.endpointBreakdown?.byCategory || stats.endpointBreakdown.byCategory.length === 0) && (
+                    <div className="text-sm text-gray-500 text-center py-4">No usage data yet</div>
+                  )}
                 </div>
               </div>
             </CardBody>
