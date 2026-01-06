@@ -1,15 +1,24 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is required');
-}
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_for_build';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+export const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: '2025-02-24.acacia',
   typescript: true,
 });
 
+function checkStripeConfig() {
+  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+    console.warn('Warning: Stripe is not properly configured. Billing features will not work.');
+    return false;
+  }
+  return true;
+}
+
 export async function createStripeCustomer(email: string, name?: string) {
+  if (!checkStripeConfig()) {
+    throw new Error('Stripe is not configured');
+  }
   return await stripe.customers.create({
     email,
     name: name || undefined,
@@ -20,6 +29,9 @@ export async function createStripeSubscription(
   customerId: string,
   priceId: string
 ) {
+  if (!checkStripeConfig()) {
+    throw new Error('Stripe is not configured');
+  }
   return await stripe.subscriptions.create({
     customer: customerId,
     items: [{ price: priceId }],
@@ -30,6 +42,9 @@ export async function createStripeSubscription(
 }
 
 export async function cancelStripeSubscription(subscriptionId: string) {
+  if (!checkStripeConfig()) {
+    throw new Error('Stripe is not configured');
+  }
   return await stripe.subscriptions.cancel(subscriptionId);
 }
 
@@ -38,6 +53,9 @@ export async function createStripeInvoice(
   amount: number,
   description: string
 ) {
+  if (!checkStripeConfig()) {
+    throw new Error('Stripe is not configured');
+  }
   await stripe.invoiceItems.create({
     customer: customerId,
     amount: Math.round(amount * 100),
