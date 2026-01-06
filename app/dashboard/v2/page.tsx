@@ -5,6 +5,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { TrendingUp, Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Zap, Webhook } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -63,20 +64,51 @@ interface MetricChanges {
 }
 
 export default function DashboardV2Page() {
+  const { data: session, status: sessionStatus } = useSession();
   const { selectedApp } = useAppStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activeCampaigns, setActiveCampaigns] = useState<ActiveCampaign[]>([]);
   const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDelivery[]>([]);
   const [metricChanges, setMetricChanges] = useState<MetricChanges | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingStatus, setOnboardingStatus] = useState<{ completed: boolean; loading: boolean }>({ 
+    completed: false, 
+    loading: true 
+  });
 
   useEffect(() => {
-    loadDashboardStats();
-    loadActiveCampaigns();
-    loadWebhookDeliveries();
-    loadMetrics();
+    if (sessionStatus === 'authenticated') {
+      checkOnboardingStatus();
+    }
+  }, [sessionStatus]);
+
+  useEffect(() => {
+    if (onboardingStatus.completed) {
+      loadDashboardStats();
+      loadActiveCampaigns();
+      loadWebhookDeliveries();
+      loadMetrics();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedApp]);
+  }, [selectedApp, onboardingStatus.completed]);
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const response = await fetch('/api/partner/onboarding-status');
+      if (response.ok) {
+        const data = await response.json();
+        setOnboardingStatus({ completed: data.onboardingCompleted, loading: false });
+        if (!data.onboardingCompleted) {
+          // Redirect to onboarding if not completed
+          window.location.href = '/onboarding';
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setOnboardingStatus({ completed: false, loading: false });
+    }
+  };
 
   const loadDashboardStats = async () => {
     try {
@@ -137,7 +169,7 @@ export default function DashboardV2Page() {
     }
   };
 
-  if (loading) {
+  if (loading || onboardingStatus.loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">

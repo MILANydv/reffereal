@@ -27,7 +27,21 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Invalid email or password');
       } else {
-        router.push('/dashboard');
+        // Check if user needs to complete onboarding
+        try {
+          const response = await fetch('/api/partner/onboarding-status');
+          if (response.ok) {
+            const data = await response.json();
+            if (!data.onboardingCompleted) {
+              router.push('/onboarding');
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+        }
+        
+        router.push('/dashboard/v2');
         router.refresh();
       }
     } catch {

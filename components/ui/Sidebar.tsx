@@ -131,7 +131,7 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
         ))}
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-900/50">
+      <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
         <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 px-2">Account</div>
         <div className="px-2 mb-4">
           <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{userEmail}</div>
