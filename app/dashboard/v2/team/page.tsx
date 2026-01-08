@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useEffect, useState } from 'react';
 import { UserPlus, Mail, Trash2 } from 'lucide-react';
+import { TableSkeleton, PageHeaderSkeleton } from '@/components/ui/Skeleton';
 
 interface TeamMember {
   id: string;
@@ -86,8 +87,9 @@ export default function TeamPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600">Loading...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <TableSkeleton cols={6} rows={5} />
         </div>
       </DashboardLayout>
     );

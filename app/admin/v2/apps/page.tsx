@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Search, MoreHorizontal, Building2, Zap, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
 interface App {
   id: string;
@@ -89,13 +90,13 @@ export default function AdminAppsPage() {
   };
 
   const filteredApps = apps.filter((app) => {
-    const matchesSearch = 
+    const matchesSearch =
       app.name.toLowerCase().includes(search.toLowerCase()) ||
       app.partner.companyName?.toLowerCase().includes(search.toLowerCase()) ||
       app.partner.user.email.toLowerCase().includes(search.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -213,9 +214,16 @@ export default function AdminAppsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">Loading apps...</td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                      <td className="px-6 py-4 text-right"><Skeleton className="h-4 w-12 ml-auto" /></td>
+                    </tr>
+                  ))
                 ) : filteredApps.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-gray-500">No applications found</td>
@@ -241,9 +249,8 @@ export default function AdminAppsPage() {
                           </div>
                           <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full ${
-                                getUsagePercentage(app) > 90 ? 'bg-red-500' : 'bg-blue-500'
-                              }`}
+                              className={`h-full rounded-full ${getUsagePercentage(app) > 90 ? 'bg-red-500' : 'bg-blue-500'
+                                }`}
                               style={{ width: `${getUsagePercentage(app)}%` }}
                             />
                           </div>
@@ -335,9 +342,8 @@ export default function AdminAppsPage() {
                   <label className="text-sm text-gray-500">Usage Progress</label>
                   <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-2">
                     <div
-                      className={`h-full rounded-full ${
-                        getUsagePercentage(viewModal) > 90 ? 'bg-red-500' : 'bg-blue-500'
-                      }`}
+                      className={`h-full rounded-full ${getUsagePercentage(viewModal) > 90 ? 'bg-red-500' : 'bg-blue-500'
+                        }`}
                       style={{ width: `${getUsagePercentage(viewModal)}%` }}
                     />
                   </div>

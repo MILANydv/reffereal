@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useAppStore } from '@/lib/store';
 import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
 
 interface Referral {
   id: string;
@@ -107,9 +108,17 @@ export default function ReferralsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">Loading referrals...</td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24 font-mono" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-32 font-mono" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-4 w-20" /></td>
+                    </tr>
+                  ))
                 ) : referrals.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
@@ -130,11 +139,11 @@ export default function ReferralsPage() {
                       <td className="px-6 py-4 font-mono text-xs">{referral.referrerId}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{referral.campaign.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge 
+                        <Badge
                           variant={
-                            referral.status === 'CONVERTED' ? 'success' : 
-                            referral.status === 'FLAGGED' ? 'error' : 
-                            referral.status === 'PENDING' ? 'warning' : 'default'
+                            referral.status === 'CONVERTED' ? 'success' :
+                              referral.status === 'FLAGGED' ? 'error' :
+                                referral.status === 'PENDING' ? 'warning' : 'default'
                           }
                         >
                           {referral.status}
@@ -145,13 +154,13 @@ export default function ReferralsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3 text-gray-400">
-                          <MousePointerClick 
-                            size={16} 
-                            className={referral.clickedAt ? 'text-blue-500' : ''} 
+                          <MousePointerClick
+                            size={16}
+                            className={referral.clickedAt ? 'text-blue-500' : ''}
                           />
-                          <CheckCircle 
-                            size={16} 
-                            className={referral.convertedAt ? 'text-green-500' : ''} 
+                          <CheckCircle
+                            size={16}
+                            className={referral.convertedAt ? 'text-green-500' : ''}
                           />
                         </div>
                       </td>

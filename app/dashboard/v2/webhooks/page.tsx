@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { useEffect, useState, useCallback } from 'react';
 import { Webhook as WebhookIcon, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 interface Webhook {
   id: string;
@@ -31,7 +32,7 @@ export default function WebhooksPage() {
 
   const loadWebhooks = useCallback(async () => {
     try {
-      const url = selectedApp 
+      const url = selectedApp
         ? `/api/partner/webhooks?appId=${selectedApp.id}`
         : '/api/partner/webhooks';
       const response = await fetch(url);
@@ -120,8 +121,13 @@ export default function WebhooksPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600">Loading...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="space-y-4">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
         </div>
       </DashboardLayout>
     );

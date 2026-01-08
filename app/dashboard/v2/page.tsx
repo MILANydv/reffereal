@@ -10,6 +10,7 @@ import { TrendingUp, Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Za
 import { useAppStore } from '@/lib/store';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import Link from 'next/link';
+import { Skeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 interface DashboardStats {
   totalApps: number;
@@ -176,8 +177,32 @@ export default function DashboardV2Page() {
   if (loading || onboardingStatus.loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600 dark:text-gray-400">Loading...</div>
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <CardSkeleton />
+            </div>
+            <CardSkeleton />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -230,10 +255,10 @@ export default function DashboardV2Page() {
               <div
                 key={alert.id}
                 className={`p-4 rounded-xl border flex items-start ${alert.type === 'error'
-                    ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400'
-                    : alert.type === 'warning'
-                      ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                      : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 text-blue-800 dark:text-blue-400'
+                  ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400'
+                  : alert.type === 'warning'
+                    ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                    : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 text-blue-800 dark:text-blue-400'
                   }`}
               >
                 <AlertCircle size={20} className="mr-3 mt-0.5" />

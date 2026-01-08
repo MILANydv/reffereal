@@ -1,14 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAppStore } from '@/lib/store';
+import { useAppStore, type App } from '@/lib/store';
 import { ChevronDown, Plus, Search, Check } from 'lucide-react';
 
-interface App {
-  id: string;
-  name: string;
-  apiKey: string;
-}
 
 export function AppSwitcher() {
   const { selectedApp, setSelectedApp } = useAppStore();
@@ -41,7 +36,7 @@ export function AppSwitcher() {
     return () => clearTimeout(timer);
   }, [fetchApps]);
 
-  const filteredApps = apps.filter(app => 
+  const filteredApps = apps.filter(app =>
     app.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -60,8 +55,8 @@ export function AppSwitcher() {
 
       {isOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-10" 
+          <div
+            className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
           <div className="absolute left-0 mt-2 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg z-20 overflow-hidden">
@@ -108,7 +103,7 @@ export function AppSwitcher() {
             </div>
 
             <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-              <button 
+              <button
                 className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors font-medium"
                 onClick={() => {
                   window.location.href = '/dashboard/v2/apps/new';

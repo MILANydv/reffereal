@@ -5,6 +5,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Activity, TrendingUp, Users, Zap } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
 
 interface UsageData {
   totalApiCalls: number;
@@ -72,8 +73,19 @@ export default function AdminUsagePage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl text-gray-500">Loading usage data...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+          <TableSkeleton cols={4} rows={5} />
         </div>
       </DashboardLayout>
     );
@@ -181,11 +193,10 @@ export default function AdminUsagePage() {
                     </div>
                     <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${
-                          (app.currentUsage / app.monthlyLimit) * 100 > 90
+                        className={`h-full rounded-full ${(app.currentUsage / app.monthlyLimit) * 100 > 90
                             ? 'bg-red-500'
                             : 'bg-blue-500'
-                        }`}
+                          }`}
                         style={{
                           width: `${Math.min((app.currentUsage / app.monthlyLimit) * 100, 100)}%`,
                         }}

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Search, Trash2, Filter, RefreshCw, Terminal, Info, AlertTriangle, XCircle, Bug } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
 interface SystemLog {
   id: string;
@@ -84,11 +85,11 @@ export default function AdminLogsPage() {
     try {
       const date = new Date();
       date.setDate(date.getDate() - parseInt(days));
-      
+
       const response = await fetch(`/api/admin/logs?before=${date.toISOString()}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         fetchLogs();
       }
@@ -212,9 +213,14 @@ export default function AdminLogsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {loading ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Loading logs...</td>
-                  </tr>
+                  Array.from({ length: 10 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-6 py-3"><Skeleton className="h-4 w-16 rounded" /></td>
+                      <td className="px-6 py-3"><Skeleton className="h-4 w-full" /></td>
+                      <td className="px-6 py-3"><Skeleton className="h-4 w-20" /></td>
+                      <td className="px-6 py-3 text-right"><Skeleton className="h-4 w-24 ml-auto" /></td>
+                    </tr>
+                  ))
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-gray-500">No logs found</td>

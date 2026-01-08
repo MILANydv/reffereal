@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useEffect, useState, useCallback } from 'react';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 interface FraudFlag {
   id: string;
@@ -68,8 +69,18 @@ export default function FraudPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600">Loading...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="flex space-x-2">
+            <div className="h-9 w-24 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+            <div className="h-9 w-24 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+            <div className="h-9 w-24 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+          </div>
+          <div className="space-y-4">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
         </div>
       </DashboardLayout>
     );

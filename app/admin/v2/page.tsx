@@ -6,6 +6,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
 import { useEffect, useState } from 'react';
 import { Users, Building2, DollarSign, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
+import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
 
 interface AdminStats {
   totalPartners: number;
@@ -51,8 +52,20 @@ export default function AdminV2Page() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600 dark:text-gray-400">Loading...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+          <TableSkeleton cols={4} rows={5} />
         </div>
       </DashboardLayout>
     );

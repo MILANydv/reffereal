@@ -5,6 +5,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { DollarSign, TrendingUp, FileText, AlertCircle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
 
 interface BillingData {
   totalRevenue: number;
@@ -79,8 +80,20 @@ export default function AdminBillingPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl text-gray-500">Loading billing data...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+          <TableSkeleton cols={6} rows={5} />
+          <TableSkeleton cols={5} rows={5} />
         </div>
       </DashboardLayout>
     );

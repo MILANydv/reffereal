@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Plus, Edit3, Trash2, Search, Flag, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { PageHeaderSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
 interface FeatureFlag {
   id: string;
@@ -54,7 +55,7 @@ export default function AdminFeaturesPage() {
     try {
       const url = editingFlag ? '/api/admin/feature-flags' : '/api/admin/feature-flags';
       const method = editingFlag ? 'PATCH' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +74,7 @@ export default function AdminFeaturesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this feature flag?')) return;
-    
+
     try {
       const response = await fetch(`/api/admin/feature-flags?id=${id}`, {
         method: 'DELETE',
@@ -164,9 +165,15 @@ export default function AdminFeaturesPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {loading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Loading...</td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-40" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                      <td className="px-6 py-4 text-right"><Skeleton className="h-4 w-12 ml-auto" /></td>
+                    </tr>
+                  ))
                 ) : filteredFlags.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500">No feature flags found</td>
@@ -210,11 +217,10 @@ export default function AdminFeaturesPage() {
                         <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => handleToggle(flag)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              flag.isEnabled
+                            className={`p-2 rounded-lg transition-colors ${flag.isEnabled
                                 ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
                                 : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                            }`}
+                              }`}
                           >
                             {flag.isEnabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
                           </button>

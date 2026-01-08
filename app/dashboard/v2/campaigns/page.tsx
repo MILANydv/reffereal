@@ -7,6 +7,7 @@ import { useAppStore } from '@/lib/store';
 import { Plus, Search, Filter, MoreHorizontal, Megaphone, Users, MousePointerClick, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
 
 interface Campaign {
   id: string;
@@ -69,7 +70,7 @@ export default function CampaignsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Campaigns</h1>
             <p className="text-gray-500 mt-1">Create and manage referral campaigns for {selectedApp.name}.</p>
           </div>
-          <Link 
+          <Link
             href="/dashboard/v2/campaigns/new"
             className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
           >
@@ -79,41 +80,51 @@ export default function CampaignsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardBody className="p-4 flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
-                <Megaphone size={20} />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{campaigns.length}</div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Total Campaigns</div>
-              </div>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody className="p-4 flex items-center space-x-4">
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
-                <Users size={20} />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">
-                  {campaigns?.reduce((acc, curr) => acc + (curr._count?.referrals || 0), 0) || 0}
-                </div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Total Referrals</div>
-              </div>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody className="p-4 flex items-center space-x-4">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg">
-                <CheckCircle size={20} />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">124</div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Active Participants</div>
-              </div>
-            </CardBody>
-          </Card>
+          {loading ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : (
+            <>
+              <Card>
+                <CardBody className="p-4 flex items-center space-x-4">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                    <Megaphone size={20} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{campaigns.length}</div>
+                    <div className="text-xs text-gray-500 uppercase font-semibold">Total Campaigns</div>
+                  </div>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardBody className="p-4 flex items-center space-x-4">
+                  <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
+                    <Users size={20} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {campaigns?.reduce((acc, curr) => acc + (curr._count?.referrals || 0), 0) || 0}
+                    </div>
+                    <div className="text-xs text-gray-500 uppercase font-semibold">Total Referrals</div>
+                  </div>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardBody className="p-4 flex items-center space-x-4">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg">
+                    <CheckCircle size={20} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">124</div>
+                    <div className="text-xs text-gray-500 uppercase font-semibold">Active Participants</div>
+                  </div>
+                </CardBody>
+              </Card>
+            </>
+          )}
         </div>
 
         <Card className="overflow-hidden">
@@ -147,14 +158,21 @@ export default function CampaignsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">Loading campaigns...</td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                      <td className="px-6 py-4 text-right"><Skeleton className="h-4 w-8 ml-auto" /></td>
+                    </tr>
+                  ))
                 ) : campaigns.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center">
                       <div className="text-gray-500 mb-4">No campaigns found for this app.</div>
-                      <Link 
+                      <Link
                         href="/dashboard/v2/campaigns/new"
                         className="text-blue-600 font-medium hover:underline"
                       >

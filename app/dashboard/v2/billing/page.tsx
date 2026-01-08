@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useEffect, useState } from 'react';
 import { Check, TrendingUp } from 'lucide-react';
+import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 interface PricingPlan {
   id: string;
@@ -106,8 +107,14 @@ export default function BillingPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600">Loading...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+          <CardSkeleton />
         </div>
       </DashboardLayout>
     );
@@ -282,8 +289,8 @@ export default function BillingPage() {
                               invoice.status === 'paid'
                                 ? 'success'
                                 : invoice.status === 'pending'
-                                ? 'default'
-                                : 'error'
+                                  ? 'default'
+                                  : 'error'
                             }
                             size="sm"
                           >

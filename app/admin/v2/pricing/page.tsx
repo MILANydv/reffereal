@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Plus, Edit3, Trash2, Search, Check, Zap, Users, Box, X } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 interface PricingPlan {
   id: string;
@@ -61,7 +62,7 @@ export default function AdminPricingPage() {
     try {
       const url = editingPlan ? '/api/admin/pricing-plans' : '/api/admin/pricing-plans';
       const method = editingPlan ? 'PATCH' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -83,12 +84,12 @@ export default function AdminPricingPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this pricing plan?')) return;
-    
+
     try {
       const response = await fetch(`/api/admin/pricing-plans?id=${id}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         fetchPlans();
       } else {
@@ -183,10 +184,12 @@ export default function AdminPricingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {loading ? (
-            <div className="col-span-4 text-center py-12 text-gray-500">Loading plans...</div>
+            Array.from({ length: 4 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))
           ) : filteredPlans.map((plan) => (
-            <Card 
-              key={plan.id} 
+            <Card
+              key={plan.id}
               className={`flex flex-col h-full border-t-4 ${plan.isActive ? 'border-t-blue-600' : 'border-t-gray-400'}`}
             >
               <CardBody className="flex flex-col h-full">
@@ -197,11 +200,10 @@ export default function AdminPricingPage() {
                   <div className="flex space-x-1">
                     <button
                       onClick={() => handleToggleActive(plan)}
-                      className={`p-1.5 rounded transition-colors ${
-                        plan.isActive
+                      className={`p-1.5 rounded transition-colors ${plan.isActive
                           ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
                           : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }`}
+                        }`}
                     >
                       {plan.isActive ? <Check size={14} /> : <X size={14} />}
                     </button>
@@ -224,7 +226,7 @@ export default function AdminPricingPage() {
                   <span className="text-3xl font-bold">${plan.monthlyPrice}</span>
                   <span className="text-gray-500 text-sm">/mo</span>
                 </div>
-                
+
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center text-sm">
                     <Zap size={14} className="mr-2 text-yellow-500" />
@@ -250,7 +252,7 @@ export default function AdminPricingPage() {
                     </ul>
                   </div>
                 </div>
-                
+
                 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>{plan.isActive ? 'Active' : 'Inactive'}</span>

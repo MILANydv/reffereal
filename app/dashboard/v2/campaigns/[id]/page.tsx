@@ -7,6 +7,7 @@ import { useAppStore } from '@/lib/store';
 import { ArrowLeft, Megaphone, Settings, Gift, Shield, BarChart3, Edit3, Trash2, Calendar, Users, MousePointerClick, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
 interface CampaignData {
   id: string;
@@ -51,8 +52,20 @@ export default function CampaignDetailPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-xl text-gray-600">Loading...</div>
+        <div className="space-y-8">
+          <PageHeaderSkeleton />
+          <div className="flex space-x-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+            <CardSkeleton />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -82,7 +95,7 @@ export default function CampaignDetailPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <button 
+            <button
               onClick={() => router.back()}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500"
             >
@@ -119,8 +132,8 @@ export default function CampaignDetailPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${activeTab === tab.id 
-                    ? 'border-blue-600 text-blue-600' 
+                  ${activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
                 `}
               >
@@ -226,34 +239,34 @@ export default function CampaignDetailPage() {
           )}
 
           {activeTab === 'performance' && (
-             <div className="space-y-6 animate-in fade-in duration-300">
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                 <StatBox title="Clicks" value="1,240" change="+12%" />
-                 <StatBox title="Conversions" value="124" change="+5%" />
-                 <StatBox title="CPA" value="$12.50" change="-2%" />
-                 <StatBox title="Revenue" value="$45,000" change="+18%" />
-               </div>
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Performance over time</CardTitle>
-                 </CardHeader>
-                 <CardBody>
-                   <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-800">
-                     <div className="text-center">
-                       <BarChart3 className="mx-auto text-gray-400 mb-2" size={32} />
-                       <p className="text-sm text-gray-500">Performance charts will be displayed here</p>
-                     </div>
-                   </div>
-                 </CardBody>
-               </Card>
-             </div>
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatBox title="Clicks" value="1,240" change="+12%" />
+                <StatBox title="Conversions" value="124" change="+5%" />
+                <StatBox title="CPA" value="$12.50" change="-2%" />
+                <StatBox title="Revenue" value="$45,000" change="+18%" />
+              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance over time</CardTitle>
+                </CardHeader>
+                <CardBody>
+                  <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-800">
+                    <div className="text-center">
+                      <BarChart3 className="mx-auto text-gray-400 mb-2" size={32} />
+                      <p className="text-sm text-gray-500">Performance charts will be displayed here</p>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
           )}
 
           {(activeTab === 'rules' || activeTab === 'rewards' || activeTab === 'settings') && (
             <Card className="animate-in fade-in duration-300">
               <CardBody className="py-12 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                   <Settings size={32} />
+                  <Settings size={32} />
                 </div>
                 <h3 className="text-xl font-bold">Manage {activeTab}</h3>
                 <p className="text-gray-500 max-w-md mx-auto mt-2">
@@ -291,12 +304,12 @@ function StatBox({ title, value, change }: { title: string, value: string, chang
 
 function TrendingUp({ size, className }: { size: number, className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
   );
 }
 
 function TrendingDown({ size, className }: { size: number, className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></svg>
   );
 }
