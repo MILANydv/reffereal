@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { 
-  Code, 
-  Building2, 
-  GraduationCap, 
-  Lightbulb, 
-  ArrowRight, 
+import {
+  Code,
+  Building2,
+  GraduationCap,
+  Lightbulb,
+  ArrowRight,
   Check,
   Zap,
   Users,
@@ -80,9 +80,15 @@ export default function OnboardingPage() {
       router.push('/login');
       return;
     }
+
+    if (session?.user?.role === 'SUPER_ADMIN') {
+      router.push('/dashboard/v2');
+      return;
+    }
+
     loadOnboardingStatus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, router, session?.user?.role]);
 
   const loadOnboardingStatus = async () => {
     try {
@@ -93,7 +99,10 @@ export default function OnboardingPage() {
           router.push('/dashboard/v2');
           return;
         }
-        setOnboardingData(data.data || {});
+        setOnboardingData(prev => ({
+          ...prev,
+          ...(data.data || {})
+        }));
         setCurrentStep(data.step || 1);
       }
     } catch (error) {
@@ -148,9 +157,10 @@ export default function OnboardingPage() {
       case 1:
         return onboardingData.userType !== '';
       case 2:
-        return onboardingData.companyName.trim() !== '';
+        return (onboardingData.companyName || '').trim() !== '';
       case 3:
-        return onboardingData.appName.trim() !== '' && onboardingData.appDescription.trim() !== '';
+        return (onboardingData.appName || '').trim() !== '' &&
+          (onboardingData.appDescription || '').trim() !== '';
       default:
         return true;
     }
@@ -178,13 +188,12 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step.id < currentStep 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : step.id === currentStep 
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${step.id < currentStep
+                  ? 'bg-green-500 border-green-500 text-white'
+                  : step.id === currentStep
                     ? 'bg-blue-600 border-blue-600 text-white'
                     : 'bg-gray-200 border-gray-300 text-gray-500'
-                }`}>
+                  }`}>
                   {step.id < currentStep ? (
                     <Check size={20} />
                   ) : (
@@ -192,17 +201,15 @@ export default function OnboardingPage() {
                   )}
                 </div>
                 <div className="ml-3 hidden sm:block">
-                  <p className={`text-sm font-medium ${
-                    step.id <= currentStep ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
+                  <p className={`text-sm font-medium ${step.id <= currentStep ? 'text-gray-900' : 'text-gray-500'
+                    }`}>
                     {step.title}
                   </p>
                   <p className="text-xs text-gray-500">{step.description}</p>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`hidden sm:block w-16 h-0.5 ml-4 ${
-                    step.id < currentStep ? 'bg-green-500' : 'bg-gray-300'
-                  }`} />
+                  <div className={`hidden sm:block w-16 h-0.5 ml-4 ${step.id < currentStep ? 'bg-green-500' : 'bg-gray-300'
+                    }`} />
                 )}
               </div>
             ))}
@@ -231,11 +238,10 @@ export default function OnboardingPage() {
                   <button
                     key={type.id}
                     onClick={() => handleUserTypeSelect(type.id)}
-                    className={`p-6 rounded-lg border-2 transition-all text-left ${
-                      onboardingData.userType === type.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`p-6 rounded-lg border-2 transition-all text-left ${onboardingData.userType === type.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <div className={`w-16 h-16 rounded-lg flex items-center justify-center mb-4 ${type.color}`}>
                       {type.icon}

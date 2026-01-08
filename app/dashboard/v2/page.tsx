@@ -71,16 +71,20 @@ export default function DashboardV2Page() {
   const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDelivery[]>([]);
   const [metricChanges, setMetricChanges] = useState<MetricChanges | null>(null);
   const [loading, setLoading] = useState(true);
-  const [onboardingStatus, setOnboardingStatus] = useState<{ completed: boolean; loading: boolean }>({ 
-    completed: false, 
-    loading: true 
+  const [onboardingStatus, setOnboardingStatus] = useState<{ completed: boolean; loading: boolean }>({
+    completed: false,
+    loading: true
   });
 
   useEffect(() => {
     if (sessionStatus === 'authenticated') {
-      checkOnboardingStatus();
+      if (session?.user?.role === 'SUPER_ADMIN') {
+        setOnboardingStatus({ completed: true, loading: false });
+      } else {
+        checkOnboardingStatus();
+      }
     }
-  }, [sessionStatus]);
+  }, [sessionStatus, session?.user?.role]);
 
   useEffect(() => {
     if (onboardingStatus.completed) {
@@ -89,7 +93,7 @@ export default function DashboardV2Page() {
       loadWebhookDeliveries();
       loadMetrics();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedApp, onboardingStatus.completed]);
 
   const checkOnboardingStatus = async () => {
@@ -112,7 +116,7 @@ export default function DashboardV2Page() {
 
   const loadDashboardStats = async () => {
     try {
-      const url = selectedApp 
+      const url = selectedApp
         ? `/api/partner/dashboard-stats?appId=${selectedApp.id}`
         : '/api/partner/dashboard-stats';
       const response = await fetch(url);
@@ -129,7 +133,7 @@ export default function DashboardV2Page() {
 
   const loadActiveCampaigns = async () => {
     try {
-      const url = selectedApp 
+      const url = selectedApp
         ? `/api/partner/active-campaigns?appId=${selectedApp.id}`
         : '/api/partner/active-campaigns';
       const response = await fetch(url);
@@ -144,7 +148,7 @@ export default function DashboardV2Page() {
 
   const loadWebhookDeliveries = async () => {
     try {
-      const url = selectedApp 
+      const url = selectedApp
         ? `/api/partner/webhook-deliveries?appId=${selectedApp.id}`
         : '/api/partner/webhook-deliveries';
       const response = await fetch(url);
@@ -189,7 +193,7 @@ export default function DashboardV2Page() {
           </div>
           <h1 className="text-3xl font-bold mb-2">Welcome to Referral Platform</h1>
           <p className="text-gray-500 max-w-md mb-8">Get started by creating your first application to manage your referral campaigns.</p>
-          <Link 
+          <Link
             href="/dashboard/v2/apps/new"
             className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
           >
@@ -214,8 +218,8 @@ export default function DashboardV2Page() {
           </div>
           {selectedApp && (
             <div className="flex space-x-2">
-               <Badge variant="success" className="h-6">Healthy</Badge>
-               <span className="text-xs text-gray-400 mt-1 font-mono">v1.2.0</span>
+              <Badge variant="success" className="h-6">Healthy</Badge>
+              <span className="text-xs text-gray-400 mt-1 font-mono">v1.2.0</span>
             </div>
           )}
         </div>
@@ -225,13 +229,12 @@ export default function DashboardV2Page() {
             {stats.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className={`p-4 rounded-xl border flex items-start ${
-                  alert.type === 'error'
+                className={`p-4 rounded-xl border flex items-start ${alert.type === 'error'
                     ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400'
                     : alert.type === 'warning'
-                    ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                    : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 text-blue-800 dark:text-blue-400'
-                }`}
+                      ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                      : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 text-blue-800 dark:text-blue-400'
+                  }`}
               >
                 <AlertCircle size={20} className="mr-3 mt-0.5" />
                 <p className="text-sm font-medium">{alert.message}</p>
@@ -282,13 +285,13 @@ export default function DashboardV2Page() {
                   <AreaChart data={stats?.apiUsageChart || []}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
                     <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                     <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                   </AreaChart>
@@ -338,7 +341,7 @@ export default function DashboardV2Page() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-           <Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center">
                 <Webhook size={20} className="mr-2 text-purple-500" />
