@@ -208,9 +208,11 @@ model Referral {
   @@index([campaignId])
   @@index([referralCode])
   @@index([referrerId])
+  @@index([refereeId])
   @@index([status])
   @@index([parentReferralId])
   @@index([ipAddress])
+  @@index([status, campaignId])
 }
 
 model Conversion {
@@ -222,6 +224,7 @@ model Conversion {
   createdAt       DateTime @default(now())
 
   @@index([referralId])
+  @@index([createdAt])
 }
 
 model ApiUsageLog {
