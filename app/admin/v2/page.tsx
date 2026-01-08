@@ -8,46 +8,15 @@ import { useEffect, useState } from 'react';
 import { Users, Building2, DollarSign, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
 
-interface AdminStats {
-  totalPartners: number;
-  totalApps: number;
-  totalRevenue: number;
-  totalApiCalls: number;
-  avgDailyCalls: number;
-  totalAppsUsage: number;
-  endpointUsage: Array<{ endpoint: string; count: number }>;
-  activeSubscriptions: number;
-  unresolvedFraudFlags: number;
-  recentPartners: Array<{
-    id: string;
-    companyName: string;
-    userEmail: string;
-    planType: string;
-    createdAt: string;
-  }>;
-}
+import { useAdminStore } from '@/lib/store';
 
 export default function AdminV2Page() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { stats, fetchStats, isLoading } = useAdminStore();
+  const loading = isLoading['stats'];
 
   useEffect(() => {
-    loadAdminStats();
-  }, []);
-
-  const loadAdminStats = async () => {
-    try {
-      const response = await fetch('/api/admin/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Error loading admin stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchStats();
+  }, [fetchStats]);
 
   if (loading) {
     return (
@@ -121,7 +90,7 @@ export default function AdminV2Page() {
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Top Endpoints</div>
                   <div className="space-y-2">
-                    {stats?.endpointUsage.map((ep, idx) => (
+                    {stats?.endpointUsage?.map((ep: any, idx: number) => (
                       <div key={idx} className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400 font-mono truncate max-w-[150px]">
                           {ep.endpoint}
@@ -192,7 +161,7 @@ export default function AdminV2Page() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.recentPartners.map((partner) => (
+                    {stats.recentPartners.map((partner: any) => (
                       <tr key={partner.id} className="border-b border-gray-100 dark:border-gray-800">
                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{partner.companyName || '-'}</td>
                         <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{partner.userEmail}</td>

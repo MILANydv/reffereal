@@ -4,43 +4,20 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { usePartnerStore } from '@/lib/store';
 import { useEffect, useState } from 'react';
 import { UserPlus, Mail, Trash2 } from 'lucide-react';
 import { TableSkeleton, PageHeaderSkeleton } from '@/components/ui/Skeleton';
 
-interface TeamMember {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-  isActive: boolean;
-  inviteAcceptedAt: string | null;
-  lastLoginAt: string | null;
-  createdAt: string;
-}
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { team: members, fetchTeam, isLoading, invalidate } = usePartnerStore();
+  const loading = isLoading['team'];
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    loadTeamMembers();
-  }, []);
-
-  const loadTeamMembers = async () => {
-    try {
-      const response = await fetch('/api/partner/team');
-      if (response.ok) {
-        const data = await response.json();
-        setMembers(data);
-      }
-    } catch (error) {
-      console.error('Error loading team members:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchTeam();
+  }, [fetchTeam]);
 
   const handleInviteMember = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,7 +38,8 @@ export default function TeamPage() {
 
       if (response.ok) {
         setShowForm(false);
-        loadTeamMembers();
+        invalidate('team');
+        fetchTeam(true);
       }
     } catch (error) {
       console.error('Error inviting member:', error);
@@ -77,7 +55,8 @@ export default function TeamPage() {
       });
 
       if (response.ok) {
-        loadTeamMembers();
+        invalidate('team');
+        fetchTeam(true);
       }
     } catch (error) {
       console.error('Error removing member:', error);
@@ -179,7 +158,7 @@ export default function TeamPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {members.map((member) => (
+                    {members.map((member: any) => (
                       <tr key={member.id} className="border-b border-gray-100">
                         <td className="py-3 px-4 text-sm text-gray-900">{member.name || '-'}</td>
                         <td className="py-3 px-4 text-sm text-gray-900">{member.email}</td>

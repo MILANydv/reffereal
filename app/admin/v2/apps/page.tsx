@@ -8,53 +8,19 @@ import { Search, MoreHorizontal, Building2, Zap, Calendar, Eye, Edit, Trash2 } f
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
-interface App {
-  id: string;
-  name: string;
-  apiKey: string;
-  status: string;
-  monthlyLimit: number;
-  currentUsage: number;
-  createdAt: string;
-  partner: {
-    companyName: string | null;
-    user: {
-      email: string;
-    };
-  };
-  _count: {
-    campaigns: number;
-    apiUsageLogs: number;
-  };
-}
+import { useAdminStore } from '@/lib/store';
 
 export default function AdminAppsPage() {
-  const [apps, setApps] = useState<App[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { apps, fetchApps, isLoading, invalidate } = useAdminStore();
+  const loading = isLoading['apps'];
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [viewModal, setViewModal] = useState<App | null>(null);
-
-  const fetchApps = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/apps');
-      if (response.ok) {
-        const data = await response.json();
-        setApps(data);
-      }
-    } catch (error) {
-      console.error('Error fetching apps:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [viewModal, setViewModal] = useState<any | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchApps();
-    }, 300);
-    return () => clearTimeout(timer);
+    fetchApps();
   }, [fetchApps]);
+
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
     try {
@@ -100,7 +66,7 @@ export default function AdminAppsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const getUsagePercentage = (app: App) => {
+  const getUsagePercentage = (app: any) => {
     return Math.min((app.currentUsage / app.monthlyLimit) * 100, 100);
   };
 
@@ -229,7 +195,7 @@ export default function AdminAppsPage() {
                     <td colSpan={6} className="px-6 py-12 text-center text-gray-500">No applications found</td>
                   </tr>
                 ) : (
-                  filteredApps.map((app) => (
+                  filteredApps.map((app: any) => (
                     <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4">
                         <div className="font-medium text-gray-900 dark:text-gray-100">{app.name}</div>

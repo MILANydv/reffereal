@@ -8,22 +8,14 @@ import { Plus, Edit3, Trash2, Search, Flag, ToggleLeft, ToggleRight } from 'luci
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
-interface FeatureFlag {
-  id: string;
-  key: string;
-  name: string;
-  description: string | null;
-  isEnabled: boolean;
-  rolloutPercent: number;
-  createdAt: string;
-}
+import { useAdminStore } from '@/lib/store';
 
 export default function AdminFeaturesPage() {
-  const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { features: flags, fetchFeatures, isLoading, invalidate } = useAdminStore();
+  const loading = isLoading['features'];
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingFlag, setEditingFlag] = useState<FeatureFlag | null>(null);
+  const [editingFlag, setEditingFlag] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     key: '',
     name: '',
@@ -32,23 +24,9 @@ export default function AdminFeaturesPage() {
     rolloutPercent: 0,
   });
 
-  const fetchFlags = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/feature-flags');
-      if (response.ok) {
-        const data = await response.json();
-        setFlags(data);
-      }
-    } catch (error) {
-      console.error('Error fetching feature flags:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchFlags();
-  }, [fetchFlags]);
+    fetchFeatures();
+  }, [fetchFeatures]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +41,8 @@ export default function AdminFeaturesPage() {
       });
 
       if (response.ok) {
-        fetchFlags();
+        invalidate('features');
+        fetchFeatures(true);
         setShowModal(false);
         resetForm();
       }
@@ -107,7 +86,7 @@ export default function AdminFeaturesPage() {
     setEditingFlag(null);
   };
 
-  const openEditModal = (flag: FeatureFlag) => {
+  const openEditModal = (flag: any) => {
     setEditingFlag(flag);
     setFormData({
       key: flag.key,
@@ -179,7 +158,7 @@ export default function AdminFeaturesPage() {
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500">No feature flags found</td>
                   </tr>
                 ) : (
-                  filteredFlags.map((flag) => (
+                  filteredFlags.map((flag: any) => (
                     <tr key={flag.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
@@ -218,8 +197,8 @@ export default function AdminFeaturesPage() {
                           <button
                             onClick={() => handleToggle(flag)}
                             className={`p-2 rounded-lg transition-colors ${flag.isEnabled
-                                ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                              : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                               }`}
                           >
                             {flag.isEnabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}

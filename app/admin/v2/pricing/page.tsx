@@ -8,6 +8,8 @@ import { Plus, Edit3, Trash2, Search, Check, Zap, Users, Box, X } from 'lucide-r
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
+import { useAdminStore } from '@/lib/store';
+
 interface PricingPlan {
   id: string;
   name: string;
@@ -22,11 +24,11 @@ interface PricingPlan {
 }
 
 export default function AdminPricingPage() {
-  const [plans, setPlans] = useState<PricingPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pricing: plans, fetchPricing: fetchPlans, isLoading, invalidate } = useAdminStore();
+  const loading = isLoading['pricing'];
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
+  const [editingPlan, setEditingPlan] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -38,20 +40,6 @@ export default function AdminPricingPage() {
     features: [''],
     isActive: true,
   });
-
-  const fetchPlans = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/pricing-plans');
-      if (response.ok) {
-        const data = await response.json();
-        setPlans(data);
-      }
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     fetchPlans();
@@ -70,10 +58,12 @@ export default function AdminPricingPage() {
       });
 
       if (response.ok) {
-        fetchPlans();
+        invalidate('pricing');
+        fetchPlans(true);
         setShowModal(false);
         resetForm();
-      } else {
+      }
+      else {
         const error = await response.json();
         alert(error.error || 'Error saving plan');
       }
@@ -101,7 +91,7 @@ export default function AdminPricingPage() {
     }
   };
 
-  const handleToggleActive = async (plan: PricingPlan) => {
+  const handleToggleActive = async (plan: any) => {
     try {
       const response = await fetch('/api/admin/pricing-plans', {
         method: 'PATCH',
@@ -109,7 +99,8 @@ export default function AdminPricingPage() {
         body: JSON.stringify({ id: plan.id, isActive: !plan.isActive }),
       });
       if (response.ok) {
-        fetchPlans();
+        invalidate('pricing');
+        fetchPlans(true);
       }
     } catch (error) {
       console.error('Error toggling plan status:', error);
@@ -201,8 +192,8 @@ export default function AdminPricingPage() {
                     <button
                       onClick={() => handleToggleActive(plan)}
                       className={`p-1.5 rounded transition-colors ${plan.isActive
-                          ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                          : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                     >
                       {plan.isActive ? <Check size={14} /> : <X size={14} />}
@@ -243,7 +234,7 @@ export default function AdminPricingPage() {
                   <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Features</div>
                     <ul className="space-y-2">
-                      {(plan.features || []).map((feature, idx) => (
+                      {(plan.features || []).map((feature: any, idx: number) => (
                         <li key={idx} className="flex items-start text-xs text-gray-600 dark:text-gray-400">
                           <Check size={12} className="mr-2 mt-0.5 text-green-500 flex-shrink-0" />
                           <span>{feature}</span>

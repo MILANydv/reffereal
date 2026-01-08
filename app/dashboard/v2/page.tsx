@@ -12,66 +12,23 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 import Link from 'next/link';
 import { Skeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
-interface DashboardStats {
-  totalApps: number;
-  totalReferrals: number;
-  totalClicks: number;
-  totalConversions: number;
-  totalRewards: number;
-  apiUsage: {
-    current: number;
-    limit: number;
-    percentage: number;
-  };
-  apiUsageChart: Array<{
-    name: string;
-    value: number;
-  }>;
-  recentActivity: Array<{
-    id: string;
-    type: string;
-    description: string;
-    timestamp: string;
-  }>;
-  alerts: Array<{
-    id: string;
-    type: 'warning' | 'error' | 'info';
-    message: string;
-  }>;
-}
 
-interface ActiveCampaign {
-  id: string;
-  name: string;
-  status: string;
-  totalReferrals: number;
-  totalRewardCost: number;
-}
-
-interface WebhookDelivery {
-  id: string;
-  eventType: string;
-  url: string;
-  statusCode: number;
-  success: boolean;
-  timestamp: string;
-}
-
-interface MetricChanges {
-  referrals: number;
-  conversions: number;
-  revenue: number;
-  apiCalls: number;
-}
 
 export default function DashboardV2Page() {
   const { data: session, status: sessionStatus } = useSession();
-  const { selectedApp } = useAppStore();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activeCampaigns, setActiveCampaigns] = useState<ActiveCampaign[]>([]);
-  const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDelivery[]>([]);
-  const [metricChanges, setMetricChanges] = useState<MetricChanges | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    selectedApp,
+    stats,
+    activeCampaigns,
+    webhookDeliveries,
+    metrics: metricChanges,
+    fetchStats,
+    fetchActiveCampaigns,
+    fetchWebhookDeliveries,
+    fetchMetrics,
+    isLoading
+  } = useAppStore();
+
   const [onboardingStatus, setOnboardingStatus] = useState<{ completed: boolean; loading: boolean }>({
     completed: false,
     loading: true
@@ -89,13 +46,16 @@ export default function DashboardV2Page() {
 
   useEffect(() => {
     if (onboardingStatus.completed) {
-      loadDashboardStats();
-      loadActiveCampaigns();
-      loadWebhookDeliveries();
-      loadMetrics();
+      if (selectedApp) {
+        fetchStats(selectedApp.id);
+        fetchActiveCampaigns(selectedApp.id);
+        fetchWebhookDeliveries(selectedApp.id);
+      } else {
+        fetchStats('global'); // Fallback or global logic if api supports it
+      }
+      fetchMetrics();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedApp, onboardingStatus.completed]);
+  }, [selectedApp, onboardingStatus.completed, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
 
   const checkOnboardingStatus = async () => {
     try {
@@ -115,66 +75,10 @@ export default function DashboardV2Page() {
     }
   };
 
-  const loadDashboardStats = async () => {
-    try {
-      const url = selectedApp
-        ? `/api/partner/dashboard-stats?appId=${selectedApp.id}`
-        : '/api/partner/dashboard-stats';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Error loading dashboard stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const loadActiveCampaigns = async () => {
-    try {
-      const url = selectedApp
-        ? `/api/partner/active-campaigns?appId=${selectedApp.id}`
-        : '/api/partner/active-campaigns';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setActiveCampaigns(data.campaigns || []);
-      }
-    } catch (error) {
-      console.error('Error loading active campaigns:', error);
-    }
-  };
+  const isLoadingAny = Object.values(isLoading).some(Boolean) || onboardingStatus.loading;
 
-  const loadWebhookDeliveries = async () => {
-    try {
-      const url = selectedApp
-        ? `/api/partner/webhook-deliveries?appId=${selectedApp.id}`
-        : '/api/partner/webhook-deliveries';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setWebhookDeliveries(data.deliveries || []);
-      }
-    } catch (error) {
-      console.error('Error loading webhook deliveries:', error);
-    }
-  };
-
-  const loadMetrics = async () => {
-    try {
-      const response = await fetch('/api/partner/metrics?period=30');
-      if (response.ok) {
-        const data = await response.json();
-        setMetricChanges(data.changes);
-      }
-    } catch (error) {
-      console.error('Error loading metrics:', error);
-    }
-  };
-
-  if (loading || onboardingStatus.loading) {
+  if (isLoadingAny && !stats) {
     return (
       <DashboardLayout>
         <div className="space-y-8">
@@ -251,7 +155,7 @@ export default function DashboardV2Page() {
 
         {stats?.alerts && stats.alerts.length > 0 && (
           <div className="space-y-2">
-            {stats.alerts.map((alert) => (
+            {stats.alerts.map((alert: any) => (
               <div
                 key={alert.id}
                 className={`p-4 rounded-xl border flex items-start ${alert.type === 'error'
@@ -405,7 +309,7 @@ export default function DashboardV2Page() {
             <CardBody className="p-0">
               {stats?.recentActivity && stats.recentActivity.length > 0 ? (
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {stats.recentActivity.map((activity) => (
+                  {stats.recentActivity.map((activity: any) => (
                     <div key={activity.id} className="flex items-start justify-between p-4 px-6">
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>

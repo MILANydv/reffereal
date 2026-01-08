@@ -9,44 +9,18 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
 
-interface Campaign {
-  id: string;
-  name: string;
-  status: string;
-  referralType: string;
-  rewardModel: string;
-  rewardValue: number;
-  startDate: string | null;
-  endDate: string | null;
-  _count: {
-    referrals: number;
-  };
-}
 
 export default function CampaignsPage() {
-  const { selectedApp } = useAppStore();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { selectedApp, campaigns, fetchCampaigns, isLoading } = useAppStore();
 
-  const fetchCampaigns = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/partner/campaigns?appId=${selectedApp?.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCampaigns(data);
-      }
-    } catch (error) {
-      console.error('Error fetching campaigns:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedApp]);
 
   useEffect(() => {
     if (selectedApp) {
-      fetchCampaigns();
+      fetchCampaigns(selectedApp.id);
     }
   }, [selectedApp, fetchCampaigns]);
+
+  const loading = isLoading[`campaigns-${selectedApp?.id}`];
 
   if (!selectedApp) {
     return (

@@ -7,6 +7,8 @@ import { Users, Search, Filter, Edit, Trash2, Eye, TrendingUp, Mail } from 'luci
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
+import { useAdminStore } from '@/lib/store';
+
 interface PartnerData {
   id: string;
   companyName: string | null;
@@ -52,25 +54,11 @@ interface ViewModalData extends PartnerData {
 }
 
 export default function AdminPartnersPage() {
-  const [partners, setPartners] = useState<PartnerData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [viewModal, setViewModal] = useState<ViewModalData | null>(null);
-  const [editModal, setEditModal] = useState<PartnerData | null>(null);
+  const { partners, fetchPartners, isLoading, invalidate } = useAdminStore();
+  const loading = isLoading['partners'];
+  const [viewModal, setViewModal] = useState<any | null>(null);
+  const [editModal, setEditModal] = useState<any | null>(null);
   const [editFormData, setEditFormData] = useState({ companyName: '', active: true });
-
-  const fetchPartners = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/partners');
-      if (response.ok) {
-        const data = await response.json();
-        setPartners(data);
-      }
-    } catch (error) {
-      console.error('Error fetching partners:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     fetchPartners();
@@ -88,7 +76,7 @@ export default function AdminPartnersPage() {
     }
   };
 
-  const handleEdit = (partner: PartnerData) => {
+  const handleEdit = (partner: any) => {
     setEditModal(partner);
     setEditFormData({
       companyName: partner.companyName || '',
@@ -112,7 +100,8 @@ export default function AdminPartnersPage() {
 
       if (response.ok) {
         setEditModal(null);
-        fetchPartners();
+        invalidate('partners');
+        fetchPartners(true);
       }
     } catch (error) {
       console.error('Error updating partner:', error);
@@ -130,7 +119,8 @@ export default function AdminPartnersPage() {
       });
 
       if (response.ok) {
-        fetchPartners();
+        invalidate('partners');
+        fetchPartners(true);
       }
     } catch (error) {
       console.error('Error deleting partner:', error);
@@ -235,7 +225,7 @@ export default function AdminPartnersPage() {
                     <td colSpan={7} className="px-6 py-12 text-center text-gray-500">No partners found.</td>
                   </tr>
                 ) : (
-                  partners.map((partner) => (
+                  partners.map((partner: any) => (
                     <tr key={partner.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
@@ -335,7 +325,7 @@ export default function AdminPartnersPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Applications</h3>
                   <div className="space-y-2">
-                    {viewModal.apps.map(app => (
+                    {viewModal.apps.map((app: any) => (
                       <div key={app.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center">
                         <div>
                           <div className="font-medium">{app.name}</div>
@@ -352,7 +342,7 @@ export default function AdminPartnersPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Recent Invoices</h3>
                   <div className="space-y-2">
-                    {viewModal.invoices.map(invoice => (
+                    {viewModal.invoices.map((invoice: any) => (
                       <div key={invoice.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center">
                         <div>
                           <div className="font-medium">${invoice.amount}</div>

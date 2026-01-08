@@ -7,75 +7,15 @@ import { DollarSign, TrendingUp, FileText, AlertCircle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
 
-interface BillingData {
-  totalRevenue: number;
-  totalOverage: number;
-  totalInvoices: number;
-  paidRevenue: number;
-  pendingRevenue: number;
-  paidInvoices: number;
-  pendingInvoices: number;
-  failedInvoices: number;
-  monthlyRecurringRevenue: number;
-  subscriptionByPlan: Record<string, number>;
-  invoices: Array<{
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    billingPeriodStart: string;
-    billingPeriodEnd: string;
-    apiUsage: number;
-    overageAmount: number;
-    paidAt: string | null;
-    createdAt: string;
-    partner: {
-      companyName: string | null;
-      user: {
-        email: string;
-      };
-    };
-  }>;
-  subscriptions: Array<{
-    id: string;
-    status: string;
-    currentPeriodStart: string;
-    currentPeriodEnd: string;
-    partner: {
-      companyName: string | null;
-      user: {
-        email: string;
-      };
-    };
-    plan: {
-      name: string;
-      type: string;
-      monthlyPrice: number;
-    };
-  }>;
-}
+import { useAdminStore } from '@/lib/store';
 
 export default function AdminBillingPage() {
-  const [data, setData] = useState<BillingData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/billing');
-      if (response.ok) {
-        const result = await response.json();
-        setData(result);
-      }
-    } catch (error) {
-      console.error('Error fetching billing data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { billing: data, fetchBilling, isLoading } = useAdminStore();
+  const loading = isLoading['billing'];
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchBilling();
+  }, [fetchBilling]);
 
   if (loading) {
     return (
@@ -207,7 +147,7 @@ export default function AdminBillingPage() {
             </div>
             <CardBody className="p-6">
               <div className="space-y-4">
-                {Object.entries(data.subscriptionByPlan).map(([plan, count]) => (
+                {Object.entries(data.subscriptionByPlan || {}).map(([plan, count]: [string, any]) => (
                   <div key={plan} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Badge variant="default">{plan}</Badge>
@@ -278,7 +218,7 @@ export default function AdminBillingPage() {
                     </td>
                   </tr>
                 ) : (
-                  data.invoices.map((invoice) => (
+                  data.invoices.map((invoice: any) => (
                     <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -329,7 +269,7 @@ export default function AdminBillingPage() {
                     </td>
                   </tr>
                 ) : (
-                  data.subscriptions.map((sub) => (
+                  data.subscriptions.map((sub: any) => (
                     <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900 dark:text-gray-100">

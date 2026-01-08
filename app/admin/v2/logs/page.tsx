@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Search, Trash2, Filter, RefreshCw, Terminal, Info, AlertTriangle, XCircle, Bug } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
+import { useAdminStore } from '@/lib/store';
 
 interface SystemLog {
   id: string;
@@ -42,7 +43,7 @@ const levelIcons: Record<string, React.ReactNode> = {
 };
 
 export default function AdminLogsPage() {
-  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const { logs, fetchLogs: fetchStoreLogs, isLoading, invalidate } = useAdminStore();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [level, setLevel] = useState('all');
@@ -53,26 +54,11 @@ export default function AdminLogsPage() {
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '50',
-      });
-      if (level !== 'all') params.append('level', level);
-      if (search) params.append('search', search);
-
-      const response = await fetch(`/api/admin/logs?${params}`);
-      if (response.ok) {
-        const data: LogResponse = await response.json();
-        setLogs(data.logs);
-        setTotalPages(data.pagination.totalPages);
-        setTotal(data.pagination.total);
-      }
-    } catch (error) {
-      console.error('Error fetching logs:', error);
+      await fetchStoreLogs({ page, level, search });
     } finally {
       setLoading(false);
     }
-  }, [page, level, search]);
+  }, [page, level, search, fetchStoreLogs]);
 
   useEffect(() => {
     fetchLogs();
@@ -91,6 +77,7 @@ export default function AdminLogsPage() {
       });
 
       if (response.ok) {
+        invalidate('logs');
         fetchLogs();
       }
     } catch (error) {
@@ -129,7 +116,7 @@ export default function AdminLogsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-                  {logs.filter(l => l.level === 'INFO').length}
+                  {logs.filter((l: any) => l.level === 'INFO').length}
                 </div>
                 <div className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold">Info</div>
               </div>
@@ -142,7 +129,7 @@ export default function AdminLogsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-                  {logs.filter(l => l.level === 'WARN').length}
+                  {logs.filter((l: any) => l.level === 'WARN').length}
                 </div>
                 <div className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Warnings</div>
               </div>
@@ -155,7 +142,7 @@ export default function AdminLogsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-red-700 dark:text-red-400">
-                  {logs.filter(l => l.level === 'ERROR').length}
+                  {logs.filter((l: any) => l.level === 'ERROR').length}
                 </div>
                 <div className="text-xs text-red-600 dark:text-red-400 uppercase font-semibold">Errors</div>
               </div>
@@ -226,7 +213,7 @@ export default function AdminLogsPage() {
                     <td colSpan={4} className="px-6 py-12 text-center text-gray-500">No logs found</td>
                   </tr>
                 ) : (
-                  logs.map((log) => (
+                  logs.map((log: any) => (
                     <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getLevelColor(log.level)}`}>

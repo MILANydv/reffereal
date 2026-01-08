@@ -7,35 +7,11 @@ import { ShieldAlert, Search, Filter, AlertTriangle, CheckCircle, XCircle, Info,
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
-interface FraudFlag {
-  id: string;
-  fraudType: string;
-  description: string;
-  referralCode: string;
-  appId: string;
-  isResolved: boolean;
-  app: {
-    name: string;
-  };
-}
+import { useAdminStore } from '@/lib/store';
 
 export default function AdminFraudPage() {
-  const [flags, setFlags] = useState<FraudFlag[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchFlags = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/fraud');
-      if (response.ok) {
-        const data = await response.json();
-        setFlags(data);
-      }
-    } catch (error) {
-      console.error('Error fetching fraud flags:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { fraud: flags, fetchFraud: fetchFlags, isLoading } = useAdminStore();
+  const loading = isLoading['fraud'];
 
   useEffect(() => {
     fetchFlags();
@@ -53,7 +29,7 @@ export default function AdminFraudPage() {
           <Card className="border-l-4 border-l-red-500">
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Unresolved Flags</div>
-              <div className="text-2xl font-bold text-red-600">{flags.filter(f => !f.isResolved).length}</div>
+              <div className="text-2xl font-bold text-red-600">{flags.filter((f: any) => !f.isResolved).length}</div>
             </CardBody>
           </Card>
           <Card>
@@ -122,7 +98,7 @@ export default function AdminFraudPage() {
                 ) : flags.length === 0 ? (
                   <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No fraud flags detected.</td></tr>
                 ) : (
-                  flags.map((flag) => (
+                  flags.map((flag: any) => (
                     <tr key={flag.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

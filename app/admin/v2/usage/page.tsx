@@ -7,64 +7,11 @@ import { Activity, TrendingUp, Users, Zap } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
 
-interface UsageData {
-  totalApiCalls: number;
-  topApps: Array<{
-    appId: string;
-    appName: string;
-    calls: number;
-    currentUsage: number;
-    monthlyLimit: number;
-    partner: {
-      companyName: string | null;
-      user: {
-        email: string;
-      };
-    };
-  }>;
-  topPartners: Array<{
-    partnerId: string;
-    companyName: string;
-    email: string;
-    usage: number;
-    plan: {
-      type: string;
-      apiLimit: number;
-    } | null;
-  }>;
-  recentLogs: Array<{
-    id: string;
-    endpoint: string;
-    timestamp: string;
-    app: {
-      name: string;
-      partner: {
-        companyName: string | null;
-        user: {
-          email: string;
-        };
-      };
-    };
-  }>;
-}
+import { useAdminStore } from '@/lib/store';
 
 export default function AdminUsagePage() {
-  const [data, setData] = useState<UsageData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/usage');
-      if (response.ok) {
-        const result = await response.json();
-        setData(result);
-      }
-    } catch (error) {
-      console.error('Error fetching usage data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { usage: data, fetchUsage: fetchData, isLoading } = useAdminStore();
+  const loading = isLoading['usage'];
 
   useEffect(() => {
     fetchData();
@@ -173,7 +120,7 @@ export default function AdminUsagePage() {
               {data.topApps.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No data available</div>
               ) : (
-                data.topApps.map((app) => (
+                data.topApps.map((app: any) => (
                   <div key={app.appId} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -194,8 +141,8 @@ export default function AdminUsagePage() {
                     <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${(app.currentUsage / app.monthlyLimit) * 100 > 90
-                            ? 'bg-red-500'
-                            : 'bg-blue-500'
+                          ? 'bg-red-500'
+                          : 'bg-blue-500'
                           }`}
                         style={{
                           width: `${Math.min((app.currentUsage / app.monthlyLimit) * 100, 100)}%`,
@@ -216,7 +163,7 @@ export default function AdminUsagePage() {
               {data.topPartners.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No data available</div>
               ) : (
-                data.topPartners.map((partner) => (
+                data.topPartners.map((partner: any) => (
                   <div key={partner.partnerId} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                     <div className="flex items-center justify-between">
                       <div>
@@ -266,7 +213,7 @@ export default function AdminUsagePage() {
                     </td>
                   </tr>
                 ) : (
-                  data.recentLogs.map((log) => (
+                  data.recentLogs.map((log: any) => (
                     <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">
                         {log.endpoint}
