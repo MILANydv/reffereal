@@ -1,14 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { prisma } from '../lib/db';
 import bcrypt from 'bcryptjs';
-
-const adapter = new PrismaLibSql({
-  url: 'file:./prisma/dev.db',
-});
-
-const prisma = new PrismaClient({
-  adapter: adapter,
-});
 
 async function main() {
   // Create pricing plans
