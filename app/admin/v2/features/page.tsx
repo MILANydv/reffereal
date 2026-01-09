@@ -7,8 +7,16 @@ import { Button } from '@/components/ui/Button';
 import { Plus, Edit3, Trash2, Search, Flag, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
-
 import { useAdminStore } from '@/lib/store';
+
+interface FeatureFlag {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  isEnabled: boolean;
+  rolloutPercent: number;
+}
 
 export default function AdminFeaturesPage() {
   const { features: flags, fetchFeatures, isLoading, invalidate } = useAdminStore();
@@ -59,7 +67,8 @@ export default function AdminFeaturesPage() {
         method: 'DELETE',
       });
       if (response.ok) {
-        fetchFlags();
+        invalidate('features');
+        fetchFeatures(true);
       }
     } catch (error) {
       console.error('Error deleting feature flag:', error);
@@ -74,7 +83,8 @@ export default function AdminFeaturesPage() {
         body: JSON.stringify({ id: flag.id, isEnabled: !flag.isEnabled }),
       });
       if (response.ok) {
-        fetchFlags();
+        invalidate('features');
+        fetchFeatures(true);
       }
     } catch (error) {
       console.error('Error toggling feature flag:', error);

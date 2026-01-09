@@ -8,17 +8,7 @@ import { useEffect, useState } from 'react';
 import { Check, TrendingUp } from 'lucide-react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
-interface PricingPlan {
-  id: string;
-  name: string;
-  type: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  apiLimit: number;
-  maxApps: number;
-  overagePrice: number;
-  features: string[];
-}
+import { useAppStore } from '@/lib/store';
 
 interface Subscription {
   id: string;
@@ -51,41 +41,14 @@ interface BillingData {
 }
 
 export default function BillingPage() {
-  const [billingData, setBillingData] = useState<BillingData | null>(null);
-  const [allPlans, setAllPlans] = useState<PricingPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { billing: billingData, pricing: allPlans, fetchBilling, fetchPricing: loadPricingPlans, isLoading, invalidate } = useAppStore();
+  const loading = isLoading['billing'];
   const [showPlans, setShowPlans] = useState(false);
 
   useEffect(() => {
-    loadBillingData();
+    fetchBilling();
     loadPricingPlans();
-  }, []);
-
-  const loadBillingData = async () => {
-    try {
-      const response = await fetch('/api/partner/billing');
-      if (response.ok) {
-        const data = await response.json();
-        setBillingData(data);
-      }
-    } catch (error) {
-      console.error('Error loading billing data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadPricingPlans = async () => {
-    try {
-      const response = await fetch('/api/partner/pricing-plans');
-      if (response.ok) {
-        const data = await response.json();
-        setAllPlans(data);
-      }
-    } catch (error) {
-      console.error('Error loading pricing plans:', error);
-    }
-  };
+  }, [fetchBilling, loadPricingPlans]);
 
   const handleUpgrade = async (planId: string) => {
     try {
@@ -96,7 +59,8 @@ export default function BillingPage() {
       });
 
       if (response.ok) {
-        loadBillingData();
+        invalidate('billing');
+        fetchBilling(true);
         setShowPlans(false);
       }
     } catch (error) {

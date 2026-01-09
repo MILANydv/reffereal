@@ -36,33 +36,14 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-  const { selectedApp } = useAppStore();
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { selectedApp, analytics, fetchAnalytics, isLoading } = useAppStore();
+  const loading = isLoading[`analytics-${selectedApp?.id}`];
 
   useEffect(() => {
     if (selectedApp) {
-      loadAnalytics();
+      fetchAnalytics(selectedApp.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedApp]);
-
-  const loadAnalytics = async () => {
-    if (!selectedApp) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/partner/analytics?appId=${selectedApp.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
-      }
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedApp, fetchAnalytics]);
 
   if (!selectedApp) {
     return (

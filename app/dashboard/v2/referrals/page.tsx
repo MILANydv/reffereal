@@ -24,27 +24,12 @@ interface Referral {
 }
 
 export default function ReferralsPage() {
-  const { selectedApp } = useAppStore();
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchReferrals = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/partner/referrals?appId=${selectedApp?.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setReferrals(data);
-      }
-    } catch (error) {
-      console.error('Error fetching referrals:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedApp]);
+  const { selectedApp, referrals, fetchReferrals, isLoading } = useAppStore();
+  const loading = isLoading[`referrals-${selectedApp?.id}`];
 
   useEffect(() => {
     if (selectedApp) {
-      fetchReferrals();
+      fetchReferrals(selectedApp.id);
     }
   }, [selectedApp, fetchReferrals]);
 
@@ -126,7 +111,7 @@ export default function ReferralsPage() {
                     </td>
                   </tr>
                 ) : (
-                  referrals.map((referral) => (
+                  referrals.map((referral: any) => (
                     <tr key={referral.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
                       <td className="px-6 py-4 font-mono font-medium text-blue-600">
                         <div className="flex items-center">
