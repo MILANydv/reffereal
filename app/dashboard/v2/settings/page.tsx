@@ -3,16 +3,18 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
-import { Settings, Globe, Shield, Trash2, Save, RefreshCw, Key } from 'lucide-react';
+import { Settings, Globe, Shield, Trash2, Save, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function AppSettingsPage() {
-  const { selectedApp } = useAppStore();
+  const { selectedApp, invalidate, fetchApps } = useAppStore();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     allowedDomains: '',
   });
+
+  const [saving, setSaving] = useState(false);
 
   // Use a ref to track if we've initialized the form with the selected app
   const initializedRef = useState(false);
@@ -30,6 +32,27 @@ export default function AppSettingsPage() {
       return () => clearTimeout(timer);
     }
   }, [selectedApp, initializedRef]);
+
+  const handleSave = async () => {
+    if (!selectedApp) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/partner/apps/${selectedApp.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        invalidate('apps');
+        await fetchApps(true);
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!selectedApp) {
     return (
@@ -62,8 +85,8 @@ export default function AppSettingsPage() {
               <CardBody className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Application Name</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -71,7 +94,7 @@ export default function AppSettingsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                  <textarea 
+                  <textarea
                     rows={3}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.description}
@@ -80,9 +103,13 @@ export default function AppSettingsPage() {
                   />
                 </div>
                 <div className="flex justify-end pt-4">
-                  <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm">
-                    <Save size={18} className="mr-2" />
-                    Save Changes
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm disabled:opacity-50"
+                  >
+                    {saving ? <RefreshCw size={18} className="mr-2 animate-spin" /> : <Save size={18} className="mr-2" />}
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </CardBody>
@@ -98,15 +125,15 @@ export default function AppSettingsPage() {
               <CardBody className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Allowed Domains</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-sm"
                     value={formData.allowedDomains}
                     onChange={(e) => setFormData({ ...formData, allowedDomains: e.target.value })}
                   />
                   <p className="mt-1 text-xs text-gray-500">Comma-separated list of domains that can access the referral API. Supports wildcards (e.g. *.example.com).</p>
                 </div>
-                
+
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">

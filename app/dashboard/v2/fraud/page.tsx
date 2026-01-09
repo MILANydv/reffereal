@@ -4,9 +4,10 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
+import { useAppStore } from '@/lib/store';
 
 interface FraudFlag {
   id: string;
@@ -20,27 +21,15 @@ interface FraudFlag {
 }
 
 export default function FraudPage() {
-  const [flags, setFlags] = useState<FraudFlag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { selectedApp, fraud: flags, fetchFraud: loadFraudFlags, isLoading, invalidate } = useAppStore();
   const [filter, setFilter] = useState<'all' | 'unresolved' | 'resolved'>('unresolved');
-
-  const loadFraudFlags = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/partner/fraud?filter=${filter}`);
-      if (response.ok) {
-        const data = await response.json();
-        setFlags(data);
-      }
-    } catch (error) {
-      console.error('Error loading fraud flags:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
+  const loading = isLoading[`fraud-${selectedApp?.id || 'all'}`];
 
   useEffect(() => {
-    loadFraudFlags();
-  }, [loadFraudFlags]);
+    if (selectedApp) {
+      loadFraudFlags(selectedApp.id);
+    }
+  }, [selectedApp, loadFraudFlags]);
 
   const handleResolve = async (flagId: string) => {
     try {
@@ -49,7 +38,10 @@ export default function FraudPage() {
       });
 
       if (response.ok) {
-        loadFraudFlags();
+        invalidate(`fraud-${selectedApp?.id}`);
+        if (selectedApp) {
+          loadFraudFlags(selectedApp.id, true);
+        }
       }
     } catch (error) {
       console.error('Error resolving flag:', error);
@@ -66,7 +58,13 @@ export default function FraudPage() {
     return labels[type] || type;
   };
 
-  if (loading) {
+  const filteredFlags = flags.filter(flag => {
+    if (filter === 'unresolved') return !flag.isResolved;
+    if (filter === 'resolved') return flag.isResolved;
+    return true;
+  });
+
+  if (loading && flags.length === 0) {
     return (
       <DashboardLayout>
         <div className="space-y-8">
@@ -118,9 +116,9 @@ export default function FraudPage() {
           </Button>
         </div>
 
-        {flags.length > 0 ? (
+        {filteredFlags.length > 0 ? (
           <div className="space-y-4">
-            {flags.map((flag) => (
+            {filteredFlags.map((flag: any) => (
               <Card key={flag.id}>
                 <CardBody>
                   <div className="flex items-start justify-between">

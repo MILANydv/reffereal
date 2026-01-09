@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { Check, TrendingUp } from 'lucide-react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
-import { useAppStore } from '@/lib/store';
+import { useAppStore, PricingPlan } from '@/lib/store';
 
 interface Subscription {
   id: string;
@@ -109,7 +109,7 @@ export default function BillingPage() {
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {allPlans.map((plan) => {
+              {(allPlans as PricingPlan[]).map((plan) => {
                 const isCurrentPlan = billingData?.subscription?.plan.id === plan.id;
                 return (
                   <Card
@@ -232,7 +232,7 @@ export default function BillingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {billingData.invoices.map((invoice) => (
+                    {billingData.invoices.map((invoice: any) => (
                       <tr key={invoice.id} className="border-b border-gray-100">
                         <td className="py-3 px-4 text-sm text-gray-900">
                           {new Date(invoice.billingPeriodStart).toLocaleDateString()} -{' '}

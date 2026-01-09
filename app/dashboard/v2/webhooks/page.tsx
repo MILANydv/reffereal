@@ -4,52 +4,21 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Webhook as WebhookIcon, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
-interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  isActive: boolean;
-  appId: string;
-  appName: string;
-  createdAt: string;
-  deliveryStats: {
-    total: number;
-    successful: number;
-    failed: number;
-  };
-}
-
 export default function WebhooksPage() {
-  const { selectedApp } = useAppStore();
-  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { selectedApp, webhooks, fetchWebhooks: loadWebhooks, isLoading, invalidate } = useAppStore();
+  const loading = isLoading[`webhooks-${selectedApp?.id || 'all'}`];
   const [showForm, setShowForm] = useState(false);
 
-  const loadWebhooks = useCallback(async () => {
-    try {
-      const url = selectedApp
-        ? `/api/partner/webhooks?appId=${selectedApp.id}`
-        : '/api/partner/webhooks';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setWebhooks(data);
-      }
-    } catch (error) {
-      console.error('Error loading webhooks:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedApp]);
-
   useEffect(() => {
-    loadWebhooks();
-  }, [loadWebhooks]);
+    if (selectedApp) {
+      loadWebhooks(selectedApp.id);
+    }
+  }, [selectedApp, loadWebhooks]);
 
   const handleCreateWebhook = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,8 +47,9 @@ export default function WebhooksPage() {
       });
 
       if (response.ok) {
+        invalidate(`webhooks-${selectedApp?.id}`);
         setShowForm(false);
-        loadWebhooks();
+        loadWebhooks(selectedApp!.id, true);
       }
     } catch (error) {
       console.error('Error creating webhook:', error);
@@ -95,7 +65,8 @@ export default function WebhooksPage() {
       });
 
       if (response.ok) {
-        loadWebhooks();
+        invalidate(`webhooks-${selectedApp?.id}`);
+        loadWebhooks(selectedApp!.id, true);
       }
     } catch (error) {
       console.error('Error deleting webhook:', error);
@@ -111,14 +82,15 @@ export default function WebhooksPage() {
       });
 
       if (response.ok) {
-        loadWebhooks();
+        invalidate(`webhooks-${selectedApp?.id}`);
+        loadWebhooks(selectedApp!.id, true);
       }
     } catch (error) {
       console.error('Error toggling webhook:', error);
     }
   };
 
-  if (loading) {
+  if (loading && webhooks.length === 0) {
     return (
       <DashboardLayout>
         <div className="space-y-8">
@@ -211,7 +183,7 @@ export default function WebhooksPage() {
 
         {webhooks.length > 0 ? (
           <div className="space-y-4">
-            {webhooks.map((webhook) => (
+            {webhooks.map((webhook: any) => (
               <Card key={webhook.id}>
                 <CardBody>
                   <div className="flex items-start justify-between mb-4">
@@ -221,7 +193,7 @@ export default function WebhooksPage() {
                         <h3 className="font-semibold text-gray-900">{webhook.appName}</h3>
                         <code className="text-sm text-gray-600 break-all">{webhook.url}</code>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {webhook.events.map((event) => (
+                          {webhook.events.map((event: string) => (
                             <Badge key={event} variant="default" size="sm">
                               {event}
                             </Badge>

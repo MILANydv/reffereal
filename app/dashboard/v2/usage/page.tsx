@@ -4,80 +4,25 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Zap, TrendingUp, AlertTriangle, Calendar } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
-
-interface UsageData {
-  current: number;
-  limit: number;
-  overage: number;
-  estimatedCost: number;
-  dailyUsage: Array<{
-    date: string;
-    calls: number;
-  }>;
-}
-
-interface EndpointBreakdown {
-  byCategory: Array<{
-    category: string;
-    count: number;
-    percentage: string;
-  }>;
-}
-
-interface UsageStats {
-  apiUsage: UsageData;
-  endpointBreakdown: EndpointBreakdown;
-  recentLogs: Array<{
-    id: string;
-    endpoint: string;
-    timestamp: string;
-    status: string;
-  }>;
-}
+import { useAppStore } from '@/lib/store';
 
 export default function UsagePage() {
-  const [stats, setStats] = useState<UsageStats | null>(null);
-  const [metricChanges, setMetricChanges] = useState<{ apiCalls: number } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { usage: stats, fetchUsage: loadUsageStats, metrics, fetchMetrics: loadMetrics, isLoading } = useAppStore();
+  const loading = isLoading['usage'];
+  const metricChanges = metrics?.changes;
 
   useEffect(() => {
     loadUsageStats();
     loadMetrics();
-  }, []);
-
-  const loadUsageStats = async () => {
-    try {
-      const response = await fetch('/api/partner/usage-stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Error loading usage stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMetrics = async () => {
-    try {
-      const response = await fetch('/api/partner/metrics?period=30');
-      if (response.ok) {
-        const data = await response.json();
-        setMetricChanges(data.changes);
-      }
-    } catch (error) {
-      console.error('Error loading metrics:', error);
-    }
-  };
+  }, [loadUsageStats, loadMetrics]);
 
   const usagePercentage = stats ? Math.min((stats.apiUsage.current / stats.apiUsage.limit) * 100, 100) : 0;
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <DashboardLayout>
         <div className="space-y-8">
@@ -197,7 +142,7 @@ export default function UsagePage() {
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
-                  {stats?.endpointBreakdown?.byCategory.map((item) => (
+                  {stats?.endpointBreakdown?.byCategory.map((item: any) => (
                     <div key={item.category} className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">{item.category}</span>
                       <span className="text-sm font-medium">{item.percentage}%</span>
@@ -227,7 +172,7 @@ export default function UsagePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {stats?.recentLogs.map((log) => (
+                  {stats?.recentLogs.map((log: any) => (
                     <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-gray-300">
                         {log.endpoint}

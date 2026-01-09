@@ -32,6 +32,19 @@ export interface CacheEntry<T> {
   timestamp: number;
 }
 
+export interface PricingPlan {
+  id: string;
+  name: string;
+  type: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  apiLimit: number;
+  maxApps: number;
+  overagePrice: number;
+  features: string[];
+  isActive?: boolean;
+}
+
 interface PartnerStore {
   // Navigation / Selection State
   selectedAppId: string | null;
@@ -49,6 +62,9 @@ interface PartnerStore {
   fraud: any[];
   webhooks: any[];
   analytics: any | null;
+  referrals: any[];
+  pricing: any[];
+  usage: any | null;
 
   // Cache Management
   cache: Record<string, CacheEntry<any>>;
@@ -61,7 +77,7 @@ interface PartnerStore {
   // Actions
   setSelectedApp: (app: App | null) => void;
   setSelectedAppId: (appId: string | null) => void;
-  
+
   // Fetching Methods
   fetchApps: (force?: boolean) => Promise<void>;
   fetchCampaigns: (appId: string, force?: boolean) => Promise<void>;
@@ -74,7 +90,10 @@ interface PartnerStore {
   fetchFraud: (appId: string, force?: boolean) => Promise<void>;
   fetchWebhooks: (appId: string, force?: boolean) => Promise<void>;
   fetchAnalytics: (appId: string, force?: boolean) => Promise<void>;
-  
+  fetchReferrals: (appId: string, force?: boolean) => Promise<void>;
+  fetchPricing: (force?: boolean) => Promise<void>;
+  fetchUsage: (force?: boolean) => Promise<void>;
+
   // Invalidation
   invalidate: (key: string) => void;
   initialize: () => Promise<void>;
@@ -90,10 +109,10 @@ interface AdminStore {
   usage: any;
   billing: any;
   pricing: any[];
-  
+
   cache: Record<string, CacheEntry<any>>;
   isLoading: Record<string, boolean>;
-  
+
   fetchPartners: (force?: boolean) => Promise<void>;
   fetchApps: (force?: boolean) => Promise<void>;
   fetchFeatures: (force?: boolean) => Promise<void>;
@@ -103,7 +122,7 @@ interface AdminStore {
   fetchUsage: (force?: boolean) => Promise<void>;
   fetchBilling: (force?: boolean) => Promise<void>;
   fetchPricing: (force?: boolean) => Promise<void>;
-  
+
   invalidate: (key: string) => void;
 }
 
@@ -125,6 +144,9 @@ export const usePartnerStore = create<PartnerStore>()(
       fraud: [],
       webhooks: [],
       analytics: null,
+      referrals: [],
+      pricing: [],
+      usage: null,
       cache: {},
       lastFetched: {},
       isLoading: {},
@@ -146,17 +168,17 @@ export const usePartnerStore = create<PartnerStore>()(
         const key = 'apps';
         const now = Date.now();
         const entry = get().cache[key];
-        
+
         if (!force && entry && now - entry.timestamp < CACHE_TTL) return;
-        
+
         set({ isLoading: { ...get().isLoading, [key]: true } });
         try {
           const res = await fetch('/api/partner/apps');
           if (res.ok) {
             const data = await res.json();
-            set({ 
-              apps: data, 
-              cache: { ...get().cache, [key]: { data, timestamp: now } } 
+            set({
+              apps: data,
+              cache: { ...get().cache, [key]: { data, timestamp: now } }
             });
             if (!get().selectedAppId && data.length > 0) {
               set({ selectedApp: data[0], selectedAppId: data[0].id });
@@ -171,20 +193,20 @@ export const usePartnerStore = create<PartnerStore>()(
         const key = `campaigns-${appId}`;
         const now = Date.now();
         const entry = get().cache[key];
-        
+
         if (!force && entry && now - entry.timestamp < CACHE_TTL) {
           set({ campaigns: entry.data });
           return;
         }
-        
+
         set({ isLoading: { ...get().isLoading, [key]: true } });
         try {
           const res = await fetch(`/api/partner/campaigns?appId=${appId}`);
           if (res.ok) {
             const data = await res.json();
-            set({ 
-              campaigns: data, 
-              cache: { ...get().cache, [key]: { data, timestamp: now } } 
+            set({
+              campaigns: data,
+              cache: { ...get().cache, [key]: { data, timestamp: now } }
             });
           }
         } finally {
@@ -366,6 +388,66 @@ export const usePartnerStore = create<PartnerStore>()(
           if (res.ok) {
             const data = await res.json();
             set({ analytics: data, cache: { ...get().cache, [key]: { data, timestamp: now } } });
+          }
+        } finally {
+          set({ isLoading: { ...get().isLoading, [key]: false } });
+        }
+      },
+
+      fetchReferrals: async (appId, force = false) => {
+        const key = `referrals-${appId}`;
+        const now = Date.now();
+        const entry = get().cache[key];
+        if (!force && entry && now - entry.timestamp < CACHE_TTL) {
+          set({ referrals: entry.data });
+          return;
+        }
+        set({ isLoading: { ...get().isLoading, [key]: true } });
+        try {
+          const res = await fetch(`/api/partner/referrals?appId=${appId}`);
+          if (res.ok) {
+            const data = await res.json();
+            set({ referrals: data, cache: { ...get().cache, [key]: { data, timestamp: now } } });
+          }
+        } finally {
+          set({ isLoading: { ...get().isLoading, [key]: false } });
+        }
+      },
+
+      fetchPricing: async (force = false) => {
+        const key = 'pricing';
+        const now = Date.now();
+        const entry = get().cache[key];
+        if (!force && entry && now - entry.timestamp < CACHE_TTL) {
+          set({ pricing: entry.data });
+          return;
+        }
+        set({ isLoading: { ...get().isLoading, [key]: true } });
+        try {
+          const res = await fetch('/api/partner/pricing-plans');
+          if (res.ok) {
+            const data = await res.json();
+            set({ pricing: data, cache: { ...get().cache, [key]: { data, timestamp: now } } });
+          }
+        } finally {
+          set({ isLoading: { ...get().isLoading, [key]: false } });
+        }
+      },
+
+      fetchUsage: async (force = false) => {
+        const key = 'usage';
+        const now = Date.now();
+        const entry = get().cache[key];
+        if (!force && entry && now - entry.timestamp < CACHE_TTL) {
+          set({ usage: entry.data });
+          return;
+        }
+        set({ isLoading: { ...get().isLoading, [key]: true } });
+        try {
+          const res = await fetch('/api/partner/usage-stats');
+          if (res.ok) {
+            const data = await res.json();
+            set({ usage: data, cache: { ...get().cache, [key]: { data, timestamp: now } } });
           }
         } finally {
           set({ isLoading: { ...get().isLoading, [key]: false } });
