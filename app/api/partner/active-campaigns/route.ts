@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       name: campaign.name,
       status: campaign.status,
       totalReferrals: campaign._count.referrals,
-      totalRewardCost: campaign.referrals.reduce((sum, r) => sum + (r.rewardAmount || 0), 0),
+      totalRewardCost: campaign.referrals?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0,
     }));
 
     return NextResponse.json({ campaigns: activeCampaigns });
