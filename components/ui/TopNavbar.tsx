@@ -1,7 +1,7 @@
 'use client';
 
 import { AppSwitcher } from './AppSwitcher';
-import { Search, Bell, User, LayoutGrid, Zap, Sun, Moon, Settings, LogOut, UserCircle } from 'lucide-react';
+import { Search, Bell, LayoutGrid, Zap, Sun, Moon, LogOut, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useAppStore } from '@/lib/store';
