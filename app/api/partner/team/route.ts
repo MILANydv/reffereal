@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import crypto from 'crypto';
 
 export async function GET() {
   try {
@@ -36,7 +35,12 @@ export async function POST(request: Request) {
     const { email, name, role } = await request.json();
     const partnerId = session.user.partnerId;
 
-    const inviteToken = crypto.randomBytes(32).toString('hex');
+    // Generate a secure random 32-byte token using Web Crypto
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const inviteToken = Array.from(array)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     const member = await prisma.teamMember.create({
       data: {

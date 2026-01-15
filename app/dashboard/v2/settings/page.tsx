@@ -24,7 +24,7 @@ export default function AppSettingsPage() {
       const timer = setTimeout(() => {
         setFormData({
           name: selectedApp.name,
-          description: '',
+          description: selectedApp.description,
           allowedDomains: 'localhost, *.referral.com',
         });
         initializedRef[1](true);

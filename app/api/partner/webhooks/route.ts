@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import crypto from 'crypto';
 
 export async function GET() {
   try {
@@ -81,7 +80,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'App not found' }, { status: 404 });
     }
 
-    const secret = crypto.randomBytes(32).toString('hex');
+    // Generate a random 32-byte secret using Web Crypto
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const secret = Array.from(array)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     const webhook = await prisma.webhook.create({
       data: {

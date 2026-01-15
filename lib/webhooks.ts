@@ -1,6 +1,5 @@
 import { prisma } from './db';
 import { WebhookEventType } from '@prisma/client';
-import crypto from 'crypto';
 
 interface WebhookPayload {
   event: WebhookEventType;
@@ -61,7 +60,7 @@ async function deliverWebhook(
   payload: WebhookPayload,
   secret: string
 ) {
-  const signature = generateSignature(JSON.stringify(payload), secret);
+  const signature = await generateSignature(JSON.stringify(payload), secret);
 
   try {
     const response = await fetch(url, {
@@ -85,7 +84,7 @@ async function deliverWebhook(
     return response.ok;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     await prisma.webhookDelivery.update({
       where: { id: deliveryId },
       data: {
@@ -100,23 +99,46 @@ async function deliverWebhook(
   }
 }
 
-export function generateSignature(payload: string, secret: string): string {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
+export async function generateSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const data = encoder.encode(payload);
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, data);
+
+  // Convert ArrayBuffer to hex string
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-export function verifySignature(
+export async function verifySignature(
   payload: string,
   signature: string,
   secret: string
-): boolean {
-  const expectedSignature = generateSignature(payload, secret);
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+): Promise<boolean> {
+  const expectedSignature = await generateSignature(payload, secret);
+
+  // Timing-safe comparison using Web Crypto is subtle.
+  // One way is to sign and then use crypto.subtle.verify or just compare manually.
+  // A simple manual timing-safe comparison:
+  if (signature.length !== expectedSignature.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < signature.length; i++) {
+    result |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 function calculateNextRetry(retryCount: number): Date {
