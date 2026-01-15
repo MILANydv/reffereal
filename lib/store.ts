@@ -469,6 +469,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   analytics: null,
   billing: null,
   pricing: [],
+  usage: null,
   isLoading: {},
 
   setSelectedApp: (app) => {
@@ -676,6 +677,25 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
+  fetchUsage: async (force = false) => {
+    const key = 'usage';
+    if (!force && get().usage !== null) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/partner/usage-stats');
+      if (response.ok) {
+        const data = await response.json();
+        set({ usage: data });
+      }
+    } catch (error) {
+      console.error('Error fetching usage stats:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
   invalidate: (key) => {
     // Clear cached data for the given key
     if (key === 'apps') {
@@ -688,6 +708,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ billing: null });
     } else if (key === 'pricing') {
       set({ pricing: [] });
+    } else if (key === 'usage') {
+      set({ usage: null });
     }
     // Add more invalidation logic as needed
   },
