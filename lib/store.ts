@@ -77,6 +77,49 @@ interface Analytics {
   revenue: Array<{ date: string; amount: number }>;
 }
 
+export interface PricingPlan {
+  id: string;
+  name: string;
+  type: string;
+  monthlyPrice: number;
+  yearlyPrice: number | null;
+  apiLimit: number;
+  maxApps: number;
+  overagePrice: number;
+  features: string[];
+  isActive: boolean;
+}
+
+interface Subscription {
+  id: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  plan: PricingPlan;
+}
+
+interface Invoice {
+  id: string;
+  amount: number;
+  status: string;
+  billingPeriodStart: string;
+  billingPeriodEnd: string;
+  apiUsage: number;
+  overageAmount: number;
+  createdAt: string;
+  paidAt: string | null;
+}
+
+interface BillingData {
+  subscription: Subscription | null;
+  invoices: Invoice[];
+  currentUsage: {
+    apiCalls: number;
+    overage: number;
+    estimatedCost: number;
+  };
+}
+
 interface AppStore {
   selectedApp: App | null;
   apps: App[];
@@ -87,6 +130,8 @@ interface AppStore {
   referrals: Referral[];
   campaigns: Campaign[];
   analytics: Analytics | null;
+  billing: BillingData | null;
+  pricing: PricingPlan[];
   isLoading: Record<string, boolean>;
 
   setSelectedApp: (app: App | null) => void;
@@ -98,6 +143,8 @@ interface AppStore {
   fetchReferrals: (appId: string) => Promise<void>;
   fetchCampaigns: (appId: string) => Promise<void>;
   fetchAnalytics: (appId: string) => Promise<void>;
+  fetchBilling: (force?: boolean) => Promise<void>;
+  fetchPricing: () => Promise<void>;
   invalidate: (key: string) => void;
 }
 
@@ -111,6 +158,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   referrals: [],
   campaigns: [],
   analytics: null,
+  billing: null,
+  pricing: [],
   isLoading: {},
 
   setSelectedApp: (app) => {
@@ -253,7 +302,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const response = await fetch(`/api/partner/campaigns?appId=${appId}`);
       if (response.ok) {
         const data = await response.json();
-        set({ campaigns: data.campaigns || [] });
+        // API returns array directly, not wrapped in campaigns property
+        set({ campaigns: Array.isArray(data) ? data : (data.campaigns || []) });
       }
     } catch (error) {
       console.error('Error fetching campaigns:', error);
@@ -279,6 +329,44 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
+  fetchBilling: async (force = false) => {
+    const key = 'billing';
+    if (!force && get().billing !== null) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/partner/billing');
+      if (response.ok) {
+        const data = await response.json();
+        set({ billing: data });
+      }
+    } catch (error) {
+      console.error('Error fetching billing:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchPricing: async () => {
+    const key = 'pricing';
+    if (get().pricing.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/partner/pricing-plans');
+      if (response.ok) {
+        const data = await response.json();
+        set({ pricing: data || [] });
+      }
+    } catch (error) {
+      console.error('Error fetching pricing plans:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
   invalidate: (key) => {
     // Clear cached data for the given key
     if (key === 'apps') {
@@ -287,6 +375,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ stats: null });
     } else if (key === 'campaigns') {
       set({ campaigns: [] });
+    } else if (key === 'billing') {
+      set({ billing: null });
+    } else if (key === 'pricing') {
+      set({ pricing: [] });
     }
     // Add more invalidation logic as needed
   },
