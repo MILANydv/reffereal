@@ -6,9 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = env("DATABASE_PROVIDER")
-  url      = env("DATABASE_URL")
+   provider = "postgresql"
 }
+
 
 enum UserRole {
   SUPER_ADMIN
