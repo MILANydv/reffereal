@@ -64,7 +64,7 @@ export default function AdminUsagePage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {data.totalApiCalls.toLocaleString()}
+                  {(data.totalApiCalls ?? 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Total API Calls</div>
               </div>
@@ -77,7 +77,7 @@ export default function AdminUsagePage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {data.topApps.length}
+                  {(data.topApps ?? []).length}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Active Apps</div>
               </div>
@@ -90,7 +90,7 @@ export default function AdminUsagePage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {data.topPartners.length}
+                  {(data.topPartners ?? []).length}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Active Partners</div>
               </div>
@@ -103,7 +103,7 @@ export default function AdminUsagePage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {data.recentLogs.length}
+                  {(data.recentLogs ?? []).length}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Recent Logs</div>
               </div>
@@ -117,10 +117,10 @@ export default function AdminUsagePage() {
               <h2 className="text-lg font-semibold">Top Apps by Usage</h2>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {data.topApps.length === 0 ? (
+              {(data.topApps ?? []).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No data available</div>
               ) : (
-                data.topApps.map((app: any) => (
+                (data.topApps ?? []).map((app: any) => (
                   <div key={app.appId} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -160,10 +160,10 @@ export default function AdminUsagePage() {
               <h2 className="text-lg font-semibold">Top Partners by Usage</h2>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {data.topPartners.length === 0 ? (
+              {(data.topPartners ?? []).length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No data available</div>
               ) : (
-                data.topPartners.map((partner: any) => (
+                (data.topPartners ?? []).map((partner: any) => (
                   <div key={partner.partnerId} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                     <div className="flex items-center justify-between">
                       <div>
@@ -206,14 +206,14 @@ export default function AdminUsagePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {data.recentLogs.length === 0 ? (
+                {(data.recentLogs ?? []).length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                       No recent activity
                     </td>
                   </tr>
                 ) : (
-                  data.recentLogs.map((log: any) => (
+                  (data.recentLogs ?? []).map((log: any) => (
                     <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">
                         {log.endpoint}

@@ -93,7 +93,7 @@ export default function AdminBillingPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  ${data.paidRevenue.toLocaleString()}
+                  ${(data.paidRevenue ?? 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Paid Revenue</div>
               </div>
@@ -106,7 +106,7 @@ export default function AdminBillingPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  ${data.monthlyRecurringRevenue.toLocaleString()}
+                  ${(data.monthlyRecurringRevenue ?? 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">MRR</div>
               </div>
@@ -119,7 +119,7 @@ export default function AdminBillingPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {data.pendingInvoices}
+                  {data.pendingInvoices ?? 0}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Pending Invoices</div>
               </div>
@@ -132,7 +132,7 @@ export default function AdminBillingPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  ${data.totalOverage.toLocaleString()}
+                  ${(data.totalOverage ?? 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Total Overage</div>
               </div>
@@ -168,25 +168,25 @@ export default function AdminBillingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Total Revenue</span>
                   <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    ${data.totalRevenue.toLocaleString()}
+                    ${(data.totalRevenue ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Paid</span>
                   <span className="text-xl font-bold text-green-600">
-                    ${data.paidRevenue.toLocaleString()}
+                    ${(data.paidRevenue ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Pending</span>
                   <span className="text-xl font-bold text-yellow-600">
-                    ${data.pendingRevenue.toLocaleString()}
+                    ${(data.pendingRevenue ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Overage Fees</span>
                   <span className="text-xl font-bold text-orange-600">
-                    ${data.totalOverage.toLocaleString()}
+                    ${(data.totalOverage ?? 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -211,14 +211,14 @@ export default function AdminBillingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {data.invoices.length === 0 ? (
+                {(data.invoices ?? []).length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       No invoices found
                     </td>
                   </tr>
                 ) : (
-                  data.invoices.map((invoice: any) => (
+                  (data.invoices ?? []).map((invoice: any) => (
                     <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -262,14 +262,14 @@ export default function AdminBillingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {data.subscriptions.length === 0 ? (
+                {(data.subscriptions ?? []).length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                       No subscriptions found
                     </td>
                   </tr>
                 ) : (
-                  data.subscriptions.map((sub: any) => (
+                  (data.subscriptions ?? []).map((sub: any) => (
                     <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900 dark:text-gray-100">

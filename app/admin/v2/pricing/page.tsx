@@ -8,20 +8,7 @@ import { Plus, Edit3, Trash2, Search, Check, Zap, Users, Box, X } from 'lucide-r
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
-import { useAdminStore } from '@/lib/store';
-
-interface PricingPlan {
-  id: string;
-  name: string;
-  type: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  apiLimit: number;
-  maxApps: number;
-  overagePrice: number;
-  features: string[];
-  isActive: boolean;
-}
+import { useAdminStore, PricingPlan } from '@/lib/store';
 
 export default function AdminPricingPage() {
   const { pricing: plans, fetchPricing: fetchPlans, isLoading, invalidate } = useAdminStore();
@@ -33,7 +20,7 @@ export default function AdminPricingPage() {
     name: '',
     type: '',
     monthlyPrice: 0,
-    yearlyPrice: 0,
+    yearlyPrice: null as number | null,
     apiLimit: 10000,
     maxApps: 1,
     overagePrice: 0.01,
@@ -112,7 +99,7 @@ export default function AdminPricingPage() {
       name: '',
       type: '',
       monthlyPrice: 0,
-      yearlyPrice: 0,
+      yearlyPrice: null,
       apiLimit: 10000,
       maxApps: 1,
       overagePrice: 0.01,
@@ -128,7 +115,7 @@ export default function AdminPricingPage() {
       name: plan.name,
       type: plan.type,
       monthlyPrice: plan.monthlyPrice,
-      yearlyPrice: plan.yearlyPrice,
+      yearlyPrice: plan.yearlyPrice ?? null,
       apiLimit: plan.apiLimit,
       maxApps: plan.maxApps,
       overagePrice: plan.overagePrice,
@@ -319,8 +306,8 @@ export default function AdminPricingPage() {
                       type="number"
                       step="0.01"
                       min="0"
-                      value={formData.yearlyPrice}
-                      onChange={(e) => setFormData({ ...formData, yearlyPrice: parseFloat(e.target.value) })}
+                      value={formData.yearlyPrice ?? ''}
+                      onChange={(e) => setFormData({ ...formData, yearlyPrice: e.target.value ? parseFloat(e.target.value) : null })}
                       className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>

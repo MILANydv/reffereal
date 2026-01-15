@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 // ===== Type Definitions =====
 
-interface App {
+export interface App {
   id: string;
   name: string;
   description?: string;
@@ -12,12 +12,19 @@ interface App {
   status: string;
 }
 
-interface Campaign {
+export interface Campaign {
   id: string;
   name: string;
   status: string;
   totalReferrals: number;
   totalRewardCost: number;
+  startDate?: string;
+  referralType?: string;
+  rewardModel?: string;
+  rewardValue?: number;
+  _count?: {
+    referrals: number;
+  };
 }
 
 export interface PricingPlan {
@@ -61,6 +68,22 @@ export interface DashboardStats {
     };
     createdAt: string;
   }>;
+  alerts?: Array<{
+    id: string;
+    type: string;
+    message: string;
+  }>;
+  apiUsage?: {
+    current: number;
+    limit: number;
+  };
+  apiUsageChart?: Array<{ name: string; value: number }>;
+  recentActivity?: Array<{
+    id: string;
+    description: string;
+    timestamp: string;
+    type: string;
+  }>;
 }
 
 export interface ActiveCampaign {
@@ -72,6 +95,7 @@ export interface ActiveCampaign {
   rewardValue: number;
   totalReferrals: number;
   conversionRate: number;
+  totalRewardCost?: number;
 }
 
 export interface WebhookDelivery {
@@ -107,7 +131,8 @@ export interface TeamMember {
 }
 
 export interface BillingInfo {
-  subscription: {
+  // Partner billing fields
+  subscription?: {
     id: string;
     status: string;
     currentPeriodStart: string;
@@ -118,18 +143,52 @@ export interface BillingInfo {
     id: string;
     amount: number;
     status: string;
-    billingPeriodStart: string;
-    billingPeriodEnd: string;
+    billingPeriodStart?: string;
+    billingPeriodEnd?: string;
     apiUsage: number;
     overageAmount: number;
     createdAt: string;
-    paidAt: string | null;
+    paidAt?: string | null;
+    partner?: {
+      companyName?: string;
+      user: {
+        email: string;
+      };
+    };
   }>;
-  currentUsage: {
+  currentUsage?: {
     apiCalls: number;
     overage: number;
     estimatedCost: number;
   };
+  // Admin billing fields
+  totalRevenue?: number;
+  totalOverage?: number;
+  totalInvoices?: number;
+  paidRevenue?: number;
+  pendingRevenue?: number;
+  paidInvoices?: number;
+  pendingInvoices?: number;
+  failedInvoices?: number;
+  monthlyRecurringRevenue?: number;
+  subscriptionByPlan?: Record<string, number>;
+  subscriptions?: Array<{
+    id: string;
+    partnerId: string;
+    status: string;
+    currentPeriodEnd: string;
+    plan: {
+      name: string;
+      type: string;
+      monthlyPrice: number;
+    };
+    partner: {
+      companyName?: string;
+      user: {
+        email: string;
+      };
+    };
+  }>;
 }
 
 export interface FraudFlag {
@@ -165,6 +224,12 @@ export interface Analytics {
     conversions: number;
     revenue: number;
   }>;
+  campaigns?: Array<{
+    id: string;
+    name: string;
+    conversions: number;
+    revenue: number;
+  }>;
   appTotals?: {
     totalReferrals: number;
     totalClicks: number;
@@ -194,7 +259,7 @@ export interface Referral {
 }
 
 export interface UsageStats {
-  apiUsage: {
+  apiUsage?: {
     current: number;
     limit: number;
     overage: number;
@@ -210,6 +275,17 @@ export interface UsageStats {
     endpoint: string;
     timestamp: string;
     status: string;
+  }>;
+  totalApiCalls?: number;
+  topApps?: Array<{
+    id: string;
+    name: string;
+    calls: number;
+  }>;
+  topPartners?: Array<{
+    id: string;
+    companyName?: string;
+    calls: number;
   }>;
 }
 
@@ -296,8 +372,8 @@ interface AppStore {
   fetchPricing: () => Promise<void>;
   fetchUsage: (force?: boolean) => Promise<void>;
   fetchTeam: () => Promise<void>;
-  fetchFraud: (appId: string) => Promise<void>;
-  fetchWebhooks: (appId: string) => Promise<void>;
+  fetchFraud: (appId?: string) => Promise<void>;
+  fetchWebhooks: (appId?: string) => Promise<void>;
   invalidate: (key: string) => void;
 }
 
@@ -556,12 +632,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  fetchFraud: async (appId) => {
-    const key = `fraud-${appId}`;
+  fetchFraud: async (appId?) => {
+    const key = appId ? `fraud-${appId}` : 'fraud';
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch(`/api/partner/fraud?appId=${appId}`);
+      const url = appId ? `/api/partner/fraud?appId=${appId}` : '/api/partner/fraud';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         set({ fraud: Array.isArray(data) ? data : [] });
@@ -573,12 +650,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  fetchWebhooks: async (appId) => {
-    const key = `webhooks-${appId}`;
+  fetchWebhooks: async (appId?) => {
+    const key = appId ? `webhooks-${appId}` : 'webhooks';
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch(`/api/partner/webhooks?appId=${appId}`);
+      const url = appId ? `/api/partner/webhooks?appId=${appId}` : '/api/partner/webhooks';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         set({ webhooks: Array.isArray(data) ? data : (data.webhooks || []) });
