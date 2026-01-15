@@ -3,25 +3,10 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { useAppStore } from '@/lib/store';
+import { useAppStore, Referral } from '@/lib/store';
 import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
-
-interface Referral {
-  id: string;
-  referralCode: string;
-  referrerId: string;
-  status: string;
-  clickedAt: string | null;
-  convertedAt: string | null;
-  rewardAmount: number | null;
-  isFlagged: boolean;
-  createdAt: string;
-  campaign: {
-    name: string;
-  };
-}
 
 export default function ReferralsPage() {
   const { selectedApp, referrals, fetchReferrals, isLoading } = useAppStore();
@@ -111,7 +96,7 @@ export default function ReferralsPage() {
                     </td>
                   </tr>
                 ) : (
-                  referrals.map((referral: any) => (
+                  referrals.map((referral: Referral) => (
                     <tr key={referral.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
                       <td className="px-6 py-4 font-mono font-medium text-blue-600">
                         <div className="flex items-center">

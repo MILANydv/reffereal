@@ -90,6 +90,265 @@ export interface PricingPlan {
   isActive: boolean;
 }
 
+export interface DashboardStats {
+  totalReferrals: number;
+  totalConversions: number;
+  totalRevenue: number;
+  conversionRate: number;
+  activeCampaigns: number;
+  monthlyGrowth: number;
+  totalPartners: number;
+  totalApps: number;
+  totalApiCalls: number;
+  avgDailyCalls: number;
+  successRate: number;
+  growthRate: number;
+  endpointUsage: Array<{
+    endpoint: string;
+    count: number;
+    percentage: number;
+  }>;
+  activeSubscriptions: number;
+  unresolvedFraudFlags: number;
+  recentPartners: Array<{
+    id: string;
+    companyName?: string;
+    user: {
+      email: string;
+    };
+    createdAt: string;
+  }>;
+}
+
+export interface ActiveCampaign {
+  id: string;
+  name: string;
+  status: string;
+  referralType: string;
+  rewardModel: string;
+  rewardValue: number;
+  totalReferrals: number;
+  conversionRate: number;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  eventType: string;
+  payload: string;
+  response?: string;
+  statusCode?: number;
+  success: boolean;
+  retryCount: number;
+  createdAt: string;
+}
+
+export interface Metrics {
+  referrals: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+  conversions: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+  revenue: {
+    current: number;
+    previous: number;
+    change: number;
+  };
+}
+
+export interface TeamMember {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  inviteAcceptedAt?: string;
+  lastLoginAt?: string;
+  isActive: boolean;
+}
+
+export interface BillingInfo {
+  currentPlan: {
+    name: string;
+    type: string;
+    monthlyPrice: number;
+    apiLimit: number;
+  };
+  currentUsage: {
+    apiCalls: number;
+    overage: number;
+    nextBillingDate: string;
+  };
+  invoices: Array<{
+    id: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+  }>;
+  paidRevenue: number;
+  monthlyRecurringRevenue: number;
+  pendingInvoices: number;
+  totalOverage: number;
+  subscriptionByPlan: Record<string, number>;
+  totalRevenue: number;
+  pendingRevenue: number;
+  subscriptions: Array<{
+    id: string;
+    partnerId: string;
+    planName: string;
+    status: string;
+    currentPeriodEnd: string;
+    amount: number;
+  }>;
+}
+
+export interface FraudFlag {
+  id: string;
+  referralCode: string;
+  fraudType: string;
+  description: string;
+  isResolved: boolean;
+  createdAt: string;
+}
+
+export interface Webhook {
+  id: string;
+  url: string;
+  events: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Analytics {
+  funnelData: Array<{
+    stage: string;
+    count: number;
+    conversionRate: number;
+  }>;
+  revenueData: Array<{
+    date: string;
+    revenue: number;
+  }>;
+  topCampaigns: Array<{
+    id: string;
+    name: string;
+    conversions: number;
+    revenue: number;
+  }>;
+  appTotals: {
+    totalReferrals: number;
+    totalClicks: number;
+    totalConversions: number;
+    totalRewardValue?: number;
+    clickRate?: number;
+    conversionRate?: number;
+  };
+}
+
+export interface Referral {
+  id: string;
+  referralCode: string;
+  status: string;
+  clickedAt?: string;
+  convertedAt?: string;
+  rewardAmount?: number;
+  createdAt: string;
+}
+
+export interface UsageStats {
+  currentMonth: {
+    apiCalls: number;
+    uniqueReferrals: number;
+    conversions: number;
+  };
+  previousMonth: {
+    apiCalls: number;
+    uniqueReferrals: number;
+    conversions: number;
+  };
+  growth: {
+    apiCalls: number;
+    referrals: number;
+    conversions: number;
+  };
+  totalApiCalls: number;
+  avgResponseTime: number;
+  errorRate: number;
+  topEndpoints: Array<{
+    endpoint: string;
+    calls: number;
+  }>;
+  topApps: Array<{
+    id: string;
+    name: string;
+    calls: number;
+  }>;
+  topPartners: Array<{
+    id: string;
+    companyName?: string;
+    calls: number;
+  }>;
+  recentLogs: Array<{
+    id: string;
+    timestamp: string;
+    endpoint: string;
+    status: string;
+  }>;
+}
+
+export interface AdminApp {
+  id: string;
+  name: string;
+  apiKey: string;
+  status: string;
+  monthlyLimit: number;
+  currentUsage: number;
+  createdAt: string;
+  partner: {
+    companyName?: string;
+    user: {
+      email: string;
+    };
+  };
+  _count: {
+    apiUsageLogs: number;
+  };
+}
+
+export interface AdminPartner {
+  id: string;
+  companyName?: string;
+  user: {
+    email: string;
+    name?: string;
+  };
+  active: boolean;
+  createdAt: string;
+}
+
+export interface FeatureFlag {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  isEnabled: boolean;
+  rolloutPercent: number;
+  targetPartners?: string;
+  createdAt: string;
+}
+
+export interface SystemLog {
+  id: string;
+  level: string;
+  message: string;
+  source?: string;
+  metadata?: string;
+  createdAt: string;
+}
+
 interface Subscription {
   id: string;
   status: string;
@@ -129,9 +388,24 @@ interface AppStore {
   metrics: Metrics | null;
   referrals: Referral[];
   campaigns: Campaign[];
+  stats: DashboardStats | null;
+  activeCampaigns: ActiveCampaign[];
+  webhookDeliveries: WebhookDelivery[];
+  metrics: Metrics | null;
+  team: TeamMember[];
+  billing: BillingInfo | null;
+  fraud: FraudFlag[];
+  webhooks: Webhook[];
   analytics: Analytics | null;
-  billing: BillingData | null;
+  referrals: Referral[];
   pricing: PricingPlan[];
+  usage: UsageStats | null;
+
+  // Cache Management
+  cache: Record<string, CacheEntry<unknown>>;
+  lastFetched: Record<string, number>;
+
+  // UI State
   isLoading: Record<string, boolean>;
 
   setSelectedApp: (app: App | null) => void;
@@ -144,7 +418,42 @@ interface AppStore {
   fetchCampaigns: (appId: string) => Promise<void>;
   fetchAnalytics: (appId: string) => Promise<void>;
   fetchBilling: (force?: boolean) => Promise<void>;
-  fetchPricing: () => Promise<void>;
+  fetchFraud: (appId: string, force?: boolean) => Promise<void>;
+  fetchWebhooks: (appId: string, force?: boolean) => Promise<void>;
+  fetchAnalytics: (appId: string, force?: boolean) => Promise<void>;
+  fetchReferrals: (appId: string, force?: boolean) => Promise<void>;
+  fetchPricing: (force?: boolean) => Promise<void>;
+  fetchUsage: (force?: boolean) => Promise<void>;
+
+  // Invalidation
+  invalidate: (key: string) => void;
+  initialize: () => Promise<void>;
+}
+
+interface AdminStore {
+  partners: AdminPartner[];
+  apps: AdminApp[];
+  features: FeatureFlag[];
+  logs: SystemLog[];
+  fraud: FraudFlag[];
+  stats: DashboardStats;
+  usage: UsageStats;
+  billing: BillingInfo;
+  pricing: PricingPlan[];
+
+  cache: Record<string, CacheEntry<unknown>>;
+  isLoading: Record<string, boolean>;
+
+  fetchPartners: (force?: boolean) => Promise<void>;
+  fetchApps: (force?: boolean) => Promise<void>;
+  fetchFeatures: (force?: boolean) => Promise<void>;
+  fetchLogs: (filters?: { page?: number; level?: string; search?: string }, force?: boolean) => Promise<void>;
+  fetchFraud: (force?: boolean) => Promise<void>;
+  fetchStats: (force?: boolean) => Promise<void>;
+  fetchUsage: (force?: boolean) => Promise<void>;
+  fetchBilling: (force?: boolean) => Promise<void>;
+  fetchPricing: (force?: boolean) => Promise<void>;
+
   invalidate: (key: string) => void;
 }
 
