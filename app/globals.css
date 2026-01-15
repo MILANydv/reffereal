@@ -1,31 +1,76 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-primary: #2563EB;
+  --color-navy: #0F172A;
+  --color-eggshell: #FDFCF8;
+  --color-background-light: #F8FAFC;
+  --color-code-bg: #0B1120;
+  
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-display: var(--font-display);
+  --font-mono: Menlo, Monaco, "Courier New", monospace;
+  
+  --radius-bento: 2rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+  body {
+    @apply bg-background-light text-navy antialiased;
+  }
+  h1, h2 {
+    @apply font-serif leading-[0.9];
+  }
 }
 
-:root.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer components {
+  .bento-card {
+    @apply relative overflow-hidden bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500;
+  }
+  .bento-card:hover {
+    @apply shadow-[0_20px_50px_rgba(37,99,235,0.1)] -translate-y-1;
+  }
+  .gradient-glow {
+    @apply absolute -z-10 blur-[100px] opacity-30 rounded-full;
+  }
+  .molecule-node {
+    @apply absolute size-16 rounded-2xl glass-panel flex items-center justify-center shadow-2xl border border-white/40;
+  }
+  .glass-panel {
+    @apply bg-white/40 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .tactile-btn {
+    @apply bg-primary text-white font-extrabold px-12 py-6 rounded-2xl shadow-[0_20px_40px_rgba(37,99,235,0.3)] hover:shadow-[0_10px_20px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200;
+  }
+  .faq-item[open] .faq-icon {
+    @apply rotate-180;
+  }
+  .code-syntax-keyword {
+    @apply text-pink-400;
+  }
+  .code-syntax-string {
+    @apply text-emerald-400;
+  }
+  .code-syntax-function {
+    @apply text-blue-400;
+  }
+  .code-syntax-comment {
+    @apply text-slate-500;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+*::selection {
+  background-color: rgba(37, 99, 235, 0.2);
 }
