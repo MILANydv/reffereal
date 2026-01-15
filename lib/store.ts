@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+// ===== Type Definitions =====
+
 interface App {
   id: string;
   name: string;
@@ -16,65 +18,6 @@ interface Campaign {
   status: string;
   totalReferrals: number;
   totalRewardCost: number;
-}
-
-interface WebhookDelivery {
-  id: string;
-  eventType: string;
-  url: string;
-  success: boolean;
-  statusCode: number;
-  createdAt: string;
-}
-
-interface Stats {
-  totalReferrals: number;
-  totalConversions: number;
-  totalApps: number;
-  apiUsage: {
-    current: number;
-    limit: number;
-  };
-  apiUsageChart: Array<{ name: string; value: number }>;
-  recentActivity: Array<{
-    id: string;
-    description: string;
-    timestamp: string;
-    type: string;
-  }>;
-  alerts?: Array<{
-    id: string;
-    type: string;
-    message: string;
-  }>;
-}
-
-interface Metrics {
-  apiCalls: number;
-  referrals: number;
-  conversions: number;
-  revenue: number;
-}
-
-interface Referral {
-  id: string;
-  referralCode: string;
-  referrerId: string;
-  status: string;
-  clickedAt: string | null;
-  convertedAt: string | null;
-  rewardAmount: number | null;
-  isFlagged: boolean;
-  createdAt: string;
-  campaign: {
-    name: string;
-  };
-}
-
-interface Analytics {
-  referrals: Array<{ date: string; count: number }>;
-  conversions: Array<{ date: string; count: number }>;
-  revenue: Array<{ date: string; amount: number }>;
 }
 
 export interface PricingPlan {
@@ -134,29 +77,22 @@ export interface ActiveCampaign {
 export interface WebhookDelivery {
   id: string;
   eventType: string;
-  payload: string;
-  response?: string;
-  statusCode?: number;
+  url: string;
   success: boolean;
-  retryCount: number;
+  statusCode: number;
   createdAt: string;
 }
 
 export interface Metrics {
-  referrals: {
-    current: number;
-    previous: number;
-    change: number;
-  };
-  conversions: {
-    current: number;
-    previous: number;
-    change: number;
-  };
-  revenue: {
-    current: number;
-    previous: number;
-    change: number;
+  apiCalls: number;
+  referrals: number;
+  conversions: number;
+  revenue: number;
+  changes?: {
+    apiCalls: number;
+    referrals: number;
+    conversions: number;
+    revenue: number;
   };
 }
 
@@ -171,38 +107,29 @@ export interface TeamMember {
 }
 
 export interface BillingInfo {
-  currentPlan: {
-    name: string;
-    type: string;
-    monthlyPrice: number;
-    apiLimit: number;
-  };
-  currentUsage: {
-    apiCalls: number;
-    overage: number;
-    nextBillingDate: string;
-  };
+  subscription: {
+    id: string;
+    status: string;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    plan: PricingPlan;
+  } | null;
   invoices: Array<{
     id: string;
     amount: number;
     status: string;
+    billingPeriodStart: string;
+    billingPeriodEnd: string;
+    apiUsage: number;
+    overageAmount: number;
     createdAt: string;
+    paidAt: string | null;
   }>;
-  paidRevenue: number;
-  monthlyRecurringRevenue: number;
-  pendingInvoices: number;
-  totalOverage: number;
-  subscriptionByPlan: Record<string, number>;
-  totalRevenue: number;
-  pendingRevenue: number;
-  subscriptions: Array<{
-    id: string;
-    partnerId: string;
-    planName: string;
-    status: string;
-    currentPeriodEnd: string;
-    amount: number;
-  }>;
+  currentUsage: {
+    apiCalls: number;
+    overage: number;
+    estimatedCost: number;
+  };
 }
 
 export interface FraudFlag {
@@ -223,22 +150,22 @@ export interface Webhook {
 }
 
 export interface Analytics {
-  funnelData: Array<{
+  funnelData?: Array<{
     stage: string;
     count: number;
     conversionRate: number;
   }>;
-  revenueData: Array<{
+  revenueData?: Array<{
     date: string;
     revenue: number;
   }>;
-  topCampaigns: Array<{
+  topCampaigns?: Array<{
     id: string;
     name: string;
     conversions: number;
     revenue: number;
   }>;
-  appTotals: {
+  appTotals?: {
     totalReferrals: number;
     totalClicks: number;
     totalConversions: number;
@@ -246,55 +173,42 @@ export interface Analytics {
     clickRate?: number;
     conversionRate?: number;
   };
+  referrals?: Array<{ date: string; count: number }>;
+  conversions?: Array<{ date: string; count: number }>;
+  revenue?: Array<{ date: string; amount: number }>;
 }
 
 export interface Referral {
   id: string;
   referralCode: string;
+  referrerId?: string;
   status: string;
-  clickedAt?: string;
-  convertedAt?: string;
-  rewardAmount?: number;
+  clickedAt?: string | null;
+  convertedAt?: string | null;
+  rewardAmount?: number | null;
+  isFlagged?: boolean;
   createdAt: string;
+  campaign?: {
+    name: string;
+  };
 }
 
 export interface UsageStats {
-  currentMonth: {
-    apiCalls: number;
-    uniqueReferrals: number;
-    conversions: number;
+  apiUsage: {
+    current: number;
+    limit: number;
+    overage: number;
+    estimatedCost: number;
+    dailyUsage?: Array<{ date: string; calls: number }>;
   };
-  previousMonth: {
-    apiCalls: number;
-    uniqueReferrals: number;
-    conversions: number;
+  endpointBreakdown?: {
+    byEndpoint: Array<{ endpoint: string; count: number; percentage: string }>;
+    byCategory: Array<{ category: string; count: number; percentage: string }>;
   };
-  growth: {
-    apiCalls: number;
-    referrals: number;
-    conversions: number;
-  };
-  totalApiCalls: number;
-  avgResponseTime: number;
-  errorRate: number;
-  topEndpoints: Array<{
+  recentLogs?: Array<{
+    id: string;
     endpoint: string;
-    calls: number;
-  }>;
-  topApps: Array<{
-    id: string;
-    name: string;
-    calls: number;
-  }>;
-  topPartners: Array<{
-    id: string;
-    companyName?: string;
-    calls: number;
-  }>;
-  recentLogs: Array<{
-    id: string;
     timestamp: string;
-    endpoint: string;
     status: string;
   }>;
 }
@@ -349,63 +263,24 @@ export interface SystemLog {
   createdAt: string;
 }
 
-interface Subscription {
-  id: string;
-  status: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  plan: PricingPlan;
-}
-
-interface Invoice {
-  id: string;
-  amount: number;
-  status: string;
-  billingPeriodStart: string;
-  billingPeriodEnd: string;
-  apiUsage: number;
-  overageAmount: number;
-  createdAt: string;
-  paidAt: string | null;
-}
-
-interface BillingData {
-  subscription: Subscription | null;
-  invoices: Invoice[];
-  currentUsage: {
-    apiCalls: number;
-    overage: number;
-    estimatedCost: number;
-  };
-}
+// ===== App Store (Partner Dashboard) =====
 
 interface AppStore {
   selectedApp: App | null;
   apps: App[];
-  stats: Stats | null;
-  activeCampaigns: Campaign[];
-  webhookDeliveries: WebhookDelivery[];
-  metrics: Metrics | null;
-  referrals: Referral[];
-  campaigns: Campaign[];
   stats: DashboardStats | null;
   activeCampaigns: ActiveCampaign[];
   webhookDeliveries: WebhookDelivery[];
   metrics: Metrics | null;
-  team: TeamMember[];
-  billing: BillingInfo | null;
-  fraud: FraudFlag[];
-  webhooks: Webhook[];
-  analytics: Analytics | null;
   referrals: Referral[];
+  campaigns: Campaign[];
+  analytics: Analytics | null;
+  billing: BillingInfo | null;
   pricing: PricingPlan[];
   usage: UsageStats | null;
-
-  // Cache Management
-  cache: Record<string, CacheEntry<unknown>>;
-  lastFetched: Record<string, number>;
-
-  // UI State
+  team: TeamMember[];
+  fraud: FraudFlag[];
+  webhooks: Webhook[];
   isLoading: Record<string, boolean>;
 
   setSelectedApp: (app: App | null) => void;
@@ -418,42 +293,11 @@ interface AppStore {
   fetchCampaigns: (appId: string) => Promise<void>;
   fetchAnalytics: (appId: string) => Promise<void>;
   fetchBilling: (force?: boolean) => Promise<void>;
-  fetchFraud: (appId: string, force?: boolean) => Promise<void>;
-  fetchWebhooks: (appId: string, force?: boolean) => Promise<void>;
-  fetchAnalytics: (appId: string, force?: boolean) => Promise<void>;
-  fetchReferrals: (appId: string, force?: boolean) => Promise<void>;
-  fetchPricing: (force?: boolean) => Promise<void>;
+  fetchPricing: () => Promise<void>;
   fetchUsage: (force?: boolean) => Promise<void>;
-
-  // Invalidation
-  invalidate: (key: string) => void;
-  initialize: () => Promise<void>;
-}
-
-interface AdminStore {
-  partners: AdminPartner[];
-  apps: AdminApp[];
-  features: FeatureFlag[];
-  logs: SystemLog[];
-  fraud: FraudFlag[];
-  stats: DashboardStats;
-  usage: UsageStats;
-  billing: BillingInfo;
-  pricing: PricingPlan[];
-
-  cache: Record<string, CacheEntry<unknown>>;
-  isLoading: Record<string, boolean>;
-
-  fetchPartners: (force?: boolean) => Promise<void>;
-  fetchApps: (force?: boolean) => Promise<void>;
-  fetchFeatures: (force?: boolean) => Promise<void>;
-  fetchLogs: (filters?: { page?: number; level?: string; search?: string }, force?: boolean) => Promise<void>;
-  fetchFraud: (force?: boolean) => Promise<void>;
-  fetchStats: (force?: boolean) => Promise<void>;
-  fetchUsage: (force?: boolean) => Promise<void>;
-  fetchBilling: (force?: boolean) => Promise<void>;
-  fetchPricing: (force?: boolean) => Promise<void>;
-
+  fetchTeam: () => Promise<void>;
+  fetchFraud: (appId: string) => Promise<void>;
+  fetchWebhooks: (appId: string) => Promise<void>;
   invalidate: (key: string) => void;
 }
 
@@ -470,11 +314,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
   billing: null,
   pricing: [],
   usage: null,
+  team: [],
+  fraud: [],
+  webhooks: [],
   isLoading: {},
 
   setSelectedApp: (app) => {
     set({ selectedApp: app });
-    // Store in localStorage for persistence
     if (typeof window !== 'undefined') {
       if (app) {
         localStorage.setItem('selectedAppId', app.id);
@@ -496,7 +342,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
         const data = await response.json();
         set({ apps: data.apps || [] });
 
-        // Restore selected app from localStorage
         if (typeof window !== 'undefined') {
           const savedAppId = localStorage.getItem('selectedAppId');
           if (savedAppId && !get().selectedApp) {
@@ -577,8 +422,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const response = await fetch('/api/partner/metrics');
       if (response.ok) {
         const data = await response.json();
-        // API returns changes object, extract it
-        set({ metrics: data.changes || null });
+        set({ metrics: data.changes || data });
       }
     } catch (error) {
       console.error('Error fetching metrics:', error);
@@ -612,7 +456,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const response = await fetch(`/api/partner/campaigns?appId=${appId}`);
       if (response.ok) {
         const data = await response.json();
-        // API returns array directly, not wrapped in campaigns property
         set({ campaigns: Array.isArray(data) ? data : (data.campaigns || []) });
       }
     } catch (error) {
@@ -668,7 +511,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const response = await fetch('/api/partner/pricing-plans');
       if (response.ok) {
         const data = await response.json();
-        set({ pricing: data || [] });
+        set({ pricing: Array.isArray(data) ? data : [] });
       }
     } catch (error) {
       console.error('Error fetching pricing plans:', error);
@@ -696,8 +539,58 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
+  fetchTeam: async () => {
+    const key = 'team';
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/partner/team');
+      if (response.ok) {
+        const data = await response.json();
+        set({ team: Array.isArray(data) ? data : (data.members || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching team:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchFraud: async (appId) => {
+    const key = `fraud-${appId}`;
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch(`/api/partner/fraud?appId=${appId}`);
+      if (response.ok) {
+        const data = await response.json();
+        set({ fraud: Array.isArray(data) ? data : [] });
+      }
+    } catch (error) {
+      console.error('Error fetching fraud:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchWebhooks: async (appId) => {
+    const key = `webhooks-${appId}`;
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch(`/api/partner/webhooks?appId=${appId}`);
+      if (response.ok) {
+        const data = await response.json();
+        set({ webhooks: Array.isArray(data) ? data : (data.webhooks || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching webhooks:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
   invalidate: (key) => {
-    // Clear cached data for the given key
     if (key === 'apps') {
       set({ apps: [] });
     } else if (key === 'stats') {
@@ -710,7 +603,286 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ pricing: [] });
     } else if (key === 'usage') {
       set({ usage: null });
+    } else if (key === 'team') {
+      set({ team: [] });
+    } else if (key === 'fraud') {
+      set({ fraud: [] });
+    } else if (key === 'webhooks') {
+      set({ webhooks: [] });
     }
-    // Add more invalidation logic as needed
+  },
+}));
+
+// ===== Partner Store (Team Management) =====
+
+interface PartnerStore {
+  team: TeamMember[];
+  isLoading: Record<string, boolean>;
+  fetchTeam: () => Promise<void>;
+  invalidate: (key: string) => void;
+}
+
+export const usePartnerStore = create<PartnerStore>((set, get) => ({
+  team: [],
+  isLoading: {},
+
+  fetchTeam: async () => {
+    const key = 'team';
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/partner/team');
+      if (response.ok) {
+        const data = await response.json();
+        set({ team: Array.isArray(data) ? data : (data.members || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching team:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  invalidate: (key) => {
+    if (key === 'team') {
+      set({ team: [] });
+    }
+  },
+}));
+
+// ===== Admin Store =====
+
+interface AdminStore {
+  partners: AdminPartner[];
+  apps: AdminApp[];
+  features: FeatureFlag[];
+  logs: SystemLog[];
+  fraud: FraudFlag[];
+  stats: DashboardStats | null;
+  usage: UsageStats | null;
+  billing: BillingInfo | null;
+  pricing: PricingPlan[];
+  isLoading: Record<string, boolean>;
+
+  fetchPartners: (force?: boolean) => Promise<void>;
+  fetchApps: (force?: boolean) => Promise<void>;
+  fetchFeatures: (force?: boolean) => Promise<void>;
+  fetchLogs: (filters?: { page?: number; level?: string; search?: string }, force?: boolean) => Promise<void>;
+  fetchFraud: (force?: boolean) => Promise<void>;
+  fetchStats: (force?: boolean) => Promise<void>;
+  fetchUsage: (force?: boolean) => Promise<void>;
+  fetchBilling: (force?: boolean) => Promise<void>;
+  fetchPricing: (force?: boolean) => Promise<void>;
+  invalidate: (key: string) => void;
+}
+
+export const useAdminStore = create<AdminStore>((set, get) => ({
+  partners: [],
+  apps: [],
+  features: [],
+  logs: [],
+  fraud: [],
+  stats: null,
+  usage: null,
+  billing: null,
+  pricing: [],
+  isLoading: {},
+
+  fetchPartners: async (force = false) => {
+    const key = 'partners';
+    if (!force && get().partners.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/partners');
+      if (response.ok) {
+        const data = await response.json();
+        set({ partners: Array.isArray(data) ? data : (data.partners || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching partners:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchApps: async (force = false) => {
+    const key = 'apps';
+    if (!force && get().apps.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/apps');
+      if (response.ok) {
+        const data = await response.json();
+        set({ apps: Array.isArray(data) ? data : (data.apps || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching apps:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchFeatures: async (force = false) => {
+    const key = 'features';
+    if (!force && get().features.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/feature-flags');
+      if (response.ok) {
+        const data = await response.json();
+        set({ features: Array.isArray(data) ? data : (data.flags || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching features:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchLogs: async (filters, force = false) => {
+    const key = 'logs';
+    if (!force && get().logs.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const params = new URLSearchParams();
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.level) params.append('level', filters.level);
+      if (filters?.search) params.append('search', filters.search);
+
+      const response = await fetch(`/api/admin/logs?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        set({ logs: data.logs || [] });
+      }
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchFraud: async (force = false) => {
+    const key = 'fraud';
+    if (!force && get().fraud.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/fraud');
+      if (response.ok) {
+        const data = await response.json();
+        set({ fraud: Array.isArray(data) ? data : (data.flags || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching fraud:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchStats: async (force = false) => {
+    const key = 'stats';
+    if (!force && get().stats !== null) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const data = await response.json();
+        set({ stats: data });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchUsage: async (force = false) => {
+    const key = 'usage';
+    if (!force && get().usage !== null) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/usage');
+      if (response.ok) {
+        const data = await response.json();
+        set({ usage: data });
+      }
+    } catch (error) {
+      console.error('Error fetching usage:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchBilling: async (force = false) => {
+    const key = 'billing';
+    if (!force && get().billing !== null) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/billing');
+      if (response.ok) {
+        const data = await response.json();
+        set({ billing: data });
+      }
+    } catch (error) {
+      console.error('Error fetching billing:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchPricing: async (force = false) => {
+    const key = 'pricing';
+    if (!force && get().pricing.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/pricing-plans?includeInactive=true');
+      if (response.ok) {
+        const data = await response.json();
+        set({ pricing: Array.isArray(data) ? data : (data.plans || []) });
+      }
+    } catch (error) {
+      console.error('Error fetching pricing:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  invalidate: (key) => {
+    if (key === 'partners') {
+      set({ partners: [] });
+    } else if (key === 'apps') {
+      set({ apps: [] });
+    } else if (key === 'features') {
+      set({ features: [] });
+    } else if (key === 'logs') {
+      set({ logs: [] });
+    } else if (key === 'fraud') {
+      set({ fraud: [] });
+    } else if (key === 'stats') {
+      set({ stats: null });
+    } else if (key === 'usage') {
+      set({ usage: null });
+    } else if (key === 'billing') {
+      set({ billing: null });
+    } else if (key === 'pricing') {
+      set({ pricing: [] });
+    }
   },
 }));
