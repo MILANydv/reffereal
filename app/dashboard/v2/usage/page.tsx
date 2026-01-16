@@ -11,16 +11,17 @@ import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton } from '@/components
 import { useAppStore } from '@/lib/store';
 
 export default function UsagePage() {
-  const { usage: stats, fetchUsage: loadUsageStats, metrics, fetchMetrics: loadMetrics, isLoading } = useAppStore();
+  const { selectedApp, usage: stats, fetchUsage: loadUsageStats, metrics, fetchMetrics: loadMetrics, isLoading, invalidate } = useAppStore();
   const loading = isLoading['usage'];
   const metricChanges = metrics?.changes;
 
   useEffect(() => {
-    loadUsageStats();
+    invalidate('usage');
+    loadUsageStats(true);
     loadMetrics();
-  }, [loadUsageStats, loadMetrics]);
+  }, [selectedApp?.id, loadUsageStats, loadMetrics, invalidate]);
 
-  const usagePercentage = stats ? Math.min((stats.apiUsage.current / stats.apiUsage.limit) * 100, 100) : 0;
+  const usagePercentage = stats?.apiUsage ? Math.min((stats.apiUsage.current / stats.apiUsage.limit) * 100, 100) : 0;
 
   if (loading && !stats) {
     return (
@@ -70,23 +71,23 @@ export default function UsagePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatCard
             title="API Calls (30d)"
-            value={stats?.apiUsage.current.toLocaleString() || '0'}
+            value={stats?.apiUsage?.current?.toLocaleString() || '0'}
             icon={<Zap size={24} />}
             change={metricChanges?.apiCalls ? `${metricChanges.apiCalls > 0 ? '+' : ''}${metricChanges.apiCalls.toFixed(1)}%` : undefined}
           />
           <StatCard
             title="API Limit"
-            value={stats?.apiUsage.limit.toLocaleString() || '0'}
+            value={stats?.apiUsage?.limit?.toLocaleString() || '0'}
             icon={<TrendingUp size={24} />}
           />
           <StatCard
             title="Overage"
-            value={stats?.apiUsage.overage.toLocaleString() || '0'}
+            value={stats?.apiUsage?.overage?.toLocaleString() || '0'}
             icon={<AlertTriangle size={24} />}
           />
           <StatCard
             title="Est. Overage Cost"
-            value={`${stats?.apiUsage.estimatedCost.toFixed(2) || '0.00'}`}
+            value={`$${stats?.apiUsage?.estimatedCost?.toFixed(2) || '0.00'}`}
             icon={<Calendar size={24} />}
           />
         </div>
@@ -97,23 +98,32 @@ export default function UsagePage() {
               <CardTitle className="text-lg">Daily API Calls</CardTitle>
             </CardHeader>
             <CardBody>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats?.apiUsage.dailyUsage || []}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                    <Area type="monotone" dataKey="calls" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {stats?.apiUsage?.dailyUsage && stats.apiUsage.dailyUsage.length > 0 ? (
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={stats.apiUsage.dailyUsage}>
+                      <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                      <Area type="monotone" dataKey="calls" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[300px] w-full flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <p className="text-sm">No usage data available</p>
+                    <p className="text-xs mt-1">API calls will appear here once you start using the API</p>
+                  </div>
+                </div>
+              )}
             </CardBody>
           </Card>
 
@@ -136,8 +146,8 @@ export default function UsagePage() {
                     />
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>{stats?.apiUsage.current.toLocaleString()} used</span>
-                    <span>{stats?.apiUsage.limit.toLocaleString()} total</span>
+                    <span>{stats?.apiUsage?.current?.toLocaleString() || '0'} used</span>
+                    <span>{stats?.apiUsage?.limit?.toLocaleString() || '0'} total</span>
                   </div>
                 </div>
 
@@ -172,21 +182,29 @@ export default function UsagePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {stats?.recentLogs.map((log: any) => (
-                    <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-gray-300">
-                        {log.endpoint}
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant={log.status.startsWith('2') ? 'success' : 'error'} size="sm">
-                          {log.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500 text-xs">
-                        {new Date(log.timestamp).toLocaleString()}
+                  {stats?.recentLogs && stats.recentLogs.length > 0 ? (
+                    stats.recentLogs.map((log: any) => (
+                      <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                        <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-gray-300">
+                          {log.endpoint}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant={log.status?.startsWith('2') ? 'success' : 'error'} size="sm">
+                            {log.status || '200'}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500 text-xs">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                        No API activity yet
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>

@@ -4,13 +4,18 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
 import { Copy, RefreshCw, Key, ShieldCheck, Terminal, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function ApiKeysPage() {
-  const { selectedApp } = useAppStore();
+  const { selectedApp, usage, billing, fetchUsage, fetchBilling } = useAppStore();
   const [copied, setCopied] = useState(false);
   const [showKey, setShowKey] = useState(false);
+
+  useEffect(() => {
+    fetchUsage(true);
+    fetchBilling(true);
+  }, [selectedApp?.id, fetchUsage, fetchBilling]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -154,32 +159,71 @@ export default function ApiKeysPage() {
                   <div>
                     <div className="flex justify-between items-end mb-2">
                       <div>
-                        <div className="text-2xl font-bold">1,234</div>
+                        <div className="text-2xl font-bold">
+                          {usage?.apiUsage?.current?.toLocaleString() || selectedApp?.currentUsage?.toLocaleString() || '0'}
+                        </div>
                         <div className="text-xs text-gray-500">API Requests this month</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium">10,000</div>
+                        <div className="text-sm font-medium">
+                          {usage?.apiUsage?.limit?.toLocaleString() || selectedApp?.monthlyLimit?.toLocaleString() || '0'}
+                        </div>
                         <div className="text-xs text-gray-500">Monthly limit</div>
                       </div>
                     </div>
-                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '12.34%' }} />
-                    </div>
+                    {(() => {
+                      const current = usage?.apiUsage?.current || selectedApp?.currentUsage || 0;
+                      const limit = usage?.apiUsage?.limit || selectedApp?.monthlyLimit || 1;
+                      const percentage = Math.min((current / limit) * 100, 100);
+                      const isWarning = percentage > 80;
+                      const isDanger = percentage > 95;
+                      
+                      return (
+                        <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all ${
+                              isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="flex justify-between text-sm py-2">
                       <span className="text-gray-500">Plan</span>
-                      <span className="font-semibold">Free Tier</span>
+                      <span className="font-semibold">{billing?.subscription?.plan?.name || 'Free Tier'}</span>
                     </div>
                     <div className="flex justify-between text-sm py-2">
                       <span className="text-gray-500">Overage cost</span>
-                      <span className="font-semibold">$0.01 / hit</span>
+                      <span className="font-semibold">
+                        ${(billing?.subscription?.plan?.overagePrice || 0.01).toFixed(2)} / 1k hits
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm py-2">
-                      <span className="text-gray-500">Reset date</span>
-                      <span className="font-semibold">Feb 1, 2024</span>
+                      <span className="text-gray-500">Overage</span>
+                      <span className="font-semibold">
+                        {usage?.apiUsage?.overage?.toLocaleString() || '0'} calls
+                      </span>
                     </div>
+                    {usage?.apiUsage?.estimatedCost && usage.apiUsage.estimatedCost > 0 && (
+                      <div className="flex justify-between text-sm py-2">
+                        <span className="text-gray-500">Est. Overage Cost</span>
+                        <span className="font-semibold text-red-600">
+                          ${usage.apiUsage.estimatedCost.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {billing?.subscription?.currentPeriodEnd && (
+                      <div className="flex justify-between text-sm py-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                        <span className="text-gray-500">Reset date</span>
+                        <span className="font-semibold">
+                          {new Date(billing.subscription.currentPeriodEnd).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardBody>
@@ -203,3 +247,4 @@ export default function ApiKeysPage() {
     </DashboardLayout>
   );
 }
+

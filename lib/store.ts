@@ -598,15 +598,25 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   fetchUsage: async (force = false) => {
     const key = 'usage';
+    const selectedApp = get().selectedApp;
+    const cacheKey = selectedApp ? `usage-${selectedApp.id}` : 'usage';
+    
     if (!force && get().usage !== null) return;
 
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch('/api/partner/usage-stats');
+      const url = selectedApp 
+        ? `/api/partner/usage-stats?appId=${selectedApp.id}`
+        : '/api/partner/usage-stats';
+      
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         set({ usage: data });
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error fetching usage stats:', errorData.error || 'Unknown error');
       }
     } catch (error) {
       console.error('Error fetching usage stats:', error);

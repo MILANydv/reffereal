@@ -4,10 +4,11 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useAppStore } from '@/lib/store';
-import { ArrowLeft, Megaphone, Settings, Gift, Shield, BarChart3, Edit3, Trash2, Calendar, Users, MousePointerClick, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Megaphone, Settings, Gift, Shield, BarChart3, Edit3, Trash2, Calendar, Users, MousePointerClick, CheckCircle, TrendingUp, DollarSign } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
+import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 interface CampaignData {
   id: string;
@@ -16,11 +17,41 @@ interface CampaignData {
   referralType: string;
   rewardModel: string;
   rewardValue: number;
+  rewardCap?: number | null;
   startDate: string | null;
   endDate: string | null;
+  app: {
+    id: string;
+    name: string;
+  };
   _count: {
     referrals: number;
   };
+  analytics?: {
+    totalReferrals: number;
+    totalClicks: number;
+    totalConversions: number;
+    clickRate: number;
+    conversionRate: number;
+    totalRewardValue: number;
+    averageReward: number;
+    revenue: number;
+  };
+  recentReferrals?: Array<{
+    id: string;
+    referralCode: string;
+    referrerId: string | null;
+    status: string;
+    clickedAt: string | null;
+    convertedAt: string | null;
+    rewardAmount: number | null;
+    createdAt: string;
+  }>;
+  dailyStats?: Array<{
+    date: string;
+    referrals: number;
+    conversions: number;
+  }>;
 }
 
 export default function CampaignDetailPage() {
@@ -32,11 +63,16 @@ export default function CampaignDetailPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchCampaign = useCallback(async () => {
+    if (!id) return;
+    
+    setLoading(true);
     try {
       const response = await fetch(`/api/partner/campaigns/${id}`);
       if (response.ok) {
         const data = await response.json();
         setCampaign(data);
+      } else {
+        console.error('Failed to fetch campaign');
       }
     } catch (error) {
       console.error('Error fetching campaign:', error);
@@ -84,11 +120,20 @@ export default function CampaignDetailPage() {
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: <Megaphone size={18} /> },
-    { id: 'rules', name: 'Rules', icon: <Shield size={18} /> },
-    { id: 'rewards', name: 'Rewards', icon: <Gift size={18} /> },
     { id: 'performance', name: 'Performance', icon: <BarChart3 size={18} /> },
-    { id: 'settings', name: 'Settings', icon: <Settings size={18} /> },
+    { id: 'referrals', name: 'Referrals', icon: <Users size={18} /> },
   ];
+
+  const analytics = campaign.analytics || {
+    totalReferrals: campaign._count?.referrals || 0,
+    totalClicks: 0,
+    totalConversions: 0,
+    clickRate: 0,
+    conversionRate: 0,
+    totalRewardValue: 0,
+    averageReward: 0,
+    revenue: 0,
+  };
 
   return (
     <DashboardLayout>
@@ -148,55 +193,67 @@ export default function CampaignDetailPage() {
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
               <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Quick Stats</CardTitle>
-                  </CardHeader>
-                  <CardBody>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-1">
-                        <div className="text-gray-500 text-xs font-bold uppercase">Total Referrals</div>
-                        <div className="text-3xl font-bold">{campaign._count?.referrals || 0}</div>
-                        <div className="text-green-600 text-xs font-bold flex items-center">
-                          <TrendingUp size={12} className="mr-1" /> 8.2%
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-gray-500 text-xs font-bold uppercase">Conversions</div>
-                        <div className="text-3xl font-bold">124</div>
-                        <div className="text-green-600 text-xs font-bold flex items-center">
-                          <TrendingUp size={12} className="mr-1" /> 12.5%
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-gray-500 text-xs font-bold uppercase">Conversion Rate</div>
-                        <div className="text-3xl font-bold">14.8%</div>
-                        <div className="text-amber-600 text-xs font-bold flex items-center">
-                          <TrendingDown size={12} className="mr-1" /> 2.1%
-                        </div>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardBody className="p-6">
+                      <div className="text-gray-500 text-xs font-bold uppercase mb-2">Total Referrals</div>
+                      <div className="text-3xl font-bold">{analytics.totalReferrals.toLocaleString()}</div>
+                    </CardBody>
+                  </Card>
+                  <Card>
+                    <CardBody className="p-6">
+                      <div className="text-gray-500 text-xs font-bold uppercase mb-2">Total Clicks</div>
+                      <div className="text-3xl font-bold">{analytics.totalClicks.toLocaleString()}</div>
+                    </CardBody>
+                  </Card>
+                  <Card>
+                    <CardBody className="p-6">
+                      <div className="text-gray-500 text-xs font-bold uppercase mb-2">Conversions</div>
+                      <div className="text-3xl font-bold">{analytics.totalConversions.toLocaleString()}</div>
+                    </CardBody>
+                  </Card>
+                </div>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
+                    <CardTitle>Recent Referrals</CardTitle>
                   </CardHeader>
                   <CardBody className="p-0">
                     <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="px-6 py-4 flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs">JD</div>
-                            <div>
-                              <p className="text-sm font-medium">New referral created</p>
-                              <p className="text-xs text-gray-500">by john.doe@example.com</p>
+                      {campaign.recentReferrals && campaign.recentReferrals.length > 0 ? (
+                        campaign.recentReferrals.map((referral) => (
+                          <div key={referral.id} className="px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs">
+                                {referral.referrerId?.charAt(0).toUpperCase() || 'U'}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium font-mono">{referral.referralCode}</p>
+                                <p className="text-xs text-gray-500">
+                                  {referral.referrerId || 'Anonymous'} • {new Date(referral.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant={
+                                referral.status === 'CONVERTED' ? 'success' :
+                                referral.status === 'CLICKED' ? 'default' : 'default'
+                              }>
+                                {referral.status}
+                              </Badge>
+                              {referral.rewardAmount && (
+                                <span className="text-sm font-semibold text-green-600">
+                                  ${referral.rewardAmount.toFixed(2)}
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-400">2 hours ago</div>
+                        ))
+                      ) : (
+                        <div className="px-6 py-12 text-center text-gray-500">
+                          No referrals yet
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardBody>
                 </Card>
@@ -222,6 +279,12 @@ export default function CampaignDetailPage() {
                         {campaign.rewardModel === 'FIXED_CURRENCY' ? `$${campaign.rewardValue}` : `${campaign.rewardValue}%`}
                       </span>
                     </div>
+                    {campaign.rewardCap && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500">Reward Cap</span>
+                        <span className="font-medium">${campaign.rewardCap}</span>
+                      </div>
+                    )}
                     <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                       <div className="flex items-center text-xs text-gray-500 font-bold uppercase mb-2">
                         <Calendar size={14} className="mr-1" /> Active Dates
@@ -234,6 +297,36 @@ export default function CampaignDetailPage() {
                     </div>
                   </CardBody>
                 </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Key Metrics</CardTitle>
+                  </CardHeader>
+                  <CardBody className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">Click Rate</span>
+                      <span className="text-lg font-bold">{analytics.clickRate.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">Conversion Rate</span>
+                      <span className="text-lg font-bold">{analytics.conversionRate.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">Avg Reward</span>
+                      <span className="text-lg font-bold">${analytics.averageReward.toFixed(2)}</span>
+                    </div>
+                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">Total Revenue</span>
+                        <span className="text-lg font-bold text-green-600">${analytics.revenue.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm text-gray-500">Total Rewards</span>
+                        <span className="text-lg font-bold text-red-600">${analytics.totalRewardValue.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
               </div>
             </div>
           )}
@@ -241,75 +334,128 @@ export default function CampaignDetailPage() {
           {activeTab === 'performance' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatBox title="Clicks" value="1,240" change="+12%" />
-                <StatBox title="Conversions" value="124" change="+5%" />
-                <StatBox title="CPA" value="$12.50" change="-2%" />
-                <StatBox title="Revenue" value="$45,000" change="+18%" />
+                <Card>
+                  <CardBody className="p-6">
+                    <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Clicks</div>
+                    <div className="text-2xl font-bold">{analytics.totalClicks.toLocaleString()}</div>
+                  </CardBody>
+                </Card>
+                <Card>
+                  <CardBody className="p-6">
+                    <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Conversions</div>
+                    <div className="text-2xl font-bold">{analytics.totalConversions.toLocaleString()}</div>
+                  </CardBody>
+                </Card>
+                <Card>
+                  <CardBody className="p-6">
+                    <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Conversion Rate</div>
+                    <div className="text-2xl font-bold">{analytics.conversionRate.toFixed(1)}%</div>
+                  </CardBody>
+                </Card>
+                <Card>
+                  <CardBody className="p-6">
+                    <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Revenue</div>
+                    <div className="text-2xl font-bold text-green-600">${analytics.revenue.toLocaleString()}</div>
+                  </CardBody>
+                </Card>
               </div>
+
               <Card>
                 <CardHeader>
-                  <CardTitle>Performance over time</CardTitle>
+                  <CardTitle>Performance Over Time (Last 30 Days)</CardTitle>
                 </CardHeader>
                 <CardBody>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-800">
-                    <div className="text-center">
-                      <BarChart3 className="mx-auto text-gray-400 mb-2" size={32} />
-                      <p className="text-sm text-gray-500">Performance charts will be displayed here</p>
+                  {campaign.dailyStats && campaign.dailyStats.length > 0 ? (
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={campaign.dailyStats}>
+                          <defs>
+                            <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="colorConversions" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                          <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                          <Legend />
+                          <Area type="monotone" dataKey="referrals" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorReferrals)" name="Referrals" />
+                          <Area type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorConversions)" name="Conversions" />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-800">
+                      <div className="text-center">
+                        <BarChart3 className="mx-auto text-gray-400 mb-2" size={32} />
+                        <p className="text-sm text-gray-500">No performance data yet</p>
+                      </div>
+                    </div>
+                  )}
                 </CardBody>
               </Card>
             </div>
           )}
 
-          {(activeTab === 'rules' || activeTab === 'rewards' || activeTab === 'settings') && (
+          {activeTab === 'referrals' && (
             <Card className="animate-in fade-in duration-300">
-              <CardBody className="py-12 text-center">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                  <Settings size={32} />
+              <CardHeader>
+                <CardTitle>All Referrals</CardTitle>
+              </CardHeader>
+              <CardBody className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                        <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Referral Code</th>
+                        <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Referrer</th>
+                        <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                        <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Reward</th>
+                        <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {campaign.recentReferrals && campaign.recentReferrals.length > 0 ? (
+                        campaign.recentReferrals.map((referral) => (
+                          <tr key={referral.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                            <td className="px-6 py-4 font-mono text-xs">{referral.referralCode}</td>
+                            <td className="px-6 py-4">{referral.referrerId || 'Anonymous'}</td>
+                            <td className="px-6 py-4">
+                              <Badge variant={
+                                referral.status === 'CONVERTED' ? 'success' :
+                                referral.status === 'CLICKED' ? 'default' : 'default'
+                              }>
+                                {referral.status}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4">
+                              {referral.rewardAmount ? `$${referral.rewardAmount.toFixed(2)}` : '-'}
+                            </td>
+                            <td className="px-6 py-4 text-gray-500 text-xs">
+                              {new Date(referral.createdAt).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                            No referrals found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-                <h3 className="text-xl font-bold">Manage {activeTab}</h3>
-                <p className="text-gray-500 max-w-md mx-auto mt-2">
-                  Use this section to configure specific details for your campaign {activeTab}.
-                </p>
-                <button className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm">
-                  Update {activeTab}
-                </button>
               </CardBody>
             </Card>
           )}
         </div>
       </div>
     </DashboardLayout>
-  );
-}
-
-function StatBox({ title, value, change }: { title: string, value: string, change: string }) {
-  const isPositive = change.startsWith('+');
-  return (
-    <Card>
-      <CardBody className="p-4">
-        <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">{title}</div>
-        <div className="flex items-end justify-between">
-          <div className="text-2xl font-bold">{value}</div>
-          <div className={`${isPositive ? 'text-green-600' : 'text-red-600'} text-xs font-bold flex items-center mb-1`}>
-            {isPositive ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
-            {change}
-          </div>
-        </div>
-      </CardBody>
-    </Card>
-  );
-}
-
-function TrendingUp({ size, className }: { size: number, className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
-  );
-}
-
-function TrendingDown({ size, className }: { size: number, className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></svg>
   );
 }
