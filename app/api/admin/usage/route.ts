@@ -21,10 +21,12 @@ export async function GET() {
       
       prisma.apiUsageLog.groupBy({
         by: ['appId'],
-        _count: true,
+        _count: {
+          id: true,
+        },
         orderBy: {
           _count: {
-            appId: 'desc',
+            id: 'desc',
           },
         },
         take: 10,
@@ -65,12 +67,12 @@ export async function GET() {
         },
       }),
       
-      prisma.$queryRaw`
+      prisma.$queryRaw<Array<{ month: string; count: bigint }>>`
         SELECT 
-          strftime('%Y-%m', timestamp) as month,
-          COUNT(*) as count
-        FROM ApiUsageLog
-        WHERE timestamp >= datetime('now', '-12 months')
+          TO_CHAR("timestamp", 'YYYY-MM') as month,
+          COUNT(*)::int as count
+        FROM "ApiUsageLog"
+        WHERE "timestamp" >= NOW() - INTERVAL '12 months'
         GROUP BY month
         ORDER BY month DESC
       `,
@@ -78,7 +80,7 @@ export async function GET() {
 
     const appDetails = await prisma.app.findMany({
       where: {
-        id: { in: apiCallsByApp.map(a => a.appId) },
+        id: { in: apiCallsByApp.map(a => a.appId).filter((id): id is string => id !== null) },
       },
       select: {
         id: true,
@@ -100,7 +102,7 @@ export async function GET() {
 
     const partnerDetails = await prisma.partner.findMany({
       where: {
-        id: { in: apiCallsByPartner.map(p => p.partnerId) },
+        id: { in: apiCallsByPartner.map(p => p.partnerId).filter((id): id is string => id !== null) },
       },
       select: {
         id: true,
@@ -128,7 +130,7 @@ export async function GET() {
       return {
         appId: item.appId,
         appName: app?.name || 'Unknown',
-        calls: item._count,
+        calls: item._count.id || 0,
         currentUsage: app?.currentUsage || 0,
         monthlyLimit: app?.monthlyLimit || 0,
         partner: app?.partner,
@@ -146,12 +148,34 @@ export async function GET() {
       };
     });
 
+    // Format recent logs
+    const formattedRecentLogs = recentLogs.map(log => ({
+      id: log.id,
+      endpoint: log.endpoint,
+      timestamp: log.timestamp.toISOString(),
+      ipAddress: log.ipAddress,
+      userAgent: log.userAgent,
+      app: log.app ? {
+        name: log.app.name,
+        partner: log.app.partner ? {
+          companyName: log.app.partner.companyName,
+          email: log.app.partner.user?.email,
+        } : null,
+      } : null,
+    }));
+
+    // Format usage by month
+    const formattedUsageByMonth = (usageByMonth || []).map((item: any) => ({
+      month: item.month,
+      count: Number(item.count),
+    }));
+
     return NextResponse.json({
       totalApiCalls,
       topApps,
       topPartners,
-      recentLogs,
-      usageByMonth,
+      recentLogs: formattedRecentLogs,
+      usageByMonth: formattedUsageByMonth,
     });
   } catch (error) {
     console.error('Error fetching usage data:', error);
