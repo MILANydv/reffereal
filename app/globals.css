@@ -10,9 +10,32 @@
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
   --font-display: var(--font-display);
-  --font-mono: Menlo, Monaco, "Courier New", monospace;
+  --font-mono: "Menlo", "Monaco", "Courier New", monospace;
   
   --radius-bento: 2rem;
+  
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  
+  --color-red-50: #fef2f2;
+  --color-red-500: #ef4444;
+  
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  
+  --color-amber-500: #f59e0b;
+  
+  --color-indigo-500: #6366f1;
+  
+  --color-pink-400: #f472b6;
+  
+  --color-blue-400: #60a5fa;
 }
 
 @layer base {
@@ -31,14 +54,17 @@
   .bento-card:hover {
     @apply shadow-[0_20px_50px_rgba(37,99,235,0.1)] -translate-y-1;
   }
+  .rounded-bento {
+    border-radius: 2rem;
+  }
   .gradient-glow {
     @apply absolute -z-10 blur-[100px] opacity-30 rounded-full;
   }
-  .molecule-node {
-    @apply absolute size-16 rounded-2xl glass-panel flex items-center justify-center shadow-2xl border border-white/40;
-  }
   .glass-panel {
     @apply bg-white/40 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+  .molecule-node {
+    @apply absolute size-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/40 flex items-center justify-center shadow-2xl;
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;

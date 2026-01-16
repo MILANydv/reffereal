@@ -33,8 +33,8 @@ export default function ServicesPage() {
     },
     {
       icon: Settings,
-      title: 'Custom Configuration',
-      description: 'Need a custom setup? We'll configure your referral program to match your exact business requirements and workflows.',
+      title: "Custom Configuration",
+      description: "Need a custom setup? We'll configure your referral program to match your exact business requirements and workflows.",
       features: ['Custom reward models', 'Workflow automation', 'Integration setup', 'Custom reporting'],
       color: 'from-purple-500 to-pink-500'
     },
@@ -334,5 +334,6 @@ export default function ServicesPage() {
     </div>
   );
 }
+
 
 
