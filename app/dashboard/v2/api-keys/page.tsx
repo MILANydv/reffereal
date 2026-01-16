@@ -5,6 +5,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
 import { Copy, RefreshCw, Key, ShieldCheck, Terminal, Check } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function ApiKeysPage() {
   const { selectedApp } = useAppStore();
@@ -186,11 +187,14 @@ export default function ApiKeysPage() {
 
             <Card className="bg-blue-600 text-white border-none">
               <CardBody className="p-6">
-                <h3 className="font-bold text-lg mb-2">Need higher limits?</h3>
-                <p className="text-blue-100 text-sm mb-4">Upgrade your plan to get more monthly API hits and enterprise-grade features.</p>
-                <button className="w-full bg-white text-blue-600 font-bold py-2 rounded-lg text-sm hover:bg-blue-50 transition-colors">
-                  View Pricing Plans
-                </button>
+                <h3 className="font-bold text-lg mb-2">Test Your API</h3>
+                <p className="text-blue-100 text-sm mb-4">Try out the API endpoints with our interactive simulator. Test referrals, clicks, conversions, and stats.</p>
+                <Link
+                  href="/demo"
+                  className="w-full bg-white text-blue-600 font-bold py-2 rounded-lg text-sm hover:bg-blue-50 transition-colors block text-center"
+                >
+                  Open API Simulator
+                </Link>
               </CardBody>
             </Card>
           </div>

@@ -94,8 +94,8 @@ interface SidebarProps {
 
 export function Sidebar({ userRole, userEmail }: SidebarProps) {
   const pathname = usePathname();
-  const { selectedAppId } = useAppStore();
-  const navigation = userRole === 'SUPER_ADMIN' ? adminNavigation : getPartnerNavigation(selectedAppId);
+  const { selectedApp } = useAppStore();
+  const navigation = userRole === 'SUPER_ADMIN' ? adminNavigation : getPartnerNavigation(selectedApp?.id || null);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800">
