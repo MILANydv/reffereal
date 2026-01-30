@@ -91,18 +91,28 @@ export default function AppOverviewPage() {
             fetchWebhookDeliveries(appId),
             fetchMetrics(),
           ]);
-        } finally {
-          if (isAppChanging) {
-            // Small delay to ensure smooth transition
-            setTimeout(() => {
-              setAppTransitioning(false);
-            }, 300);
-          }
+        } catch (error) {
+          console.error('Error fetching app data:', error);
         }
       };
       fetchData();
     }
-  }, [appId, onboardingStatus.completed, dateRange, selectedApp?.id, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics, setAppTransitioning]);
+  }, [appId, onboardingStatus.completed, dateRange, selectedApp?.id, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
+
+  // Watch loading states and clear transitioning when all are complete
+  useEffect(() => {
+    if (!onboardingStatus.completed || !appId) return;
+
+    const statsLoading = isLoading[`stats-${appId}`];
+    const campaignsLoading = isLoading[`activeCampaigns-${appId}`];
+    const webhooksLoading = isLoading[`webhookDeliveries-${appId}`];
+    const metricsLoading = isLoading['metrics'];
+    
+    // Clear transitioning state when all fetches are complete
+    if (!statsLoading && !campaignsLoading && !webhooksLoading && !metricsLoading) {
+      setAppTransitioning(false);
+    }
+  }, [isLoading, appId, onboardingStatus.completed, setAppTransitioning]);
 
   const checkOnboardingStatus = async () => {
     try {
