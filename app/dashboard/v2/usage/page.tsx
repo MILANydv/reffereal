@@ -5,21 +5,25 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
 import { useEffect } from 'react';
-import { Zap, TrendingUp, AlertTriangle, Calendar } from 'lucide-react';
+import { Zap, TrendingUp, AlertTriangle, Calendar, Users, MousePointerClick, CheckCircle, DollarSign } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/lib/store';
+import Link from 'next/link';
 
 export default function UsagePage() {
-  const { selectedApp, usage: stats, fetchUsage: loadUsageStats, metrics, fetchMetrics: loadMetrics, isLoading, invalidate } = useAppStore();
+  const { usage: stats, fetchUsage: loadUsageStats, metrics, fetchMetrics: loadMetrics, isLoading, invalidate, stats: dashboardStats, fetchStats } = useAppStore();
   const loading = isLoading['usage'];
   const metricChanges = metrics?.changes;
 
   useEffect(() => {
     invalidate('usage');
+    // Fetch platform-level usage (no appId = all apps)
     loadUsageStats(true);
     loadMetrics();
-  }, [selectedApp?.id, loadUsageStats, loadMetrics, invalidate]);
+    // Fetch platform-level stats for referrals data
+    fetchStats('global');
+  }, [loadUsageStats, loadMetrics, invalidate, fetchStats]);
 
   const usagePercentage = stats?.apiUsage ? Math.min((stats.apiUsage.current / stats.apiUsage.limit) * 100, 100) : 0;
 
@@ -91,6 +95,69 @@ export default function UsagePage() {
             icon={<Calendar size={24} />}
           />
         </div>
+
+        {stats?.referralStats && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <StatCard
+                title="Total Referrals (30d)"
+                value={stats.referralStats.totalReferrals?.toLocaleString() || '0'}
+                icon={<Users size={24} />}
+              />
+              <StatCard
+                title="Total Clicks"
+                value={stats.referralStats.totalClicks?.toLocaleString() || '0'}
+                icon={<MousePointerClick size={24} />}
+              />
+              <StatCard
+                title="Total Conversions"
+                value={stats.referralStats.totalConversions?.toLocaleString() || '0'}
+                icon={<CheckCircle size={24} />}
+              />
+              <StatCard
+                title="Total Rewards"
+                value={`$${stats.referralStats.totalRewards?.toFixed(2) || '0.00'}`}
+                icon={<DollarSign size={24} />}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Referral Performance</CardTitle>
+                </CardHeader>
+                <CardBody>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Click Rate</span>
+                        <span className="text-sm font-medium">{stats.referralStats.clickRate}%</span>
+                      </div>
+                      <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500"
+                          style={{ width: `${stats.referralStats.clickRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</span>
+                        <span className="text-sm font-medium">{stats.referralStats.conversionRate}%</span>
+                      </div>
+                      <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-green-500"
+                          style={{ width: `${stats.referralStats.conversionRate}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+          </>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
@@ -167,49 +234,55 @@ export default function UsagePage() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Recent API Activity</CardTitle>
-          </CardHeader>
-          <CardBody className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
-                    <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Endpoint</th>
-                    <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                    <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {stats?.recentLogs && stats.recentLogs.length > 0 ? (
-                    stats.recentLogs.map((log: any) => (
-                      <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                        <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-gray-300">
-                          {log.endpoint}
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={log.status?.startsWith('2') ? 'success' : 'error'} size="sm">
-                            {log.status || '200'}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-gray-500 text-xs">
-                          {new Date(log.timestamp).toLocaleString()}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg">Recent API Activity</CardTitle>
+              <Link
+                href="/dashboard/v2/usage/activity"
+                className="text-xs text-blue-600 hover:underline font-bold"
+              >
+                View all activity
+              </Link>
+            </CardHeader>
+            <CardBody className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Endpoint</th>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-400">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {stats?.recentLogs && stats.recentLogs.length > 0 ? (
+                      stats.recentLogs.slice(0, 10).map((log: any) => (
+                        <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                          <td className="px-6 py-4 font-mono text-xs text-gray-700 dark:text-gray-300">
+                            {log.endpoint}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={log.status?.startsWith('2') ? 'success' : 'error'} size="sm">
+                              {log.status || '200'}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 text-xs">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                          No API activity yet
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
-                        No API activity yet
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardBody>
-        </Card>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardBody>
+          </Card>
       </div>
     </DashboardLayout>
   );

@@ -3,52 +3,62 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ActionDropdown } from '@/components/ui/ActionDropdown';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { DateRangeFilter, DateRange } from '@/components/ui/DateRangeFilter';
 import { useAppStore, Referral } from '@/lib/store';
-import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle } from 'lucide-react';
+import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
 import { useRouter } from 'next/navigation';
 
 export default function ReferralsPage() {
-  const { selectedApp, referrals, fetchReferrals, isLoading } = useAppStore();
+  const { referrals, fetchReferrals, isLoading } = useAppStore();
   const router = useRouter();
-  const loading = isLoading[`referrals-${selectedApp?.id}`];
+  const loading = isLoading['referrals-platform'];
   const [markSuspiciousModal, setMarkSuspiciousModal] = useState<{ isOpen: boolean; referralId: string | null; referralCode: string }>({
     isOpen: false,
     referralId: null,
     referralCode: '',
   });
   const [isMarking, setIsMarking] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: null,
+    endDate: null,
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<{ page: number; totalPages: number; totalItems: number } | null>(null);
+  const itemsPerPage = 25;
 
   useEffect(() => {
-    if (selectedApp) {
-      fetchReferrals(selectedApp.id);
-    }
-  }, [selectedApp, fetchReferrals]);
+    loadReferrals();
+  }, [currentPage, statusFilter, searchQuery, dateRange]);
 
-  if (!selectedApp) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64 text-center">
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 mb-4">
-            <UserPlus size={32} />
-          </div>
-          <h2 className="text-xl font-bold">No App Selected</h2>
-          <p className="text-gray-500 mt-2">Please select an app from the switcher above to view referrals.</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const loadReferrals = async () => {
+    // Fetch platform-level referrals (no appId = all apps)
+    const result = await fetchReferrals('platform', {
+      page: currentPage,
+      limit: itemsPerPage,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      search: searchQuery || undefined,
+      startDate: dateRange.startDate || undefined,
+      endDate: dateRange.endDate || undefined,
+    });
+    if (result.pagination) {
+      setPagination(result.pagination);
+    }
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Referrals</h1>
-            <p className="text-gray-500 mt-1">Track and manage individual referral instances.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Platform Referrals</h1>
+            <p className="text-gray-500 mt-1">Track and manage all referral instances across all your apps.</p>
           </div>
           <button className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors font-medium text-sm">
             <Download size={18} className="mr-2" />
@@ -57,20 +67,51 @@ export default function ReferralsPage() {
         </div>
 
         <Card className="overflow-hidden">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by code or ID..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+          <div className="p-4 border-b border-gray-100 dark:border-gray-800 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by code or ID..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <DateRangeFilter value={dateRange} onChange={setDateRange} presets={['7d', '30d', '90d', 'custom']} />
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button className="flex items-center px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                <Filter size={16} className="mr-2" />
-                Filter
-              </button>
+            <div className="flex items-center gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="CLICKED">Clicked</option>
+                <option value="CONVERTED">Converted</option>
+                <option value="FLAGGED">Flagged</option>
+              </select>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setDateRange({ startDate: null, endDate: null });
+                  setCurrentPage(1);
+                }}
+              >
+                Clear Filters
+              </Button>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -118,7 +159,14 @@ export default function ReferralsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 font-mono text-xs">{referral.referrerId}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{referral.campaign.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="font-medium">{referral.campaign.name}</div>
+                          {referral.campaign.app && (
+                            <div className="text-xs text-gray-500 mt-0.5">{referral.campaign.app.name}</div>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge
                           variant={
@@ -165,15 +213,38 @@ export default function ReferralsPage() {
               </tbody>
             </table>
           </div>
-          <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
-            <div className="text-xs text-gray-500 font-medium">
-              Showing {referrals.length} referrals
+          {!loading && pagination && (
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
+              <div className="text-xs text-gray-500 font-medium">
+                Showing {(pagination.page - 1) * itemsPerPage + 1} to {Math.min(pagination.page * itemsPerPage, pagination.totalItems)} of {pagination.totalItems} referrals
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </Button>
+                <div className="text-xs text-gray-500 font-medium">
+                  Page {pagination.page} of {pagination.totalPages}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                  disabled={currentPage === pagination.totalPages}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button disabled className="px-3 py-1.5 rounded bg-white dark:bg-black border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-400">Previous</button>
-              <button disabled className="px-3 py-1.5 rounded bg-white dark:bg-black border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-400">Next</button>
-            </div>
-          </div>
+          )}
         </Card>
 
         <ConfirmModal
@@ -182,14 +253,12 @@ export default function ReferralsPage() {
           onConfirm={async () => {
             if (!markSuspiciousModal.referralId) return;
             setIsMarking(true);
-            try {
+              try {
               const response = await fetch(`/api/partner/referrals/${markSuspiciousModal.referralId}/flag`, {
                 method: 'POST',
               });
               if (response.ok) {
-                if (selectedApp) {
-                  fetchReferrals(selectedApp.id);
-                }
+                loadReferrals();
                 setMarkSuspiciousModal({ isOpen: false, referralId: null, referralCode: '' });
               }
             } catch (error) {

@@ -40,12 +40,52 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
     }
 
+    // If appId is provided, filter to that app; otherwise show all apps (platform-level)
     let apps = partner.apps;
     if (appId) {
       apps = apps.filter(app => app.id === appId);
     }
 
     const allLogs = apps.flatMap(app => app.apiUsageLogs);
+    
+    // Get referral stats for platform-level view
+    let referralStats = null;
+    if (!appId) {
+      // Platform-level: get all referrals across all apps
+      const allReferrals = await prisma.referral.findMany({
+        where: {
+          campaign: {
+            app: {
+              partnerId,
+            },
+          },
+          createdAt: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          },
+        },
+        include: {
+          campaign: {
+            select: {
+              appId: true,
+            },
+          },
+        },
+      });
+
+      const totalReferrals = allReferrals.length;
+      const totalClicks = allReferrals.filter(r => r.clickedAt).length;
+      const totalConversions = allReferrals.filter(r => r.convertedAt).length;
+      const totalRewards = allReferrals.reduce((sum, r) => sum + (r.rewardAmount || 0), 0);
+
+      referralStats = {
+        totalReferrals,
+        totalClicks,
+        totalConversions,
+        totalRewards,
+        clickRate: totalReferrals > 0 ? ((totalClicks / totalReferrals) * 100).toFixed(1) : '0',
+        conversionRate: totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(1) : '0',
+      };
+    }
 
     const dailyUsage = calculateDailyUsage(allLogs);
 
@@ -73,6 +113,7 @@ export async function GET(request: NextRequest) {
       },
       endpointBreakdown,
       recentLogs,
+      referralStats, // Include referral stats for platform-level view
     });
   } catch (error) {
     console.error('Usage stats error:', error);

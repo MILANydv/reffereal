@@ -223,14 +223,19 @@ export default function DashboardV2Page() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Active Campaigns</CardTitle>
+              {activeCampaigns.length > 4 && (
+                <Link href="/dashboard/v2/campaigns" className="text-xs text-blue-600 hover:underline font-bold">
+                  View all ({activeCampaigns.length})
+                </Link>
+              )}
             </CardHeader>
             <CardBody className="p-0">
               {activeCampaigns.length > 0 ? (
                 <>
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {activeCampaigns.map((campaign) => (
+                    {activeCampaigns.slice(0, 4).map((campaign) => (
                       <div key={campaign.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold text-sm">{campaign.name}</span>
@@ -273,8 +278,9 @@ export default function DashboardV2Page() {
             </CardHeader>
             <CardBody className="p-0">
               {webhookDeliveries.length > 0 ? (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {webhookDeliveries.map((delivery) => (
+                <>
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {webhookDeliveries.slice(0, 5).map((delivery) => (
                     <div key={delivery.id} className="px-6 py-4 flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className={`w-2 h-2 rounded-full ${delivery.success ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -285,8 +291,16 @@ export default function DashboardV2Page() {
                       </div>
                       <span className="text-xs font-mono text-gray-400">{delivery.statusCode}</span>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  {webhookDeliveries.length > 5 && (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800">
+                      <Link href="/dashboard/v2/webhooks" className="text-xs font-bold text-blue-600 hover:underline flex items-center justify-center">
+                        View all webhook deliveries ({webhookDeliveries.length}) <ArrowRight size={14} className="ml-1" />
+                      </Link>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="p-8 text-center text-sm text-gray-500">
                   No webhook deliveries yet
@@ -301,8 +315,9 @@ export default function DashboardV2Page() {
             </CardHeader>
             <CardBody className="p-0">
               {stats?.recentActivity && stats.recentActivity.length > 0 ? (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {stats.recentActivity.map((activity: any) => (
+                <>
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {stats.recentActivity.slice(0, 5).map((activity: any) => (
                     <div key={activity.id} className="flex items-start justify-between p-4 px-6">
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>
@@ -310,8 +325,16 @@ export default function DashboardV2Page() {
                       </div>
                       <Badge variant="default" size="sm">{activity.type}</Badge>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  {stats.recentActivity.length > 5 && (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800">
+                      <p className="text-xs text-gray-500 text-center">
+                        Showing 5 of {stats.recentActivity.length} activities
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-12">No recent activity</p>
               )}

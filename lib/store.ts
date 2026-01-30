@@ -255,6 +255,9 @@ export interface Referral {
   createdAt: string;
   campaign?: {
     name: string;
+    app?: {
+      name: string;
+    };
   };
 }
 
@@ -367,8 +370,8 @@ interface AppStore {
   fetchActiveCampaigns: (appId?: string) => Promise<void>;
   fetchWebhookDeliveries: (appId?: string) => Promise<void>;
   fetchMetrics: () => Promise<void>;
-  fetchReferrals: (appId: string) => Promise<void>;
-  fetchCampaigns: (appId: string) => Promise<void>;
+  fetchReferrals: (appId: string, options?: { page?: number; limit?: number; status?: string; search?: string; startDate?: Date; endDate?: Date }) => Promise<{ referrals: Referral[]; pagination?: { page: number; totalPages: number; totalItems: number } }>;
+  fetchCampaigns: (appId: string, options?: { page?: number; limit?: number; status?: string; search?: string }) => Promise<{ campaigns: Campaign[]; pagination?: { page: number; totalPages: number; totalItems: number } }>;
   fetchAnalytics: (appId: string) => Promise<void>;
   fetchBilling: (force?: boolean) => Promise<void>;
   fetchPricing: () => Promise<void>;
@@ -538,35 +541,67 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  fetchReferrals: async (appId) => {
-    const key = `referrals-${appId}`;
+  fetchReferrals: async (appId, options = {}) => {
+    const key = appId === 'platform' ? 'referrals-platform' : `referrals-${appId}`;
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch(`/api/partner/referrals?appId=${appId}`);
+      const params = new URLSearchParams();
+      // Only add appId if it's not 'platform' (platform = all apps)
+      if (appId && appId !== 'platform') {
+        params.append('appId', appId);
+      }
+      if (options.page) params.append('page', options.page.toString());
+      if (options.limit) params.append('limit', options.limit.toString());
+      if (options.status) params.append('status', options.status);
+      if (options.search) params.append('search', options.search);
+      if (options.startDate) params.append('startDate', options.startDate.toISOString());
+      if (options.endDate) params.append('endDate', options.endDate.toISOString());
+
+      const response = await fetch(`/api/partner/referrals?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         set({ referrals: data.referrals || [] });
+        return {
+          referrals: data.referrals || [],
+          pagination: data.pagination,
+        };
       }
+      return { referrals: [] };
     } catch (error) {
       console.error('Error fetching referrals:', error);
+      return { referrals: [] };
     } finally {
       set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
     }
   },
 
-  fetchCampaigns: async (appId) => {
+  fetchCampaigns: async (appId, options = {}) => {
     const key = `campaigns-${appId}`;
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch(`/api/partner/campaigns?appId=${appId}`);
+      const params = new URLSearchParams();
+      params.append('appId', appId);
+      if (options.page) params.append('page', options.page.toString());
+      if (options.limit) params.append('limit', options.limit.toString());
+      if (options.status) params.append('status', options.status);
+      if (options.search) params.append('search', options.search);
+
+      const response = await fetch(`/api/partner/campaigns?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        set({ campaigns: Array.isArray(data) ? data : (data.campaigns || []) });
+        const campaigns = data.campaigns || data || [];
+        set({ campaigns: Array.isArray(campaigns) ? campaigns : [] });
+        return {
+          campaigns: Array.isArray(campaigns) ? campaigns : [],
+          pagination: data.pagination,
+        };
       }
+      return { campaigns: [] };
     } catch (error) {
       console.error('Error fetching campaigns:', error);
+      return { campaigns: [] };
     } finally {
       set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
     }

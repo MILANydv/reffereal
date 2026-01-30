@@ -13,51 +13,81 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const appId = searchParams.get('appId');
     const campaignId = searchParams.get('campaignId');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '25');
+    const statusFilter = searchParams.get('status');
+    const search = searchParams.get('search');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
-    if (!appId) {
-      return NextResponse.json(
-        { error: 'appId is required' },
-        { status: 400 }
-      );
-    }
+    const partnerId = session.user.partnerId;
 
-    // Verify app belongs to partner
-    const app = await prisma.app.findFirst({
-      where: {
-        id: appId,
-        partnerId: session.user.partnerId,
+    // Build where clause - if appId is provided, filter to that app; otherwise show all apps (platform-level)
+    const whereClause: any = {
+      campaign: {
+        app: {
+          partnerId,
+          ...(appId ? { id: appId } : {}),
+        },
       },
-    });
-
-    if (!app) {
-      return NextResponse.json({ error: 'App not found' }, { status: 404 });
-    }
-
-    const whereClause: {
-      campaign: { appId: string; id?: string };
-    } = {
-      campaign: { appId },
     };
 
     if (campaignId) {
       whereClause.campaign.id = campaignId;
     }
 
+    if (statusFilter && statusFilter !== 'all') {
+      whereClause.status = statusFilter;
+    }
+
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) {
+        whereClause.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = new Date(endDate);
+      }
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { referralCode: { contains: search, mode: 'insensitive' } },
+        { referrerId: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Get total count
+    const totalItems = await prisma.referral.count({ where: whereClause });
+    const totalPages = Math.ceil(totalItems / limit);
+
     const referrals = await prisma.referral.findMany({
       where: whereClause,
       include: {
         campaign: {
-          select: {
-            name: true,
+          include: {
+            app: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
       take: limit,
     });
 
-    return NextResponse.json({ referrals });
+    return NextResponse.json({
+      referrals,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+      },
+    });
   } catch (error) {
     console.error('Error fetching referrals:', error);
     return NextResponse.json(

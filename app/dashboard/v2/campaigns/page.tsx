@@ -3,10 +3,11 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ActionDropdown } from '@/components/ui/ActionDropdown';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAppStore } from '@/lib/store';
-import { Plus, Search, Filter, MoreHorizontal, Megaphone, Users, MousePointerClick, CheckCircle } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Megaphone, Users, MousePointerClick, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,12 +23,30 @@ export default function CampaignsPage() {
     campaignName: '',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<{ page: number; totalPages: number; totalItems: number } | null>(null);
+  const itemsPerPage = 25;
 
   useEffect(() => {
     if (selectedApp) {
-      fetchCampaigns(selectedApp.id);
+      loadCampaigns();
     }
-  }, [selectedApp, fetchCampaigns]);
+  }, [selectedApp?.id, currentPage, statusFilter, searchQuery]);
+
+  const loadCampaigns = async () => {
+    if (!selectedApp) return;
+    const result = await fetchCampaigns(selectedApp.id, {
+      page: currentPage,
+      limit: itemsPerPage,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      search: searchQuery || undefined,
+    });
+    if (result.pagination) {
+      setPagination(result.pagination);
+    }
+  };
 
   const loading = isLoading[`campaigns-${selectedApp?.id}`];
 
@@ -131,20 +150,46 @@ export default function CampaignsPage() {
         </div>
 
         <Card className="overflow-hidden">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search campaigns..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+          <div className="p-4 border-b border-gray-100 dark:border-gray-800 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search campaigns..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button className="flex items-center px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                <Filter size={16} className="mr-2" />
-                Filter
-              </button>
+            <div className="flex items-center gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="PAUSED">Paused</option>
+                <option value="ENDED">Ended</option>
+              </select>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setCurrentPage(1);
+                }}
+              >
+                Clear Filters
+              </Button>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -229,6 +274,38 @@ export default function CampaignsPage() {
               </tbody>
             </table>
           </div>
+          {!loading && pagination && (
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
+              <div className="text-xs text-gray-500 font-medium">
+                Showing {(pagination.page - 1) * itemsPerPage + 1} to {Math.min(pagination.page * itemsPerPage, pagination.totalItems)} of {pagination.totalItems} campaigns
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </Button>
+                <div className="text-xs text-gray-500 font-medium">
+                  Page {pagination.page} of {pagination.totalPages}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                  disabled={currentPage === pagination.totalPages}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
 
         <ConfirmModal
