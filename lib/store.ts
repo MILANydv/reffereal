@@ -77,12 +77,19 @@ export interface DashboardStats {
     current: number;
     limit: number;
   };
-  apiUsageChart?: Array<{ name: string; value: number }>;
+  apiUsageChart?: {
+    data: Array<{ name: string; date: string; [appName: string]: any }>;
+    apps: Array<{ id: string; name: string }>;
+  } | Array<{ name: string; value: number }>;
   recentActivity?: Array<{
     id: string;
     description: string;
     timestamp: string;
     type: string;
+    app?: {
+      id: string;
+      name: string;
+    };
   }>;
 }
 
@@ -96,6 +103,10 @@ export interface ActiveCampaign {
   totalReferrals: number;
   conversionRate: number;
   totalRewardCost?: number;
+  app?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface WebhookDelivery {

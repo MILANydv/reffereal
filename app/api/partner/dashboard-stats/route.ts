@@ -101,7 +101,16 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: {
-        campaign: true,
+        campaign: {
+          include: {
+            app: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -110,6 +119,10 @@ export async function GET(request: NextRequest) {
       type: referral.status,
       description: `New referral in ${referral.campaign.name}`,
       timestamp: referral.createdAt.toISOString(),
+      app: {
+        id: referral.campaign.app.id,
+        name: referral.campaign.app.name,
+      },
     }));
 
     const alerts = [];
@@ -164,25 +177,26 @@ export async function GET(request: NextRequest) {
 }
 
 async function generateApiUsageChart(
-  apps: Array<{ id: string; apiUsageLogs?: Array<{ timestamp: Date }> }>,
+  apps: Array<{ id: string; name: string; apiUsageLogs?: Array<{ timestamp: Date }> }>,
   startDate?: Date,
   endDate?: Date
 ) {
-  const dailyMap = new Map<string, number>();
-  
   // Determine date range
   const rangeStart = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const rangeEnd = endDate || new Date();
   const daysDiff = Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
   const daysToShow = Math.min(Math.max(daysDiff, 7), 90); // Show between 7-90 days
   
+  // Initialize date map for all dates
+  const dateKeys: string[] = [];
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(rangeEnd);
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
-    dailyMap.set(dateStr, 0);
+    dateKeys.push(dateStr);
   }
 
+  // Get logs for all apps
   const logsWhere: any = {
     appId: { in: apps.map(app => app.id) },
   };
@@ -199,24 +213,57 @@ async function generateApiUsageChart(
 
   const logs = await prisma.apiUsageLog.findMany({
     where: logsWhere,
+    include: {
+      app: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
   });
 
+  // Create a map for each app's daily usage
+  const appDailyMap = new Map<string, Map<string, number>>();
+  apps.forEach(app => {
+    appDailyMap.set(app.id, new Map());
+    dateKeys.forEach(dateStr => {
+      appDailyMap.get(app.id)!.set(dateStr, 0);
+    });
+  });
+
+  // Count logs per app per day
   logs.forEach(log => {
     const dateStr = log.timestamp.toISOString().split('T')[0];
-    if (dailyMap.has(dateStr)) {
-      dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + 1);
+    const appMap = appDailyMap.get(log.appId);
+    if (appMap && appMap.has(dateStr)) {
+      appMap.set(dateStr, (appMap.get(dateStr) || 0) + 1);
     }
   });
 
-    return Array.from(dailyMap.entries()).map(([date, value]) => {
-      const d = new Date(date);
-      // Show date format based on range length
-      const format = daysToShow > 30 
-        ? { month: 'short', day: 'numeric' }
-        : { weekday: 'short' };
-      return {
-        name: d.toLocaleDateString('en-US', format),
-        value,
-      };
+  // Generate chart data with one line per app
+  const chartData = dateKeys.map((dateStr) => {
+    const d = new Date(dateStr);
+    const format = daysToShow > 30 
+      ? { month: 'short', day: 'numeric' }
+      : { weekday: 'short' };
+    
+    const dataPoint: any = {
+      name: d.toLocaleDateString('en-US', format),
+      date: dateStr,
+    };
+
+    // Add value for each app
+    apps.forEach(app => {
+      const appMap = appDailyMap.get(app.id);
+      dataPoint[app.name] = appMap?.get(dateStr) || 0;
     });
-  }
+
+    return dataPoint;
+  });
+
+  return {
+    data: chartData,
+    apps: apps.map(app => ({ id: app.id, name: app.name })),
+  };
+}

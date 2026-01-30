@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { TrendingUp, Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Zap, Webhook } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import Link from 'next/link';
 import { Skeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { DateRangeFilter, DateRange } from '@/components/ui/DateRangeFilter';
@@ -202,23 +202,120 @@ export default function DashboardV2Page() {
               <DateRangeFilter value={dateRange} onChange={setDateRange} presets={['7d', '30d', '90d', 'custom']} />
             </CardHeader>
             <CardBody>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats?.apiUsageChart || []}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {(() => {
+                // Handle both new format (with apps) and old format (array)
+                const chartData = stats?.apiUsageChart && 'data' in stats.apiUsageChart 
+                  ? stats.apiUsageChart.data 
+                  : Array.isArray(stats?.apiUsageChart) 
+                    ? stats.apiUsageChart 
+                    : [];
+                const chartApps = stats?.apiUsageChart && 'apps' in stats.apiUsageChart 
+                  ? stats.apiUsageChart.apps 
+                  : [];
+
+                if (chartData.length > 0 && chartApps.length > 0) {
+                  return (
+                    <div className="h-[350px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            {chartApps.map((app: any, index: number) => {
+                              const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+                              const color = colors[index % colors.length];
+                              return (
+                                <linearGradient key={app.id} id={`color-${app.id}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor={color} stopOpacity={0.2} />
+                                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                                </linearGradient>
+                              );
+                            })}
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-slate-700" />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 12, fill: '#9ca3af' }} 
+                            className="dark:text-slate-400"
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 12, fill: '#9ca3af' }} 
+                            className="dark:text-slate-400"
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              borderRadius: '12px', 
+                              border: 'none', 
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                              backgroundColor: 'white',
+                            }}
+                            className="dark:!bg-slate-800 dark:!border-slate-700"
+                            formatter={(value: any, name: string) => {
+                              if (value === 0 || value === null || value === undefined) return null;
+                              return [`${value} calls`, name];
+                            }}
+                            labelFormatter={(label) => `Date: ${label}`}
+                          />
+                          <Legend 
+                            wrapperStyle={{ paddingTop: '20px' }}
+                            iconType="circle"
+                            formatter={(value) => value}
+                            iconSize={8}
+                          />
+                          {chartApps.map((app: any, index: number) => {
+                            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+                            const color = colors[index % colors.length];
+                            return (
+                              <Area
+                                key={app.id}
+                                type="monotone"
+                                dataKey={app.name}
+                                stroke={color}
+                                strokeWidth={2}
+                                fillOpacity={0.6}
+                                fill={`url(#color-${app.id})`}
+                                name={app.name}
+                              />
+                            );
+                          })}
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                } else if (Array.isArray(stats?.apiUsageChart) && stats.apiUsageChart.length > 0) {
+                  // Fallback to old single-line format
+                  return (
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.apiUsageChart}>
+                          <defs>
+                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                          <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                          <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="h-[350px] w-full flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <p className="text-sm">No API usage data available</p>
+                        <p className="text-xs mt-1">API calls will appear here once you start using the API</p>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
             </CardBody>
           </Card>
 
@@ -235,11 +332,16 @@ export default function DashboardV2Page() {
               {activeCampaigns.length > 0 ? (
                 <>
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {activeCampaigns.slice(0, 4).map((campaign) => (
+                    {activeCampaigns.slice(0, 4).map((campaign: any) => (
                       <div key={campaign.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold text-sm">{campaign.name}</span>
                           <Badge variant="success" size="sm">Active</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          {campaign.app && (
+                            <Badge variant="default" size="sm">{campaign.app.name}</Badge>
+                          )}
                         </div>
                         <div className="flex items-center text-xs text-gray-500">
                           <Users size={12} className="mr-1" /> {campaign.totalReferrals} referrals
@@ -280,12 +382,17 @@ export default function DashboardV2Page() {
               {webhookDeliveries.length > 0 ? (
                 <>
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {webhookDeliveries.slice(0, 5).map((delivery) => (
+                    {webhookDeliveries.slice(0, 5).map((delivery: any) => (
                     <div key={delivery.id} className="px-6 py-4 flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 flex-1">
                         <div className={`w-2 h-2 rounded-full ${delivery.success ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <div>
-                          <p className="text-sm font-medium">{delivery.eventType}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-medium">{delivery.eventType}</p>
+                            {delivery.app && (
+                              <Badge variant="default" size="sm">{delivery.app.name}</Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 truncate max-w-[200px]">{delivery.url}</p>
                         </div>
                       </div>
@@ -319,8 +426,13 @@ export default function DashboardV2Page() {
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     {stats.recentActivity.slice(0, 5).map((activity: any) => (
                     <div key={activity.id} className="flex items-start justify-between p-4 px-6">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>
+                          {activity.app && (
+                            <Badge variant="default" size="sm">{activity.app.name}</Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
                       </div>
                       <Badge variant="default" size="sm">{activity.type}</Badge>

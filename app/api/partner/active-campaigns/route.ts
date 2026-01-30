@@ -29,6 +29,12 @@ export async function GET(request: NextRequest) {
     const campaigns = await prisma.campaign.findMany({
       where: whereClause,
       include: {
+        app: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: {
             referrals: true,
@@ -55,6 +61,10 @@ export async function GET(request: NextRequest) {
       status: campaign.status,
       totalReferrals: campaign._count.referrals,
       totalRewardCost: campaign.referrals?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0,
+      app: {
+        id: campaign.app.id,
+        name: campaign.app.name,
+      },
     }));
 
     return NextResponse.json({ campaigns: activeCampaigns });

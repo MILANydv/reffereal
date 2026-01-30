@@ -28,8 +28,13 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       include: {
         webhook: {
-          select: {
-            url: true,
+          include: {
+            app: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -46,6 +51,10 @@ export async function GET(request: NextRequest) {
       statusCode: delivery.statusCode || 0,
       success: delivery.success,
       timestamp: delivery.createdAt.toISOString(),
+      app: {
+        id: delivery.webhook.app.id,
+        name: delivery.webhook.app.name,
+      },
     }));
 
     return NextResponse.json({ deliveries: recentDeliveries });
