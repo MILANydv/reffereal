@@ -46,17 +46,23 @@ export default function AppOverviewPage() {
     loading: true
   });
 
-  // Set selected app when component mounts
+  // Set selected app when component mounts or appId changes
   useEffect(() => {
     if (apps.length > 0 && appId) {
       const app = apps.find(a => a.id === appId);
       if (app) {
-        setSelectedApp(app);
+        // Only set transitioning if we're switching to a different app
+        const currentAppId = selectedApp?.id;
+        if (currentAppId && currentAppId !== appId) {
+          setSelectedApp(app);
+        } else if (!currentAppId) {
+          setSelectedApp(app);
+        }
       } else {
         router.push('/dashboard/v2/apps');
       }
     }
-  }, [apps, appId, setSelectedApp, router]);
+  }, [apps, appId, selectedApp?.id, setSelectedApp, router]);
 
   useEffect(() => {
     if (sessionStatus === 'authenticated') {
@@ -70,9 +76,14 @@ export default function AppOverviewPage() {
 
   useEffect(() => {
     if (onboardingStatus.completed && appId) {
+      // Only show loading if we're switching to a different app
+      const isAppChanging = selectedApp?.id && selectedApp.id !== appId;
+      
       // Fetch app-specific data
       const fetchData = async () => {
-        setAppTransitioning(true);
+        if (isAppChanging) {
+          setAppTransitioning(true);
+        }
         try {
           await Promise.all([
             fetchStats(appId, dateRange),
@@ -81,15 +92,17 @@ export default function AppOverviewPage() {
             fetchMetrics(),
           ]);
         } finally {
-          // Small delay to ensure smooth transition
-          setTimeout(() => {
-            setAppTransitioning(false);
-          }, 300);
+          if (isAppChanging) {
+            // Small delay to ensure smooth transition
+            setTimeout(() => {
+              setAppTransitioning(false);
+            }, 300);
+          }
         }
       };
       fetchData();
     }
-  }, [appId, onboardingStatus.completed, dateRange, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics, setAppTransitioning]);
+  }, [appId, onboardingStatus.completed, dateRange, selectedApp?.id, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics, setAppTransitioning]);
 
   const checkOnboardingStatus = async () => {
     try {

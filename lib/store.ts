@@ -404,7 +404,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (app && currentApp && app.id !== currentApp.id) {
       set({ isAppTransitioning: true, selectedApp: app });
     } else {
-      set({ selectedApp: app });
+      // Clear transitioning state if same app or no app
+      set({ selectedApp: app, isAppTransitioning: false });
     }
     if (typeof window !== 'undefined') {
       if (app) {
