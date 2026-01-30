@@ -15,12 +15,12 @@ export default function ReferralsPage() {
   const { selectedApp, referrals, fetchReferrals, isLoading } = useAppStore();
   const router = useRouter();
   const loading = isLoading[`referrals-${selectedApp?.id}`];
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; referralId: string | null; referralCode: string }>({
+  const [markSuspiciousModal, setMarkSuspiciousModal] = useState<{ isOpen: boolean; referralId: string | null; referralCode: string }>({
     isOpen: false,
     referralId: null,
     referralCode: '',
   });
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isMarking, setIsMarking] = useState(false);
 
   useEffect(() => {
     if (selectedApp) {
@@ -150,16 +150,8 @@ export default function ReferralsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <ActionDropdown
-                          onView={() => {
-                            // Navigate to referral details or show modal
-                            console.log('View referral:', referral.id);
-                          }}
-                          onEdit={() => {
-                            // Navigate to edit referral
-                            console.log('Edit referral:', referral.id);
-                          }}
-                          onDelete={() => {
-                            setDeleteModal({
+                          onMarkSuspicious={() => {
+                            setMarkSuspiciousModal({
                               isOpen: true,
                               referralId: referral.id,
                               referralCode: referral.referralCode,
@@ -185,33 +177,33 @@ export default function ReferralsPage() {
         </Card>
 
         <ConfirmModal
-          isOpen={deleteModal.isOpen}
-          onClose={() => setDeleteModal({ isOpen: false, referralId: null, referralCode: '' })}
+          isOpen={markSuspiciousModal.isOpen}
+          onClose={() => setMarkSuspiciousModal({ isOpen: false, referralId: null, referralCode: '' })}
           onConfirm={async () => {
-            if (!deleteModal.referralId) return;
-            setIsDeleting(true);
+            if (!markSuspiciousModal.referralId) return;
+            setIsMarking(true);
             try {
-              const response = await fetch(`/api/partner/referrals/${deleteModal.referralId}`, {
-                method: 'DELETE',
+              const response = await fetch(`/api/partner/referrals/${markSuspiciousModal.referralId}/flag`, {
+                method: 'POST',
               });
               if (response.ok) {
                 if (selectedApp) {
                   fetchReferrals(selectedApp.id);
                 }
-                setDeleteModal({ isOpen: false, referralId: null, referralCode: '' });
+                setMarkSuspiciousModal({ isOpen: false, referralId: null, referralCode: '' });
               }
             } catch (error) {
-              console.error('Error deleting referral:', error);
+              console.error('Error marking referral as suspicious:', error);
             } finally {
-              setIsDeleting(false);
+              setIsMarking(false);
             }
           }}
-          title="Delete Referral"
-          message={`Are you sure you want to delete referral "${deleteModal.referralCode}"? This action cannot be undone.`}
-          confirmText="Delete"
+          title="Mark as Suspicious"
+          message={`Are you sure you want to mark referral "${markSuspiciousModal.referralCode}" as suspicious? This will flag it for review.`}
+          confirmText="Mark Suspicious"
           cancelText="Cancel"
-          variant="danger"
-          isLoading={isDeleting}
+          variant="warning"
+          isLoading={isMarking}
         />
       </div>
     </DashboardLayout>

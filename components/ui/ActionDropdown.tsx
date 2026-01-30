@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink, ShieldAlert } from 'lucide-react';
 
 interface ActionDropdownProps {
   onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onMarkSuspicious?: () => void;
   viewLabel?: string;
   editLabel?: string;
   deleteLabel?: string;
+  markSuspiciousLabel?: string;
   viewHref?: string;
   editHref?: string;
   className?: string;
@@ -19,9 +21,11 @@ export function ActionDropdown({
   onView,
   onEdit,
   onDelete,
+  onMarkSuspicious,
   viewLabel = 'View',
   editLabel = 'Edit',
   deleteLabel = 'Delete',
+  markSuspiciousLabel = 'Mark Suspicious',
   viewHref,
   editHref,
   className = '',
@@ -108,6 +112,13 @@ export function ActionDropdown({
     setIsOpen(false);
   };
 
+  const handleMarkSuspicious = () => {
+    if (onMarkSuspicious) {
+      onMarkSuspicious();
+    }
+    setIsOpen(false);
+  };
+
   return (
     <div 
       className={`relative ${className}`} 
@@ -155,6 +166,15 @@ export function ActionDropdown({
               >
                 <Trash2 size={16} className="mr-3" />
                 {deleteLabel}
+              </button>
+            )}
+            {onMarkSuspicious && (
+              <button
+                onClick={handleMarkSuspicious}
+                className="w-full flex items-center px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+              >
+                <ShieldAlert size={16} className="mr-3" />
+                {markSuspiciousLabel}
               </button>
             )}
           </div>
