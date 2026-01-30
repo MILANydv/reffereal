@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Verify token was saved
+    console.log('[Signup] User created:', user.email);
+    console.log('[Signup] Token saved:', user.emailVerifyToken ? user.emailVerifyToken.substring(0, 20) + '...' : 'NULL');
+    console.log('[Signup] Token expiry:', user.emailVerifyExpiry);
+
     // Send signup and verification emails
     await Promise.all([
       sendSignupEmail(email, name),

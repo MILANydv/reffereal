@@ -152,7 +152,8 @@ export async function sendSignupEmail(email: string, name?: string) {
 }
 
 export async function sendVerificationEmail(email: string, token: string, name?: string) {
-  const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${token}`;
+  // Properly encode the token in the URL
+  const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
 
   const html = `
     <!DOCTYPE html>

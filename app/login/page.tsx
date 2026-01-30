@@ -21,6 +21,41 @@ function LoginForm() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 5000);
     }
+    
+    // Handle email verification results
+    const verified = searchParams?.get('verified');
+    const error = searchParams?.get('error');
+    
+    if (verified === 'success') {
+      setShowSuccess(true);
+      setError('Email verified successfully! You can now log in.');
+      setTimeout(() => {
+        setShowSuccess(false);
+        setError('');
+      }, 5000);
+    } else if (error) {
+      let errorMessage = 'An error occurred';
+      switch (error) {
+        case 'invalid_token':
+          errorMessage = 'Invalid verification token. Please check your email link.';
+          break;
+        case 'invalid_or_expired_token':
+          errorMessage = 'Verification token is invalid or has expired. Please request a new verification email.';
+          break;
+        case 'expired_token':
+          errorMessage = 'Verification token has expired. Please request a new verification email.';
+          break;
+        case 'already_verified':
+          errorMessage = 'Your email is already verified. You can log in now.';
+          break;
+        case 'verification_failed':
+          errorMessage = 'Email verification failed. Please try again or contact support.';
+          break;
+        default:
+          errorMessage = 'An error occurred during verification.';
+      }
+      setError(errorMessage);
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
