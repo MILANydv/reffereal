@@ -3,16 +3,25 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { ActionDropdown } from '@/components/ui/ActionDropdown';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAppStore } from '@/lib/store';
 import { Plus, Search, Filter, MoreHorizontal, Megaphone, Users, MousePointerClick, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
 
 
 export default function CampaignsPage() {
   const { selectedApp, campaigns, fetchCampaigns, isLoading } = useAppStore();
-
+  const router = useRouter();
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; campaignId: string | null; campaignName: string }>({
+    isOpen: false,
+    campaignId: null,
+    campaignName: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (selectedApp) {
@@ -21,6 +30,26 @@ export default function CampaignsPage() {
   }, [selectedApp, fetchCampaigns]);
 
   const loading = isLoading[`campaigns-${selectedApp?.id}`];
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.campaignId) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/partner/campaigns/${deleteModal.campaignId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        if (selectedApp) {
+          fetchCampaigns(selectedApp.id);
+        }
+        setDeleteModal({ isOpen: false, campaignId: null, campaignName: '' });
+      }
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (!selectedApp) {
     return (
@@ -182,9 +211,17 @@ export default function CampaignsPage() {
                         {campaign._count.referrals}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                          <MoreHorizontal size={20} />
-                        </button>
+                        <ActionDropdown
+                          viewHref={`/dashboard/v2/campaigns/${campaign.id}`}
+                          editHref={`/dashboard/v2/campaigns/${campaign.id}/edit`}
+                          onDelete={() => {
+                            setDeleteModal({
+                              isOpen: true,
+                              campaignId: campaign.id,
+                              campaignName: campaign.name,
+                            });
+                          }}
+                        />
                       </td>
                     </tr>
                   ))
@@ -193,6 +230,18 @@ export default function CampaignsPage() {
             </table>
           </div>
         </Card>
+
+        <ConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal({ isOpen: false, campaignId: null, campaignName: '' })}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Campaign"
+          message={`Are you sure you want to delete campaign "${deleteModal.campaignName}"? This action cannot be undone and will also delete all associated referrals.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          isLoading={isDeleting}
+        />
       </div>
     </DashboardLayout>
   );

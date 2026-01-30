@@ -3,14 +3,24 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { ActionDropdown } from '@/components/ui/ActionDropdown';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAppStore, Referral } from '@/lib/store';
 import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
+import { useRouter } from 'next/navigation';
 
 export default function ReferralsPage() {
   const { selectedApp, referrals, fetchReferrals, isLoading } = useAppStore();
+  const router = useRouter();
   const loading = isLoading[`referrals-${selectedApp?.id}`];
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; referralId: string | null; referralCode: string }>({
+    isOpen: false,
+    referralId: null,
+    referralCode: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (selectedApp) {
@@ -74,6 +84,7 @@ export default function ReferralsPage() {
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Reward</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Activity</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -91,7 +102,7 @@ export default function ReferralsPage() {
                   ))
                 ) : referrals.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                       No referrals found for this app.
                     </td>
                   </tr>
@@ -137,6 +148,25 @@ export default function ReferralsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                         {new Date(referral.createdAt).toLocaleDateString()}
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        <ActionDropdown
+                          onView={() => {
+                            // Navigate to referral details or show modal
+                            console.log('View referral:', referral.id);
+                          }}
+                          onEdit={() => {
+                            // Navigate to edit referral
+                            console.log('Edit referral:', referral.id);
+                          }}
+                          onDelete={() => {
+                            setDeleteModal({
+                              isOpen: true,
+                              referralId: referral.id,
+                              referralCode: referral.referralCode,
+                            });
+                          }}
+                        />
+                      </td>
                     </tr>
                   ))
                 )}
@@ -153,6 +183,36 @@ export default function ReferralsPage() {
             </div>
           </div>
         </Card>
+
+        <ConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal({ isOpen: false, referralId: null, referralCode: '' })}
+          onConfirm={async () => {
+            if (!deleteModal.referralId) return;
+            setIsDeleting(true);
+            try {
+              const response = await fetch(`/api/partner/referrals/${deleteModal.referralId}`, {
+                method: 'DELETE',
+              });
+              if (response.ok) {
+                if (selectedApp) {
+                  fetchReferrals(selectedApp.id);
+                }
+                setDeleteModal({ isOpen: false, referralId: null, referralCode: '' });
+              }
+            } catch (error) {
+              console.error('Error deleting referral:', error);
+            } finally {
+              setIsDeleting(false);
+            }
+          }}
+          title="Delete Referral"
+          message={`Are you sure you want to delete referral "${deleteModal.referralCode}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          isLoading={isDeleting}
+        />
       </div>
     </DashboardLayout>
   );
