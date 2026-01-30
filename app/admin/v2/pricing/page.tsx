@@ -151,8 +151,8 @@ export default function AdminPricingPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Pricing Plans</h1>
-            <p className="text-gray-500 mt-1">Configure and manage platform subscription tiers.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Pricing Plans</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Configure and manage platform subscription tiers.</p>
           </div>
           <Button onClick={() => { resetForm(); setShowModal(true); }}>
             <Plus size={18} className="mr-2" />

@@ -86,8 +86,8 @@ export default function AdminAppsPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
-            <p className="text-gray-500 mt-1">Global view of all applications created by partners.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Applications</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Global view of all applications created by partners.</p>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export default function AdminAppsPage() {
                   ))
                 ) : filteredApps.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">No applications found</td>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No applications found</td>
                   </tr>
                 ) : (
                   filteredApps.map((app: any) => (
@@ -230,9 +230,9 @@ export default function AdminAppsPage() {
                           {app.status}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">
+                      <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
                         <div className="flex items-center">
-                          <Calendar size={14} className="mr-1.5 text-gray-400" />
+                          <Calendar size={14} className="mr-1.5 text-gray-400 dark:text-gray-500" />
                           {new Date(app.createdAt).toLocaleDateString()}
                         </div>
                       </td>

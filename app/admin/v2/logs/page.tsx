@@ -93,8 +93,8 @@ export default function AdminLogsPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">System Logs</h1>
-            <p className="text-gray-500 mt-1">View and monitor platform activity and events.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">System Logs</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">View and monitor platform activity and events.</p>
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="ghost" onClick={fetchLogs}>

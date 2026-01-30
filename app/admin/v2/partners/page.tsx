@@ -132,8 +132,8 @@ export default function AdminPartnersPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Partners</h1>
-            <p className="text-gray-500 mt-1">Manage all platform partners and their subscriptions.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Partners</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Manage all platform partners and their subscriptions.</p>
           </div>
         </div>
 
@@ -144,34 +144,34 @@ export default function AdminPartnersPage() {
                 <Users size={20} />
               </div>
               <div>
-                <div className="text-2xl font-bold">{partners.length}</div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Total Partners</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{partners.length}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total Partners</div>
               </div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4 flex items-center space-x-4">
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
                 <TrendingUp size={20} />
               </div>
               <div>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {partners.filter(p => p.active).length}
                 </div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Active</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Active</div>
               </div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4 flex items-center space-x-4">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
                 <Mail size={20} />
               </div>
               <div>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {partners.filter(p => !p.active).length}
                 </div>
-                <div className="text-xs text-gray-500 uppercase font-semibold">Suspended</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Suspended</div>
               </div>
             </CardBody>
           </Card>

@@ -43,7 +43,7 @@ export default function AdminBillingPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl text-gray-500">Failed to load billing data</div>
+          <div className="text-xl text-gray-500 dark:text-gray-400">Failed to load billing data</div>
         </div>
       </DashboardLayout>
     );
@@ -81,8 +81,8 @@ export default function AdminBillingPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Billing & Payments</h1>
-          <p className="text-gray-500 mt-1">Track revenue, invoices, and payment activity.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Billing & Payments</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Track revenue, invoices, and payment activity.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

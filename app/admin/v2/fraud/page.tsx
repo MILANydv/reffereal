@@ -21,33 +21,33 @@ export default function AdminFraudPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fraud & Abuse</h1>
-          <p className="text-gray-500 mt-1">Review and resolve suspicious activities across all partners.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Fraud & Abuse</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Review and resolve suspicious activities across all partners.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="border-l-4 border-l-red-500">
             <CardBody className="p-4">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Unresolved Flags</div>
-              <div className="text-2xl font-bold text-red-600">{flags.filter((f: any) => !f.isResolved).length}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Unresolved Flags</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{flags.filter((f: any) => !f.isResolved).length}</div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Self-Referrals</div>
-              <div className="text-2xl font-bold">42</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Self-Referrals</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">42</div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Duplicate IPs</div>
-              <div className="text-2xl font-bold">156</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Duplicate IPs</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">156</div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Resolved (30d)</div>
-              <div className="text-2xl font-bold text-green-600">842</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Resolved (30d)</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">842</div>
             </CardBody>
           </Card>
         </div>
@@ -64,8 +64,8 @@ export default function AdminFraudPage() {
                 />
               </div>
               <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-lg">
-                <button className="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-black shadow-sm">All</button>
-                <button className="px-3 py-1 text-xs font-bold rounded-md text-gray-500">Unresolved</button>
+                <button className="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm">All</button>
+                <button className="px-3 py-1 text-xs font-bold rounded-md text-gray-500 dark:text-gray-400">Unresolved</button>
               </div>
             </div>
             <button className="flex items-center px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
@@ -96,7 +96,7 @@ export default function AdminFraudPage() {
                     </tr>
                   ))
                 ) : flags.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No fraud flags detected.</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No fraud flags detected.</td></tr>
                 ) : (
                   flags.map((flag: any) => (
                     <tr key={flag.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">

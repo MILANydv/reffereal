@@ -42,7 +42,7 @@ export default function AdminUsagePage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl text-gray-500">Failed to load usage data</div>
+          <div className="text-xl text-gray-500 dark:text-gray-400">Failed to load usage data</div>
         </div>
       </DashboardLayout>
     );
@@ -52,8 +52,8 @@ export default function AdminUsagePage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Platform Usage</h1>
-          <p className="text-gray-500 mt-1">Monitor API usage and activity across the platform.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Platform Usage</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Monitor API usage and activity across the platform.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
