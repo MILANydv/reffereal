@@ -361,7 +361,7 @@ interface AppStore {
 
   setSelectedApp: (app: App | null) => void;
   fetchApps: (force?: boolean) => Promise<void>;
-  fetchStats: (appId: string | 'global') => Promise<void>;
+  fetchStats: (appId: string | 'global', dateRange?: { startDate?: Date | null; endDate?: Date | null }) => Promise<void>;
   fetchActiveCampaigns: (appId?: string) => Promise<void>;
   fetchWebhookDeliveries: (appId?: string) => Promise<void>;
   fetchMetrics: () => Promise<void>;
@@ -437,14 +437,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  fetchStats: async (appId) => {
+  fetchStats: async (appId, dateRange) => {
     const key = `stats-${appId}`;
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const url = appId === 'global' 
-        ? '/api/partner/dashboard-stats'
-        : `/api/partner/dashboard-stats?appId=${appId}`;
+      const params = new URLSearchParams();
+      if (appId !== 'global') {
+        params.append('appId', appId);
+      }
+      if (dateRange?.startDate) {
+        params.append('startDate', dateRange.startDate.toISOString());
+      }
+      if (dateRange?.endDate) {
+        params.append('endDate', dateRange.endDate.toISOString());
+      }
+      
+      const url = `/api/partner/dashboard-stats${params.toString() ? `?${params.toString()}` : ''}`;
       
       const response = await fetch(url);
       if (response.ok) {

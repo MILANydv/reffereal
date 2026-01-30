@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
@@ -10,16 +10,39 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const appId = searchParams.get('appId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
     const partnerId = session.user.partnerId;
+    
+    // Build date filter
+    const dateFilter: { gte?: Date; lte?: Date } = {};
+    if (startDate) {
+      dateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(endDate);
+    }
+
+    const appsWhere: any = { partnerId };
+    if (appId) {
+      appsWhere.id = appId;
+    }
 
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
       include: {
         apps: {
+          where: appsWhere,
           include: {
             campaigns: {
               include: {
                 referrals: {
+                  where: dateFilter.gte || dateFilter.lte ? {
+                    createdAt: dateFilter,
+                  } : undefined,
                   include: {
                     conversions: true,
                   },
@@ -28,7 +51,7 @@ export async function GET() {
             },
             apiUsageLogs: {
               where: {
-                timestamp: {
+                timestamp: dateFilter.gte || dateFilter.lte ? dateFilter : {
                   gte: new Date(new Date().setDate(1)),
                 },
               },
@@ -64,14 +87,17 @@ export async function GET() {
     const apiUsageLimit = partner.subscription?.plan.apiLimit || 10000;
     const apiUsagePercentage = (apiUsageCurrent / apiUsageLimit) * 100;
 
-    const recentReferrals = await prisma.referral.findMany({
-      where: {
-        campaign: {
-          app: {
-            partnerId,
-          },
-        },
+    const recentReferralsWhere: any = {
+      campaign: {
+        app: appId ? { partnerId, id: appId } : { partnerId },
       },
+    };
+    if (dateFilter.gte || dateFilter.lte) {
+      recentReferralsWhere.createdAt = dateFilter;
+    }
+
+    const recentReferrals = await prisma.referral.findMany({
+      where: recentReferralsWhere,
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: {
@@ -110,7 +136,11 @@ export async function GET() {
       });
     }
 
-    const apiUsageChart = await generateApiUsageChart(partner.apps || []);
+    const apiUsageChart = await generateApiUsageChart(
+      partner.apps || [],
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined
+    );
 
     return NextResponse.json({
       totalApps,
@@ -133,23 +163,42 @@ export async function GET() {
   }
 }
 
-async function generateApiUsageChart(apps: Array<{ id: string; apiUsageLogs?: Array<{ timestamp: Date }> }>) {
+async function generateApiUsageChart(
+  apps: Array<{ id: string; apiUsageLogs?: Array<{ timestamp: Date }> }>,
+  startDate?: Date,
+  endDate?: Date
+) {
   const dailyMap = new Map<string, number>();
   
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
+  // Determine date range
+  const rangeStart = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const rangeEnd = endDate || new Date();
+  const daysDiff = Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
+  const daysToShow = Math.min(Math.max(daysDiff, 7), 90); // Show between 7-90 days
+  
+  for (let i = daysToShow - 1; i >= 0; i--) {
+    const date = new Date(rangeEnd);
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
     dailyMap.set(dateStr, 0);
   }
 
+  const logsWhere: any = {
+    appId: { in: apps.map(app => app.id) },
+  };
+  
+  if (startDate || endDate) {
+    logsWhere.timestamp = {};
+    if (startDate) logsWhere.timestamp.gte = startDate;
+    if (endDate) logsWhere.timestamp.lte = endDate;
+  } else {
+    logsWhere.timestamp = {
+      gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    };
+  }
+
   const logs = await prisma.apiUsageLog.findMany({
-    where: {
-      appId: { in: apps.map(app => app.id) },
-      timestamp: {
-        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      },
-    },
+    where: logsWhere,
   });
 
   logs.forEach(log => {
@@ -159,11 +208,15 @@ async function generateApiUsageChart(apps: Array<{ id: string; apiUsageLogs?: Ar
     }
   });
 
-  return Array.from(dailyMap.entries()).map(([date, value]) => {
-    const d = new Date(date);
-    return {
-      name: d.toLocaleDateString('en-US', { weekday: 'short' }),
-      value,
-    };
-  });
-}
+    return Array.from(dailyMap.entries()).map(([date, value]) => {
+      const d = new Date(date);
+      // Show date format based on range length
+      const format = daysToShow > 30 
+        ? { month: 'short', day: 'numeric' }
+        : { weekday: 'short' };
+      return {
+        name: d.toLocaleDateString('en-US', format),
+        value,
+      };
+    });
+  }

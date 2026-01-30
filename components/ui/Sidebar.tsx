@@ -54,7 +54,7 @@ const getPartnerNavigation = (appId: string | null): NavSection[] => {
   const appSection: NavSection = {
     title: 'App',
     items: [
-      { name: 'Overview', href: `/dashboard/v2`, icon: <LayoutDashboard size={20} /> },
+      { name: 'Overview', href: `/dashboard/v2/app/${appId}`, icon: <LayoutDashboard size={20} /> },
       { name: 'API & Keys', href: `/dashboard/v2/api-keys`, icon: <Code size={20} /> },
       { name: 'Campaigns', href: `/dashboard/v2/campaigns`, icon: <Megaphone size={20} /> },
       { name: 'Referrals', href: `/dashboard/v2/referrals`, icon: <UserPlus size={20} /> },

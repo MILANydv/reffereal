@@ -4,20 +4,24 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
+import { DateRangeFilter, DateRange } from '@/components/ui/DateRangeFilter';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { TrendingUp, Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Zap, Webhook } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Zap, Webhook } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import Link from 'next/link';
 import { Skeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
-import { DateRangeFilter, DateRange } from '@/components/ui/DateRangeFilter';
 
-
-
-export default function DashboardV2Page() {
+export default function AppOverviewPage() {
   const { data: session, status: sessionStatus } = useSession();
+  const params = useParams();
+  const router = useRouter();
+  const appId = params.appId as string;
+  
   const {
+    apps,
     selectedApp,
     stats,
     activeCampaigns,
@@ -27,18 +31,31 @@ export default function DashboardV2Page() {
     fetchActiveCampaigns,
     fetchWebhookDeliveries,
     fetchMetrics,
+    setSelectedApp,
     isLoading
   } = useAppStore();
+
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    endDate: new Date(),
+  });
 
   const [onboardingStatus, setOnboardingStatus] = useState<{ completed: boolean; loading: boolean }>({
     completed: false,
     loading: true
   });
 
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    endDate: new Date(),
-  });
+  // Set selected app when component mounts
+  useEffect(() => {
+    if (apps.length > 0 && appId) {
+      const app = apps.find(a => a.id === appId);
+      if (app) {
+        setSelectedApp(app);
+      } else {
+        router.push('/dashboard/v2/apps');
+      }
+    }
+  }, [apps, appId, setSelectedApp, router]);
 
   useEffect(() => {
     if (sessionStatus === 'authenticated') {
@@ -51,14 +68,14 @@ export default function DashboardV2Page() {
   }, [sessionStatus, session?.user?.role]);
 
   useEffect(() => {
-    if (onboardingStatus.completed) {
-      // Always fetch platform-level data (independent of apps)
-      fetchStats('global', dateRange);
-      fetchActiveCampaigns();
-      fetchWebhookDeliveries();
+    if (onboardingStatus.completed && appId) {
+      // Fetch app-specific data
+      fetchStats(appId, dateRange);
+      fetchActiveCampaigns(appId);
+      fetchWebhookDeliveries(appId);
       fetchMetrics();
     }
-  }, [onboardingStatus.completed, dateRange, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
+  }, [appId, onboardingStatus.completed, dateRange, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
 
   const checkOnboardingStatus = async () => {
     try {
@@ -67,8 +84,7 @@ export default function DashboardV2Page() {
         const data = await response.json();
         setOnboardingStatus({ completed: data.onboardingCompleted, loading: false });
         if (!data.onboardingCompleted) {
-          // Redirect to onboarding if not completed
-          window.location.href = '/onboarding';
+          router.push('/onboarding');
           return;
         }
       }
@@ -77,7 +93,6 @@ export default function DashboardV2Page() {
       setOnboardingStatus({ completed: false, loading: false });
     }
   };
-
 
   const isLoadingAny = Object.values(isLoading).some(Boolean) || onboardingStatus.loading;
 
@@ -115,21 +130,20 @@ export default function DashboardV2Page() {
     );
   }
 
-  // If no app is selected, show a "Global Overview" or prompt to select/create an app
-  if (!selectedApp && stats?.totalApps === 0) {
+  if (!selectedApp) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-3xl flex items-center justify-center mb-6">
             <Zap size={40} />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Welcome to Referral Platform</h1>
-          <p className="text-gray-500 max-w-md mb-8">Get started by creating your first application to manage your referral campaigns.</p>
+          <h1 className="text-3xl font-bold mb-2">App Not Found</h1>
+          <p className="text-gray-500 max-w-md mb-8">The requested application could not be found.</p>
           <Link
-            href="/dashboard/v2/apps/new"
+            href="/dashboard/v2/apps"
             className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
           >
-            Create Your First App
+            View All Apps
           </Link>
         </div>
       </DashboardLayout>
@@ -141,12 +155,20 @@ export default function DashboardV2Page() {
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {selectedApp.name} Overview
+            </h1>
             <p className="text-gray-500 mt-1">
-              Aggregated performance across all your applications.
+              Real-time performance for this application.
             </p>
           </div>
-          <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          <div className="flex items-center gap-4">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+            <div className="flex space-x-2">
+              <Badge variant="success" className="h-6">Healthy</Badge>
+              <span className="text-xs text-gray-400 mt-1 font-mono">v1.2.0</span>
+            </div>
+          </div>
         </div>
 
         {stats?.alerts && stats.alerts.length > 0 && (
@@ -154,12 +176,13 @@ export default function DashboardV2Page() {
             {stats.alerts.map((alert: any) => (
               <div
                 key={alert.id}
-                className={`p-4 rounded-xl border flex items-start ${alert.type === 'error'
-                  ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400'
-                  : alert.type === 'warning'
+                className={`p-4 rounded-xl border flex items-start ${
+                  alert.type === 'error'
+                    ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400'
+                    : alert.type === 'warning'
                     ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30 text-yellow-800 dark:text-yellow-400'
                     : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 text-blue-800 dark:text-blue-400'
-                  }`}
+                }`}
               >
                 <AlertCircle size={20} className="mr-3 mt-0.5" />
                 <p className="text-sm font-medium">{alert.message}</p>
@@ -177,13 +200,13 @@ export default function DashboardV2Page() {
           />
           <StatCard
             title="Referrals Created"
-            value={stats?.totalReferrals.toLocaleString() || '0'}
+            value={stats?.totalReferrals?.toLocaleString() || '0'}
             icon={<Users size={24} />}
             change={metricChanges?.referrals ? `${metricChanges.referrals > 0 ? '+' : ''}${metricChanges.referrals.toFixed(1)}%` : undefined}
           />
           <StatCard
             title="Conversions"
-            value={stats?.totalConversions.toLocaleString() || '0'}
+            value={stats?.totalConversions?.toLocaleString() || '0'}
             icon={<CheckCircle size={24} />}
             change={metricChanges?.conversions ? `${metricChanges.conversions > 0 ? '+' : ''}${metricChanges.conversions.toFixed(1)}%` : undefined}
           />
@@ -245,7 +268,7 @@ export default function DashboardV2Page() {
                     ))}
                   </div>
                   <div className="p-4 bg-gray-50 dark:bg-gray-900/50">
-                    <Link href="/dashboard/v2/campaigns" className="text-xs font-bold text-blue-600 hover:underline flex items-center justify-center">
+                    <Link href={`/dashboard/v2/campaigns?appId=${appId}`} className="text-xs font-bold text-blue-600 hover:underline flex items-center justify-center">
                       View all campaigns <ArrowRight size={14} className="ml-1" />
                     </Link>
                   </div>
@@ -253,7 +276,7 @@ export default function DashboardV2Page() {
               ) : (
                 <div className="p-8 text-center text-sm text-gray-500">
                   No active campaigns yet.
-                  <Link href="/dashboard/v2/campaigns/new" className="block mt-2 text-blue-600 hover:underline font-medium">
+                  <Link href={`/dashboard/v2/campaigns/new?appId=${appId}`} className="block mt-2 text-blue-600 hover:underline font-medium">
                     Create your first campaign
                   </Link>
                 </div>
@@ -269,7 +292,7 @@ export default function DashboardV2Page() {
                 <Webhook size={20} className="mr-2 text-purple-500" />
                 Recent Webhook Events
               </CardTitle>
-              <Link href="/dashboard/v2/webhooks" className="text-xs text-blue-600 hover:underline font-bold">View logs</Link>
+              <Link href={`/dashboard/v2/webhooks?appId=${appId}`} className="text-xs text-blue-600 hover:underline font-bold">View logs</Link>
             </CardHeader>
             <CardBody className="p-0">
               {webhookDeliveries.length > 0 ? (
