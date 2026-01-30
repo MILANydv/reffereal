@@ -5,11 +5,13 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
 import { Settings, Globe, Shield, Trash2, Save, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 export default function AppSettingsPage() {
+  const params = useParams();
   const router = useRouter();
-  const { selectedApp, invalidate, fetchApps } = useAppStore();
+  const appId = params?.appId as string;
+  const { apps, invalidate, fetchApps } = useAppStore();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -17,29 +19,37 @@ export default function AppSettingsPage() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Use a ref to track if we've initialized the form with the selected app
-  const initializedRef = useState(false);
+  // Find the app from the apps list
+  const app = apps.find(a => a.id === appId);
 
   useEffect(() => {
-    if (selectedApp && !initializedRef[0]) {
-      const timer = setTimeout(() => {
-        setFormData({
-          name: selectedApp.name,
-          description: selectedApp.description,
-          allowedDomains: 'localhost, *.referral.com',
-        });
-        initializedRef[1](true);
-      }, 0);
-      return () => clearTimeout(timer);
+    // Fetch apps if not loaded
+    if (apps.length === 0) {
+      fetchApps();
     }
-  }, [selectedApp, initializedRef]);
+  }, [apps.length, fetchApps]);
+
+  useEffect(() => {
+    if (app) {
+      setFormData({
+        name: app.name || '',
+        description: app.description || '',
+        allowedDomains: 'localhost, *.referral.com', // TODO: Fetch from API
+      });
+      setLoading(false);
+    } else if (apps.length > 0 && !loading) {
+      // App not found, redirect to apps page
+      router.push('/dashboard/v2/apps');
+    }
+  }, [app, apps.length, router, loading]);
 
   const handleSave = async () => {
-    if (!selectedApp) return;
+    if (!app) return;
     setSaving(true);
     try {
-      const response = await fetch(`/api/partner/apps/${selectedApp.id}`, {
+      const response = await fetch(`/api/partner/apps/${app.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -56,22 +66,15 @@ export default function AppSettingsPage() {
     }
   };
 
-  useEffect(() => {
-    // Redirect to app-specific settings if an app is selected
-    if (selectedApp) {
-      router.replace(`/dashboard/v2/app/${selectedApp.id}/settings`);
-    }
-  }, [selectedApp, router]);
-
-  if (!selectedApp) {
+  if (loading || !app) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-64 text-center">
           <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 mb-4">
             <Settings size={32} />
           </div>
-          <h2 className="text-xl font-bold">No App Selected</h2>
-          <p className="text-gray-500 mt-2">Please select an app to view its settings.</p>
+          <h2 className="text-xl font-bold">Loading...</h2>
+          <p className="text-gray-500 mt-2">Loading app settings...</p>
         </div>
       </DashboardLayout>
     );
@@ -82,7 +85,7 @@ export default function AppSettingsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">App Settings</h1>
-          <p className="text-gray-500 mt-1">Configure general settings and security for {selectedApp.name}.</p>
+          <p className="text-gray-500 mt-1">Configure general settings and security for {app.name}.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -190,17 +193,17 @@ export default function AppSettingsPage() {
               <CardBody className="space-y-4">
                 <div className="text-sm">
                   <div className="text-gray-500 mb-1">App ID</div>
-                  <div className="font-mono bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded border border-gray-100 dark:border-gray-800 break-all">{selectedApp.id}</div>
+                  <div className="font-mono bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded border border-gray-100 dark:border-gray-800 break-all">{app.id}</div>
                 </div>
                 <div className="text-sm">
-                  <div className="text-gray-500 mb-1">Created on</div>
-                  <div className="font-medium">January 15, 2024</div>
+                  <div className="text-gray-500 mb-1">API Key</div>
+                  <div className="font-mono bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded border border-gray-100 dark:border-gray-800 break-all text-xs">{app.apiKey}</div>
                 </div>
                 <div className="text-sm">
                   <div className="text-gray-500 mb-1">Status</div>
                   <div className="flex items-center">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                    <span className="font-medium">Active</span>
+                    <div className={`w-2 h-2 rounded-full mr-2 ${app.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className="font-medium capitalize">{app.status.toLowerCase()}</span>
                   </div>
                 </div>
               </CardBody>

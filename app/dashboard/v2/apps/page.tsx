@@ -178,7 +178,7 @@ export default function AppsPage() {
 
                     <div className="flex items-center space-x-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                       <Link
-                        href={`/dashboard/v2/settings`}
+                        href={`/dashboard/v2/app/${app.id}/settings`}
                         onClick={(e) => e.stopPropagation()}
                         className="flex-1"
                       >

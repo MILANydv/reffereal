@@ -43,7 +43,6 @@ const getPartnerNavigation = (appId: string | null): NavSection[] => {
       { name: 'API Usage', href: '/dashboard/v2/usage', icon: <Zap size={20} /> },
       { name: 'Billing', href: '/dashboard/v2/billing', icon: <CreditCard size={20} /> },
       { name: 'Team', href: '/dashboard/v2/team', icon: <Users size={20} /> },
-      { name: 'Settings', href: '/dashboard/v2/settings', icon: <Settings size={20} /> },
     ],
   };
 
@@ -61,6 +60,7 @@ const getPartnerNavigation = (appId: string | null): NavSection[] => {
       { name: 'Analytics', href: `/dashboard/v2/analytics`, icon: <BarChart3 size={20} /> },
       { name: 'Webhooks', href: `/dashboard/v2/webhooks`, icon: <Webhook size={20} /> },
       { name: 'UI Bundles', href: `/dashboard/v2/ui-bundles`, icon: <Box size={20} /> },
+      { name: 'Settings', href: `/dashboard/v2/app/${appId}/settings`, icon: <Settings size={20} /> },
     ],
   };
 
