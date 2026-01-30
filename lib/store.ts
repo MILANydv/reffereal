@@ -416,12 +416,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const response = await fetch('/api/partner/apps');
       if (response.ok) {
         const data = await response.json();
-        set({ apps: data.apps || [] });
+        // API returns array directly, not wrapped in an object
+        const appsArray = Array.isArray(data) ? data : (data.apps || []);
+        set({ apps: appsArray });
 
         if (typeof window !== 'undefined') {
           const savedAppId = localStorage.getItem('selectedAppId');
           if (savedAppId && !get().selectedApp) {
-            const app = data.apps?.find((a: App) => a.id === savedAppId);
+            const app = appsArray.find((a: App) => a.id === savedAppId);
             if (app) {
               set({ selectedApp: app });
             }

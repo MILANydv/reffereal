@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Plus, Edit3, Trash2, Search, Check, Zap, Users, Box, X } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
@@ -16,6 +17,11 @@ export default function AdminPricingPage() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<any | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; planId: string | null }>({
+    isOpen: false,
+    planId: null,
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -59,22 +65,30 @@ export default function AdminPricingPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this pricing plan?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeleteModal({ isOpen: true, planId: id });
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.planId) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/pricing-plans?id=${id}`, {
+      const response = await fetch(`/api/admin/pricing-plans?id=${deleteModal.planId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         fetchPlans();
+        setDeleteModal({ isOpen: false, planId: null });
       } else {
         const error = await response.json();
         alert(error.error || 'Error deleting plan');
       }
     } catch (error) {
       console.error('Error deleting pricing plan:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -192,7 +206,7 @@ export default function AdminPricingPage() {
                       <Edit3 size={14} />
                     </button>
                     <button
-                      onClick={() => handleDelete(plan.id)}
+                      onClick={() => handleDeleteClick(plan.id)}
                       className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
                     >
                       <Trash2 size={14} />
@@ -412,6 +426,18 @@ export default function AdminPricingPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, planId: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Pricing Plan"
+        message="Are you sure you want to delete this pricing plan? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

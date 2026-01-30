@@ -3,6 +3,7 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Users, Search, Filter, Edit, Trash2, Eye, TrendingUp, Mail } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
@@ -59,6 +60,12 @@ export default function AdminPartnersPage() {
   const [viewModal, setViewModal] = useState<any | null>(null);
   const [editModal, setEditModal] = useState<any | null>(null);
   const [editFormData, setEditFormData] = useState({ companyName: '', active: true });
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; partnerId: string | null; email: string }>({
+    isOpen: false,
+    partnerId: null,
+    email: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPartners();
@@ -108,22 +115,28 @@ export default function AdminPartnersPage() {
     }
   };
 
-  const handleDelete = async (partnerId: string, email: string) => {
-    if (!confirm(`Are you sure you want to delete partner "${email}"? This action cannot be undone and will delete all associated data.`)) {
-      return;
-    }
+  const handleDeleteClick = (partnerId: string, email: string) => {
+    setDeleteModal({ isOpen: true, partnerId, email });
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.partnerId) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/partners?id=${partnerId}`, {
+      const response = await fetch(`/api/admin/partners?id=${deleteModal.partnerId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         invalidate('partners');
         fetchPartners(true);
+        setDeleteModal({ isOpen: false, partnerId: null, email: '' });
       }
     } catch (error) {
       console.error('Error deleting partner:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -270,7 +283,7 @@ export default function AdminPartnersPage() {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => handleDelete(partner.id, partner.user.email)}
+                            onClick={() => handleDeleteClick(partner.id, partner.user.email)}
                             className="p-2 text-red-600 hover:text-red-700 transition-colors"
                             title="Delete Partner"
                           >
@@ -414,6 +427,18 @@ export default function AdminPartnersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, partnerId: null, email: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Partner"
+        message={`Are you sure you want to delete partner "${deleteModal.email}"? This action cannot be undone and will delete all associated data.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

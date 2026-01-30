@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { usePartnerStore } from '@/lib/store';
 import { useEffect, useState } from 'react';
 import { UserPlus, Mail, Trash2 } from 'lucide-react';
@@ -14,6 +15,12 @@ export default function TeamPage() {
   const { team: members, fetchTeam, isLoading, invalidate } = usePartnerStore();
   const loading = isLoading['team'];
   const [showForm, setShowForm] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; memberId: string | null; memberEmail: string }>({
+    isOpen: false,
+    memberId: null,
+    memberEmail: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchTeam();
@@ -39,27 +46,35 @@ export default function TeamPage() {
       if (response.ok) {
         setShowForm(false);
         invalidate('team');
-        fetchTeam(true);
+        fetchTeam();
       }
     } catch (error) {
       console.error('Error inviting member:', error);
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this team member?')) return;
+  const handleRemoveClick = (memberId: string, memberEmail: string) => {
+    setDeleteModal({ isOpen: true, memberId, memberEmail });
+  };
 
+  const handleRemoveConfirm = async () => {
+    if (!deleteModal.memberId) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/partner/team/${memberId}`, {
+      const response = await fetch(`/api/partner/team/${deleteModal.memberId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         invalidate('team');
-        fetchTeam(true);
+        fetchTeam();
+        setDeleteModal({ isOpen: false, memberId: null, memberEmail: '' });
       }
     } catch (error) {
-      console.error('Error removing member:', error);
+      console.error('Error removing team member:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -186,7 +201,7 @@ export default function TeamPage() {
                         </td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleRemoveMember(member.id)}
+                            onClick={() => handleRemoveClick(member.id, member.email)}
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 size={16} />
@@ -207,6 +222,18 @@ export default function TeamPage() {
           </CardBody>
         </Card>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, memberId: null, memberEmail: '' })}
+        onConfirm={handleRemoveConfirm}
+        title="Remove Team Member"
+        message={`Are you sure you want to remove "${deleteModal.memberEmail}" from your team? This action cannot be undone.`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

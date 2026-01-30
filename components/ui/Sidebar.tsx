@@ -35,39 +35,36 @@ interface NavSection {
 }
 
 const getPartnerNavigation = (appId: string | null): NavSection[] => {
+  const platformSection: NavSection = {
+    title: 'Platform',
+    items: [
+      { name: 'Overview', href: '/dashboard/v2', icon: <LayoutDashboard size={20} /> },
+      { name: 'Applications', href: '/dashboard/v2/apps', icon: <Building2 size={20} /> },
+      { name: 'API Usage', href: '/dashboard/v2/usage', icon: <Zap size={20} /> },
+      { name: 'Billing', href: '/dashboard/v2/billing', icon: <CreditCard size={20} /> },
+      { name: 'Team', href: '/dashboard/v2/team', icon: <Users size={20} /> },
+      { name: 'Settings', href: '/dashboard/v2/settings', icon: <Settings size={20} /> },
+    ],
+  };
+
   if (!appId) {
-    return [
-      {
-        title: 'Global',
-        items: [
-          { name: 'Home', href: '/dashboard/v2', icon: <LayoutDashboard size={20} /> },
-          { name: 'Applications', href: '/dashboard/v2/apps', icon: <Building2 size={20} /> },
-          { name: 'API Usage', href: '/dashboard/v2/usage', icon: <Zap size={20} /> },
-          { name: 'Billing', href: '/dashboard/v2/billing', icon: <CreditCard size={20} /> },
-          { name: 'Team', href: '/dashboard/v2/team', icon: <Users size={20} /> },
-          { name: 'Settings', href: '/dashboard/v2/settings', icon: <Settings size={20} /> },
-        ],
-      },
-    ];
+    return [platformSection];
   }
 
-  return [
-    {
-      title: 'App Context',
-      items: [
-        { name: 'Overview', href: `/dashboard/v2`, icon: <LayoutDashboard size={20} /> },
-        { name: 'API Usage', href: '/dashboard/v2/usage', icon: <Zap size={20} /> },
-        { name: 'API & Keys', href: `/dashboard/v2/api-keys`, icon: <Code size={20} /> },
-        { name: 'Campaigns', href: `/dashboard/v2/campaigns`, icon: <Megaphone size={20} /> },
-        { name: 'Referrals', href: `/dashboard/v2/referrals`, icon: <UserPlus size={20} /> },
-        { name: 'Analytics', href: `/dashboard/v2/analytics`, icon: <BarChart3 size={20} /> },
-        { name: 'Webhooks', href: `/dashboard/v2/webhooks`, icon: <Webhook size={20} /> },
-        { name: 'UI Bundles', href: `/dashboard/v2/ui-bundles`, icon: <Box size={20} /> },
-        { name: 'Billing', href: `/dashboard/v2/billing`, icon: <CreditCard size={20} /> },
-        { name: 'Settings', href: `/dashboard/v2/settings`, icon: <Settings size={20} /> },
-      ],
-    },
-  ];
+  const appSection: NavSection = {
+    title: 'App',
+    items: [
+      { name: 'Overview', href: `/dashboard/v2`, icon: <LayoutDashboard size={20} /> },
+      { name: 'API & Keys', href: `/dashboard/v2/api-keys`, icon: <Code size={20} /> },
+      { name: 'Campaigns', href: `/dashboard/v2/campaigns`, icon: <Megaphone size={20} /> },
+      { name: 'Referrals', href: `/dashboard/v2/referrals`, icon: <UserPlus size={20} /> },
+      { name: 'Analytics', href: `/dashboard/v2/analytics`, icon: <BarChart3 size={20} /> },
+      { name: 'Webhooks', href: `/dashboard/v2/webhooks`, icon: <Webhook size={20} /> },
+      { name: 'UI Bundles', href: `/dashboard/v2/ui-bundles`, icon: <Box size={20} /> },
+    ],
+  };
+
+  return [platformSection, appSection];
 };
 
 const adminNavigation: NavSection[] = [
@@ -100,11 +97,25 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800">
       <div className="flex-1 overflow-y-auto py-4">
-        {navigation.map((section) => (
-          <div key={section.title} className="mb-6">
-            <h3 className="px-6 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-              {section.title}
-            </h3>
+        {navigation.map((section, sectionIndex) => (
+          <div key={section.title} className={sectionIndex > 0 ? 'mt-8' : 'mb-6'}>
+            <div className="px-6 mb-2">
+              <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                {section.title}
+              </h3>
+              {section.title === 'App' && selectedApp && (
+                <div className="mt-1 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 rounded bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      {selectedApp.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300 truncate">
+                      {selectedApp.name}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
             <nav className="space-y-1">
               {section.items.map((item) => {
                 const isActive = pathname === item.href;

@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Search, MoreHorizontal, Building2, Zap, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
@@ -16,6 +17,12 @@ export default function AdminAppsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewModal, setViewModal] = useState<any | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; appId: string | null; appName: string }>({
+    isOpen: false,
+    appId: null,
+    appName: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchApps();
@@ -37,21 +44,27 @@ export default function AdminAppsPage() {
     }
   };
 
-  const handleDelete = async (appId: string, appName: string) => {
-    if (!confirm(`Are you sure you want to delete app "${appName}"? This action cannot be undone and will delete all associated campaigns and data.`)) {
-      return;
-    }
+  const handleDeleteClick = (appId: string, appName: string) => {
+    setDeleteModal({ isOpen: true, appId, appName });
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.appId) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/apps?id=${appId}`, {
+      const response = await fetch(`/api/admin/apps?id=${deleteModal.appId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         fetchApps();
+        setDeleteModal({ isOpen: false, appId: null, appName: '' });
       }
     } catch (error) {
       console.error('Error deleting app:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -255,7 +268,7 @@ export default function AdminAppsPage() {
                             <option value="SUSPENDED">Suspended</option>
                           </select>
                           <button
-                            onClick={() => handleDelete(app.id, app.name)}
+                            onClick={() => handleDeleteClick(app.id, app.name)}
                             className="p-2 text-red-600 hover:text-red-700 transition-colors"
                             title="Delete App"
                           >
@@ -349,6 +362,18 @@ export default function AdminAppsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, appId: null, appName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Application"
+        message={`Are you sure you want to delete app "${deleteModal.appName}"? This action cannot be undone and will delete all associated campaigns and data.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

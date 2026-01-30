@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAppStore } from '@/lib/store';
 import { Plus, Search, Settings, Trash2, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -13,6 +14,12 @@ import { Skeleton, CardSkeleton } from '@/components/ui/Skeleton';
 export default function AppsPage() {
   const { apps, selectedApp, setSelectedApp, fetchApps, isLoading } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; appId: string | null; appName: string }>({
+    isOpen: false,
+    appId: null,
+    appName: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
   const loading = isLoading['apps'];
 
   useEffect(() => {
@@ -28,25 +35,31 @@ export default function AppsPage() {
     setSelectedApp(app);
   };
 
-  const handleDeleteApp = async (appId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (appId: string, appName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this app? This action cannot be undone.')) {
-      return;
-    }
+    setDeleteModal({ isOpen: true, appId, appName });
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.appId) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/partner/apps/${appId}`, {
+      const response = await fetch(`/api/partner/apps/${deleteModal.appId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         fetchApps(true);
-        if (selectedApp?.id === appId) {
+        if (selectedApp?.id === deleteModal.appId) {
           setSelectedApp(null);
         }
+        setDeleteModal({ isOpen: false, appId: null, appName: '' });
       }
     } catch (error) {
       console.error('Error deleting app:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -76,8 +89,8 @@ export default function AppsPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
-            <p className="text-gray-500 mt-1">Manage your applications and API keys.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-slate-100">Applications</h1>
+            <p className="text-gray-500 dark:text-slate-400 mt-1">Manage your applications and API keys.</p>
           </div>
           <Link href="/dashboard/v2/apps/new">
             <Button>
@@ -112,7 +125,7 @@ export default function AppsPage() {
                 placeholder="Search apps..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400"
               />
             </div>
 
@@ -140,12 +153,12 @@ export default function AppsPage() {
                   <CardBody className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">API Usage</span>
-                        <span className="font-medium">
+                        <span className="text-gray-600 dark:text-slate-400">API Usage</span>
+                        <span className="font-medium text-gray-900 dark:text-slate-100">
                           {app.currentUsage.toLocaleString()} / {app.monthlyLimit.toLocaleString()}
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
                             (app.currentUsage / app.monthlyLimit) * 100 > 90
@@ -175,7 +188,7 @@ export default function AppsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => handleDeleteApp(app.id, e)}
+                        onClick={(e) => handleDeleteClick(app.id, app.name, e)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <Trash2 size={16} />
@@ -189,13 +202,25 @@ export default function AppsPage() {
             {filteredApps.length === 0 && searchQuery && (
               <Card>
                 <CardBody className="text-center py-8">
-                  <p className="text-gray-500">No apps found matching "{searchQuery}"</p>
+                  <p className="text-gray-500 dark:text-slate-400">No apps found matching "{searchQuery}"</p>
                 </CardBody>
               </Card>
             )}
           </>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, appId: null, appName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Application"
+        message={`Are you sure you want to delete "${deleteModal.appName}"? This action cannot be undone and will delete all associated campaigns and data.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useEffect, useState } from 'react';
 import { Webhook as WebhookIcon, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
@@ -13,6 +14,11 @@ export default function WebhooksPage() {
   const { selectedApp, webhooks, fetchWebhooks: loadWebhooks, isLoading, invalidate } = useAppStore();
   const loading = isLoading[`webhooks-${selectedApp?.id || 'all'}`];
   const [showForm, setShowForm] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; webhookId: string | null }>({
+    isOpen: false,
+    webhookId: null,
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (selectedApp) {
@@ -49,27 +55,35 @@ export default function WebhooksPage() {
       if (response.ok) {
         invalidate(`webhooks-${selectedApp?.id}`);
         setShowForm(false);
-        loadWebhooks(selectedApp!.id, true);
+        loadWebhooks(selectedApp!.id);
       }
     } catch (error) {
       console.error('Error creating webhook:', error);
     }
   };
 
-  const handleDeleteWebhook = async (webhookId: string) => {
-    if (!confirm('Are you sure you want to delete this webhook?')) return;
+  const handleDeleteClick = (webhookId: string) => {
+    setDeleteModal({ isOpen: true, webhookId });
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.webhookId || !selectedApp) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/partner/webhooks/${webhookId}`, {
+      const response = await fetch(`/api/partner/webhooks/${deleteModal.webhookId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        invalidate(`webhooks-${selectedApp?.id}`);
-        loadWebhooks(selectedApp!.id, true);
+        invalidate(`webhooks-${selectedApp.id}`);
+        loadWebhooks(selectedApp.id);
+        setDeleteModal({ isOpen: false, webhookId: null });
       }
     } catch (error) {
       console.error('Error deleting webhook:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -83,7 +97,7 @@ export default function WebhooksPage() {
 
       if (response.ok) {
         invalidate(`webhooks-${selectedApp?.id}`);
-        loadWebhooks(selectedApp!.id, true);
+        loadWebhooks(selectedApp!.id);
       }
     } catch (error) {
       console.error('Error toggling webhook:', error);
@@ -212,7 +226,7 @@ export default function WebhooksPage() {
                         {webhook.isActive ? 'Disable' : 'Enable'}
                       </button>
                       <button
-                        onClick={() => handleDeleteWebhook(webhook.id)}
+                        onClick={() => handleDeleteClick(webhook.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 size={16} />
@@ -260,6 +274,18 @@ export default function WebhooksPage() {
           </Card>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, webhookId: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Webhook"
+        message="Are you sure you want to delete this webhook? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

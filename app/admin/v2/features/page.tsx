@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Plus, Edit3, Trash2, Search, Flag, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
@@ -24,6 +25,12 @@ export default function AdminFeaturesPage() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingFlag, setEditingFlag] = useState<any | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; flagId: string | null; flagName: string }>({
+    isOpen: false,
+    flagId: null,
+    flagName: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     key: '',
     name: '',
@@ -59,19 +66,27 @@ export default function AdminFeaturesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this feature flag?')) return;
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteModal({ isOpen: true, flagId: id, flagName: name });
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.flagId) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/feature-flags?id=${id}`, {
+      const response = await fetch(`/api/admin/feature-flags?id=${deleteModal.flagId}`, {
         method: 'DELETE',
       });
       if (response.ok) {
         invalidate('features');
         fetchFeatures(true);
+        setDeleteModal({ isOpen: false, flagId: null, flagName: '' });
       }
     } catch (error) {
       console.error('Error deleting feature flag:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -220,7 +235,7 @@ export default function AdminFeaturesPage() {
                             <Edit3 size={16} />
                           </button>
                           <button
-                            onClick={() => handleDelete(flag.id)}
+                            onClick={() => handleDeleteClick(flag.id, flag.name)}
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                           >
                             <Trash2 size={16} />
@@ -321,6 +336,18 @@ export default function AdminFeaturesPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, flagId: null, flagName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Feature Flag"
+        message={`Are you sure you want to delete the feature flag "${deleteModal.flagName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }
