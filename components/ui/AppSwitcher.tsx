@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore, type App } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, Plus, Search, Check } from 'lucide-react';
 
 
 export function AppSwitcher() {
   const { selectedApp, setSelectedApp } = useAppStore();
+  const router = useRouter();
   const [apps, setApps] = useState<App[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,6 +83,8 @@ export function AppSwitcher() {
                   onClick={() => {
                     setSelectedApp(app);
                     setIsOpen(false);
+                    // Navigate to app overview when switching apps
+                    router.push(`/dashboard/v2/app/${app.id}`);
                   }}
                   className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-left transition-colors"
                 >

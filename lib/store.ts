@@ -358,8 +358,10 @@ interface AppStore {
   fraud: FraudFlag[];
   webhooks: Webhook[];
   isLoading: Record<string, boolean>;
+  isAppTransitioning: boolean;
 
   setSelectedApp: (app: App | null) => void;
+  setAppTransitioning: (isTransitioning: boolean) => void;
   fetchApps: (force?: boolean) => Promise<void>;
   fetchStats: (appId: string | 'global', dateRange?: { startDate?: Date | null; endDate?: Date | null }) => Promise<void>;
   fetchActiveCampaigns: (appId?: string) => Promise<void>;
@@ -394,9 +396,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
   fraud: [],
   webhooks: [],
   isLoading: {},
+  isAppTransitioning: false,
 
   setSelectedApp: (app) => {
-    set({ selectedApp: app });
+    const currentApp = get().selectedApp;
+    // Only set transitioning if we're actually switching to a different app
+    if (app && currentApp && app.id !== currentApp.id) {
+      set({ isAppTransitioning: true, selectedApp: app });
+    } else {
+      set({ selectedApp: app });
+    }
     if (typeof window !== 'undefined') {
       if (app) {
         localStorage.setItem('selectedAppId', app.id);
@@ -404,6 +413,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
         localStorage.removeItem('selectedAppId');
       }
     }
+  },
+
+  setAppTransitioning: (isTransitioning) => {
+    set({ isAppTransitioning: isTransitioning });
   },
 
   fetchApps: async (force = false) => {

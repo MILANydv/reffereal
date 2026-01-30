@@ -33,6 +33,8 @@ export default function AppsPage() {
 
   const handleSelectApp = (app: typeof apps[0]) => {
     setSelectedApp(app);
+    // Navigate to app overview
+    window.location.href = `/dashboard/v2/app/${app.id}`;
   };
 
   const handleDeleteClick = (appId: string, appName: string, e: React.MouseEvent) => {

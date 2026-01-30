@@ -2,9 +2,11 @@
 
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
+import { AppTransitionLoader } from './AppTransitionLoader';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useAppStore } from '@/lib/store';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { isAppTransitioning, selectedApp } = useAppStore();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -59,6 +62,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {children}
           </div>
         </main>
+        {isAppTransitioning && (
+          <AppTransitionLoader appName={selectedApp?.name} />
+        )}
       </div>
     </div>
   );

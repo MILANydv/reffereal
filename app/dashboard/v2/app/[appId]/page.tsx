@@ -32,6 +32,7 @@ export default function AppOverviewPage() {
     fetchWebhookDeliveries,
     fetchMetrics,
     setSelectedApp,
+    setAppTransitioning,
     isLoading
   } = useAppStore();
 
@@ -70,12 +71,25 @@ export default function AppOverviewPage() {
   useEffect(() => {
     if (onboardingStatus.completed && appId) {
       // Fetch app-specific data
-      fetchStats(appId, dateRange);
-      fetchActiveCampaigns(appId);
-      fetchWebhookDeliveries(appId);
-      fetchMetrics();
+      const fetchData = async () => {
+        setAppTransitioning(true);
+        try {
+          await Promise.all([
+            fetchStats(appId, dateRange),
+            fetchActiveCampaigns(appId),
+            fetchWebhookDeliveries(appId),
+            fetchMetrics(),
+          ]);
+        } finally {
+          // Small delay to ensure smooth transition
+          setTimeout(() => {
+            setAppTransitioning(false);
+          }, 300);
+        }
+      };
+      fetchData();
     }
-  }, [appId, onboardingStatus.completed, dateRange, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
+  }, [appId, onboardingStatus.completed, dateRange, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics, setAppTransitioning]);
 
   const checkOnboardingStatus = async () => {
     try {
