@@ -89,8 +89,8 @@ export default function BillingPage() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
-            <p className="mt-2 text-gray-600">Manage your subscription and view billing history</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Billing & Subscription</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Manage your subscription and view billing history</p>
           </div>
           {!showPlans && (
             <Button onClick={() => setShowPlans(true)}>
@@ -103,7 +103,7 @@ export default function BillingPage() {
         {showPlans && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Choose Your Plan</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Choose Your Plan</h2>
               <Button variant="ghost" onClick={() => setShowPlans(false)}>
                 Cancel
               </Button>
@@ -122,15 +122,15 @@ export default function BillingPage() {
                       </div>
                     )}
                     <CardBody>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{plan.name}</h3>
                       <div className="mb-4">
-                        <span className="text-4xl font-bold text-gray-900">${plan.monthlyPrice}</span>
-                        <span className="text-gray-600">/month</span>
+                        <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">${plan.monthlyPrice}</span>
+                        <span className="text-gray-600 dark:text-gray-400">/month</span>
                       </div>
                       <ul className="space-y-2 mb-6">
                         {plan.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start text-sm text-gray-600">
-                            <Check size={16} className="mr-2 mt-0.5 text-green-600 flex-shrink-0" />
+                          <li key={idx} className="flex items-start text-sm text-gray-600 dark:text-gray-400">
+                            <Check size={16} className="mr-2 mt-0.5 text-green-600 dark:text-green-400 flex-shrink-0" />
                             <span>{feature}</span>
                           </li>
                         ))}
@@ -158,8 +158,8 @@ export default function BillingPage() {
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Plan</div>
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Plan</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {billingData.subscription.plan.name}
                   </div>
                   <Badge variant={billingData.subscription.status === 'ACTIVE' ? 'success' : 'default'} size="sm" className="mt-2">
@@ -167,14 +167,14 @@ export default function BillingPage() {
                   </Badge>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Monthly Cost</div>
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Monthly Cost</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     ${billingData.subscription.plan.monthlyPrice}/month
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Renewal Date</div>
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Renewal Date</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {new Date(billingData.subscription.currentPeriodEnd).toLocaleDateString()}
                   </div>
                 </div>
@@ -191,20 +191,20 @@ export default function BillingPage() {
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">API Calls</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">API Calls</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {billingData.currentUsage.apiCalls.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Overage</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Overage</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {billingData.currentUsage.overage.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Estimated Cost</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Estimated Cost</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     ${billingData.currentUsage.estimatedCost.toFixed(2)}
                   </div>
                 </div>
@@ -222,29 +222,29 @@ export default function BillingPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Period</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">API Usage</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Overage</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Amount</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Period</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">API Usage</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Overage</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Amount</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {billingData.invoices.map((invoice: any) => (
-                      <tr key={invoice.id} className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-sm text-gray-900">
+                      <tr key={invoice.id} className="border-b border-gray-100 dark:border-gray-800">
+                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">
                           {new Date(invoice.billingPeriodStart).toLocaleDateString()} -{' '}
                           {new Date(invoice.billingPeriodEnd).toLocaleDateString()}
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
+                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">
                           {invoice.apiUsage.toLocaleString()}
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
+                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">
                           ${invoice.overageAmount.toFixed(2)}
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                        <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                           ${invoice.amount.toFixed(2)}
                         </td>
                         <td className="py-3 px-4">
@@ -261,7 +261,7 @@ export default function BillingPage() {
                             {invoice.status}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
+                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                           {new Date(invoice.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -270,7 +270,7 @@ export default function BillingPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-8">No invoices yet</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">No invoices yet</p>
             )}
           </CardBody>
         </Card>

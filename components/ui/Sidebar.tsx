@@ -98,11 +98,11 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
   const navigation = userRole === 'SUPER_ADMIN' ? adminNavigation : getPartnerNavigation(selectedApp?.id || null);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800">
       <div className="flex-1 overflow-y-auto py-4">
         {navigation.map((section) => (
           <div key={section.title} className="mb-6">
-            <h3 className="px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            <h3 className="px-6 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
               {section.title}
             </h3>
             <nav className="space-y-1">
@@ -117,7 +117,7 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
                       ${
                         isActive
                           ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-4 border-blue-600'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100'
+                          : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
                       }
                     `}
                   >
@@ -131,15 +131,15 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
         ))}
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
-        <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 px-2">Account</div>
+      <div className="border-t border-gray-200 dark:border-slate-800 p-4 bg-gray-50 dark:bg-slate-900/50 flex-shrink-0">
+        <div className="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-2">Account</div>
         <div className="px-2 mb-4">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{userEmail}</div>
-          <div className="text-xs text-gray-500 capitalize">{userRole.toLowerCase().replace('_', ' ')}</div>
+          <div className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">{userEmail}</div>
+          <div className="text-xs text-gray-500 dark:text-slate-400 capitalize">{userRole.toLowerCase().replace('_', ' ')}</div>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+          className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
         >
           <LogOut size={16} className="mr-2" />
           Sign Out

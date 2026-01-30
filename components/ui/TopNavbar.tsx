@@ -15,7 +15,10 @@ export function TopNavbar() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-      return savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      if (savedTheme) {
+        return savedTheme;
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return 'light';
   });
@@ -23,7 +26,14 @@ export function TopNavbar() {
   const isAdmin = session?.user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    if (typeof window !== 'undefined') {
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
   }, [theme]);
 
   const fetchUsage = useCallback(async () => {
@@ -56,14 +66,21 @@ export function TopNavbar() {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme);
+      const root = document.documentElement;
+      if (newTheme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
   };
 
   const usagePercentage = Math.min((usage.current / usage.limit) * 100, 100);
 
   return (
-    <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black flex items-center justify-between px-4 sticky top-0 z-30">
+    <header className="h-16 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-4 sticky top-0 z-30">
       <div className="flex items-center space-x-4">
         <Link href={isAdmin ? "/admin/v2" : "/dashboard/v2"} className="flex items-center space-x-2 mr-4">
           <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">
@@ -74,7 +91,7 @@ export function TopNavbar() {
 
         {!isAdmin && (
           <>
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-slate-800 hidden md:block" />
             <AppSwitcher />
           </>
         )}
@@ -84,7 +101,7 @@ export function TopNavbar() {
           <input
             type="text"
             placeholder="Search resources..."
-            className="pl-10 pr-4 py-1.5 bg-gray-100 dark:bg-gray-900 border-transparent rounded-full text-sm w-64 focus:bg-white dark:focus:bg-black focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+            className="pl-10 pr-4 py-1.5 bg-gray-100 dark:bg-slate-800 border-transparent rounded-full text-sm w-64 focus:bg-white dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400"
           />
         </div>
       </div>
@@ -96,7 +113,7 @@ export function TopNavbar() {
               <Zap size={12} className="mr-1 text-yellow-500 fill-yellow-500" />
               <span>{usage.current.toLocaleString()} / {usage.limit.toLocaleString()} API hits</span>
             </div>
-            <div className="w-32 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div className="w-32 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div 
                 className={`h-full rounded-full ${usagePercentage > 90 ? 'bg-red-500' : 'bg-blue-500'}`}
                 style={{ width: `${usagePercentage}%` }}
@@ -116,17 +133,18 @@ export function TopNavbar() {
 
         <button 
           onClick={toggleTheme}
-          className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+          className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+          aria-label="Toggle theme"
         >
           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
         </button>
 
-        <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors relative">
+        <button className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
           <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-black" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
         </button>
 
-        <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+        <button className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
           <LayoutGrid size={20} />
         </button>
 
@@ -144,12 +162,12 @@ export function TopNavbar() {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowProfileMenu(false)}
               />
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+                  <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
                     {session?.user?.email}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-gray-500 dark:text-slate-400">
                     {session?.user?.role}
                   </div>
                 </div>
@@ -157,7 +175,7 @@ export function TopNavbar() {
                   <Link
                     href="/profile"
                     onClick={() => setShowProfileMenu(false)}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                   >
                     <UserCircle size={16} className="mr-3" />
                     Profile Settings
@@ -167,7 +185,7 @@ export function TopNavbar() {
                       setShowProfileMenu(false);
                       signOut({ callbackUrl: '/login' });
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                   >
                     <LogOut size={16} className="mr-3" />
                     Sign Out
