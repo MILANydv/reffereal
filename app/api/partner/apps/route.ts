@@ -11,6 +11,9 @@ export async function GET() {
   }
 
   try {
+    // Ensure connection is active
+    await prisma.$connect();
+    
     const apps = await prisma.app.findMany({
       where: { partnerId: session.user.partnerId },
       include: {
@@ -28,6 +31,13 @@ export async function GET() {
     return NextResponse.json(apps);
   } catch (error) {
     console.error('Error fetching apps:', error);
+    // Try to reconnect on error
+    try {
+      await prisma.$disconnect();
+      await prisma.$connect();
+    } catch (reconnectError) {
+      console.error('Failed to reconnect:', reconnectError);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

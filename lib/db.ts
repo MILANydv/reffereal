@@ -14,17 +14,32 @@ function createPrismaClient(): PrismaClient {
   const pool = new Pool({
     connectionString: databaseUrl,
     max: process.env.NODE_ENV === 'production' ? 20 : 10,
+    min: 0, // Allow pool to shrink to zero connections
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 20000, // Increased timeout
     ssl: { rejectUnauthorized: false },
+    // Add connection retry logic
+    allowExitOnIdle: true,
+  });
+
+  // Handle pool errors
+  pool.on('error', (err: Error) => {
+    console.error('Unexpected error on idle client', err);
   });
 
   const adapter = new PrismaPg(pool);
 
-  return new PrismaClient({
+  const client = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error'],
   });
+
+  // Ensure connection is established
+  client.$connect().catch((err) => {
+    console.error('Failed to connect to database:', err);
+  });
+
+  return client;
 }
 
 // Reuse instance in development, create new in production

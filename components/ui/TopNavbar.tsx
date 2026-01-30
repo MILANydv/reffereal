@@ -4,37 +4,48 @@ import { AppSwitcher } from './AppSwitcher';
 import { Search, Bell, LayoutGrid, Zap, Sun, Moon, LogOut, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { useAppStore } from '@/lib/store';
+import { useAppStore, useThemeStore } from '@/lib/store';
 import { useEffect, useState, useCallback } from 'react';
 
 export function TopNavbar() {
   const { data: session } = useSession();
   const { selectedApp } = useAppStore();
+  const { theme, mounted, toggleTheme, initializeTheme } = useThemeStore();
   const [usage, setUsage] = useState({ current: 0, limit: 10000 });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-      if (savedTheme) {
-        return savedTheme;
-      }
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return 'light';
-  });
 
   const isAdmin = session?.user?.role === 'SUPER_ADMIN';
 
+  // Initialize theme on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const root = document.documentElement;
-      if (theme === 'dark') {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    }
-  }, [theme]);
+    console.log('[TopNavbar] Component mounted, initializing theme');
+    initializeTheme();
+  }, [initializeTheme]);
+  
+  // Listen for theme changes and force re-render
+  useEffect(() => {
+    const handleThemeChange = () => {
+      console.log('[TopNavbar] Theme change event received, forcing re-render');
+      // Force component to re-render by accessing the store
+      const currentTheme = useThemeStore.getState().theme;
+      console.log('[TopNavbar] Current theme from store:', currentTheme);
+      // Force a state update to trigger re-render
+      setUsage(prev => ({ ...prev }));
+    };
+    
+    window.addEventListener('themechange', handleThemeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('themechange', handleThemeChange as EventListener);
+    };
+  }, []);
+  
+  // Log theme changes
+  useEffect(() => {
+    console.log('[TopNavbar] Theme changed to:', theme);
+    console.log('[TopNavbar] Mounted state:', mounted);
+    console.log('[TopNavbar] DocumentElement has dark class:', document.documentElement.classList.contains('dark'));
+  }, [theme, mounted]);
 
   const fetchUsage = useCallback(async () => {
     try {
@@ -63,19 +74,6 @@ export function TopNavbar() {
     }
   }, [selectedApp, fetchUsage]);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme);
-      const root = document.documentElement;
-      if (newTheme === 'dark') {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    }
-  };
 
   const usagePercentage = Math.min((usage.current / usage.limit) * 100, 100);
 
@@ -132,11 +130,17 @@ export function TopNavbar() {
         )}
 
         <button 
-          onClick={toggleTheme}
+          onClick={() => {
+            console.log('[TopNavbar] Theme toggle button clicked');
+            console.log('[TopNavbar] Current theme from store:', theme);
+            toggleTheme();
+          }}
           className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
           aria-label="Toggle theme"
+          type="button"
+          suppressHydrationWarning
         >
-          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          {mounted ? (theme === 'light' ? <Moon size={20} /> : <Sun size={20} />) : <Moon size={20} />}
         </button>
 
         <button className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">

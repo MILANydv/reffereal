@@ -299,7 +299,7 @@ export default function AppOverviewPage() {
                         <div className="flex items-center text-xs text-gray-500">
                           <Users size={12} className="mr-1" /> {campaign.totalReferrals} referrals
                           <span className="mx-2">•</span>
-                          <DollarSign size={12} className="mr-1" /> ${campaign.totalRewardCost.toFixed(2)} reward cost
+                          <DollarSign size={12} className="mr-1" /> ${campaign.totalRewardCost?.toFixed(2) || '0'} reward cost
                         </div>
                       </div>
                     ))}

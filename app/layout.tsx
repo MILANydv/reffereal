@@ -35,7 +35,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedTheme = localStorage.getItem('theme');
+                  const root = document.documentElement;
+                  
+                  // Remove any existing theme classes
+                  root.classList.remove('dark', 'light');
+                  
+                  if (savedTheme === 'dark' || savedTheme === 'light') {
+                    if (savedTheme === 'dark') {
+                      root.classList.add('dark');
+                    }
+                  } else {
+                    // Only use system preference if no saved theme exists
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) {
+                      root.classList.add('dark');
+                    }
+                  }
+                } catch (e) {
+                  // Silently fail if localStorage is not available
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${instrumentSerif.variable} ${plusJakartaSans.variable} antialiased`}
       >

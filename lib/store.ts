@@ -1051,3 +1051,73 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
   },
 }));
+
+// ===== Theme Store =====
+
+interface ThemeStore {
+  theme: 'light' | 'dark';
+  mounted: boolean;
+  setTheme: (theme: 'light' | 'dark') => void;
+  toggleTheme: () => void;
+  initializeTheme: () => void;
+}
+
+export const useThemeStore = create<ThemeStore>((set, get) => ({
+  theme: 'light',
+  mounted: false,
+  
+  setTheme: (theme: 'light' | 'dark') => {
+    console.log('[ThemeStore] setTheme called with:', theme);
+    
+    if (typeof window !== 'undefined') {
+      const root = document.documentElement;
+      
+      // Update DOM FIRST for immediate visual feedback
+      root.classList.remove('dark', 'light');
+      
+      if (theme === 'dark') {
+        console.log('[ThemeStore] Adding dark class to documentElement');
+        root.classList.add('dark');
+      } else {
+        console.log('[ThemeStore] Removing dark class from documentElement');
+        root.classList.remove('dark');
+      }
+      
+      // Update localStorage
+      console.log('[ThemeStore] Setting localStorage theme to:', theme);
+      localStorage.setItem('theme', theme);
+      
+      // Update state to trigger React re-renders
+      set({ theme });
+      
+      // Dispatch custom event for any listeners
+      window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
+      
+      console.log('[ThemeStore] Current documentElement classes:', root.classList.toString());
+    } else {
+      // SSR: only update state
+      set({ theme });
+      console.log('[ThemeStore] Window is undefined, only updating state');
+    }
+  },
+  
+  toggleTheme: () => {
+    const currentTheme = get().theme;
+    console.log('[ThemeStore] toggleTheme called, current theme:', currentTheme);
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    console.log('[ThemeStore] Toggling to new theme:', newTheme);
+    get().setTheme(newTheme);
+  },
+  
+  initializeTheme: () => {
+    if (typeof window === 'undefined') return;
+    
+    // Read from DOM (which was already set by the inline script in layout.tsx)
+    const root = document.documentElement;
+    const hasDarkClass = root.classList.contains('dark');
+    
+    // Sync state with what's already on the DOM
+    const initialTheme = hasDarkClass ? 'dark' : 'light';
+    set({ theme: initialTheme, mounted: true });
+  },
+}));
