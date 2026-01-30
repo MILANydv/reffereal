@@ -1,8 +1,8 @@
 import nodemailer from 'nodemailer';
 import { prisma } from './db';
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@referralsystem.com';
-const APP_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+const FROM_EMAIL = process.env.FROM_EMAIL;
+const APP_URL = process.env.NEXTAUTH_URL;
 
 // Create transporter - supports SMTP or test account
 const createTransporter = () => {

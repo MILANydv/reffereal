@@ -69,6 +69,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${inter.variable} ${instrumentSerif.variable} ${plusJakartaSans.variable} antialiased`}
+        suppressHydrationWarning
       >
         <MaterialIconsLoader />
         <Providers>{children}</Providers>

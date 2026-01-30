@@ -47,8 +47,23 @@ export default function DashboardV2Page() {
       } else {
         checkOnboardingStatus();
       }
+    } else if (sessionStatus === 'unauthenticated') {
+      // If unauthenticated, stop loading
+      setOnboardingStatus({ completed: false, loading: false });
     }
   }, [sessionStatus, session?.user?.role]);
+
+  // Timeout fallback to prevent infinite loading
+  useEffect(() => {
+    if (onboardingStatus.loading) {
+      const timeout = setTimeout(() => {
+        console.warn('Onboarding status check timed out, setting loading to false');
+        setOnboardingStatus({ completed: false, loading: false });
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [onboardingStatus.loading]);
 
   useEffect(() => {
     if (onboardingStatus.completed) {
@@ -71,6 +86,10 @@ export default function DashboardV2Page() {
           window.location.href = '/onboarding';
           return;
         }
+      } else {
+        // If response is not OK, still set loading to false to prevent infinite loading
+        console.error('Failed to check onboarding status:', response.status);
+        setOnboardingStatus({ completed: false, loading: false });
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
@@ -80,6 +99,21 @@ export default function DashboardV2Page() {
 
 
   const isLoadingAny = Object.values(isLoading).some(Boolean) || onboardingStatus.loading;
+
+  // Show loading only if we're actually loading and don't have data yet
+  // But also show content if we have stats even if some things are still loading
+  if (onboardingStatus.loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (isLoadingAny && !stats) {
     return (
