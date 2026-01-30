@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
 import { triggerWebhook } from '@/lib/webhooks';
+import { notifyReferralConversion } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -96,6 +97,25 @@ export async function POST(request: NextRequest) {
       rewardAmount: updatedReferral.rewardAmount,
       campaignId: referral.campaignId,
     });
+
+    // Send notification to partner
+    try {
+      const partner = await prisma.partner.findUnique({
+        where: { id: app.partnerId },
+        include: { user: true },
+      });
+      
+      if (partner?.user) {
+        await notifyReferralConversion(partner.user.id, {
+          code: updatedReferral.referralCode,
+          rewardAmount: updatedReferral.rewardAmount || undefined,
+          campaignName: campaign.name,
+        });
+      }
+    } catch (error) {
+      console.error('[Notification] Error sending conversion notification:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({
       success: true,

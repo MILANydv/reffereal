@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-   provider = "postgresql"
+  provider = "postgresql"
 }
-
 
 enum UserRole {
   SUPER_ADMIN
@@ -83,34 +82,42 @@ enum FraudType {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      UserRole
-  name      String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  password            String
+  role                UserRole
+  name                String?
+  active              Boolean   @default(true)
+  emailVerified       Boolean   @default(false)
+  emailVerifyToken    String?
+  emailVerifyExpiry   DateTime?
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  partners  Partner[]
+  partners      Partner[]
+  notifications Notification[]
 
   @@index([email])
   @@index([role])
+  @@index([emailVerifyToken])
+  @@index([passwordResetToken])
 }
 
 model Partner {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Onboarding fields
-  userType          String? // "developer", "business_owner", "startup", "student"
+  userType            String? // "developer", "business_owner", "startup", "student"
   onboardingCompleted Boolean @default(false)
-  onboardingStep    Int     @default(0)
+  onboardingStep      Int     @default(0)
 
   apps         App[]
   subscription Subscription?
@@ -121,22 +128,22 @@ model Partner {
 }
 
 model App {
-  id            String    @id @default(cuid())
-  name          String
-  apiKey        String    @unique
-  partnerId     String
-  partner       Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  monthlyLimit  Int       @default(10000)
-  currentUsage  Int       @default(0)
-  status        AppStatus @default(ACTIVE)
-  isSandbox     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  apiKey       String    @unique
+  partnerId    String
+  partner      Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  monthlyLimit Int       @default(10000)
+  currentUsage Int       @default(0)
+  status       AppStatus @default(ACTIVE)
+  isSandbox    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  campaigns     Campaign[]
-  apiUsageLogs  ApiUsageLog[]
-  webhooks      Webhook[]
-  fraudFlags    FraudFlag[]
+  campaigns    Campaign[]
+  apiUsageLogs ApiUsageLog[]
+  webhooks     Webhook[]
+  fraudFlags   FraudFlag[]
 
   @@index([partnerId])
   @@index([apiKey])
@@ -144,67 +151,67 @@ model App {
 }
 
 model Campaign {
-  id                  String         @id @default(cuid())
-  appId               String
-  app                 App            @relation(fields: [appId], references: [id], onDelete: Cascade)
-  name                String
-  status              CampaignStatus @default(ACTIVE)
-  referralType        ReferralType
-  rewardModel         RewardModel
-  rewardValue         Float
-  rewardCap           Float?
-  firstTimeUserOnly   Boolean        @default(true)
-  
-  // Phase 2: Time-based rules
-  startDate           DateTime?
-  endDate             DateTime?
-  conversionWindow    Int?           // days
-  rewardExpiration    Int?           // days
-  
-  // Phase 2: Multi-level referrals
-  level1Reward        Float?
-  level2Reward        Float?
-  level1Cap           Float?
-  level2Cap           Float?
-  
-  // Phase 2: Tiered rewards
-  tierConfig          String?        // JSON config for tiers
-  
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  id                String         @id @default(cuid())
+  appId             String
+  app               App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  name              String
+  status            CampaignStatus @default(ACTIVE)
+  referralType      ReferralType
+  rewardModel       RewardModel
+  rewardValue       Float
+  rewardCap         Float?
+  firstTimeUserOnly Boolean        @default(true)
 
-  referrals           Referral[]
+  // Phase 2: Time-based rules
+  startDate        DateTime?
+  endDate          DateTime?
+  conversionWindow Int? // days
+  rewardExpiration Int? // days
+
+  // Phase 2: Multi-level referrals
+  level1Reward Float?
+  level2Reward Float?
+  level1Cap    Float?
+  level2Cap    Float?
+
+  // Phase 2: Tiered rewards
+  tierConfig String? // JSON config for tiers
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  referrals Referral[]
 
   @@index([appId])
   @@index([status])
 }
 
 model Referral {
-  id              String          @id @default(cuid())
-  campaignId      String
-  campaign        Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  referralCode    String          @unique
-  referrerId      String
-  refereeId       String?
-  status          ReferralStatus  @default(PENDING)
-  clickedAt       DateTime?
-  convertedAt     DateTime?
-  rewardAmount    Float?
-  
-  // Phase 2: Multi-level support
-  level           Int             @default(1)
-  parentReferralId String?
-  
-  // Phase 2: Fraud detection
-  ipAddress       String?
-  isFlagged       Boolean         @default(false)
-  
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id           String         @id @default(cuid())
+  campaignId   String
+  campaign     Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  referralCode String         @unique
+  referrerId   String
+  refereeId    String?
+  status       ReferralStatus @default(PENDING)
+  clickedAt    DateTime?
+  convertedAt  DateTime?
+  rewardAmount Float?
 
-  conversions     Conversion[]
-  childReferrals  Referral[]      @relation("ReferralHierarchy")
-  parentReferral  Referral?       @relation("ReferralHierarchy", fields: [parentReferralId], references: [id], onDelete: SetNull)
+  // Phase 2: Multi-level support
+  level            Int     @default(1)
+  parentReferralId String?
+
+  // Phase 2: Fraud detection
+  ipAddress String?
+  isFlagged Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conversions    Conversion[]
+  childReferrals Referral[]   @relation("ReferralHierarchy")
+  parentReferral Referral?    @relation("ReferralHierarchy", fields: [parentReferralId], references: [id], onDelete: SetNull)
 
   @@index([campaignId])
   @@index([referralCode])
@@ -217,25 +224,25 @@ model Referral {
 }
 
 model Conversion {
-  id              String   @id @default(cuid())
-  referralId      String
-  referral        Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  amount          Float?
-  metadata        String?
-  createdAt       DateTime @default(now())
+  id         String   @id @default(cuid())
+  referralId String
+  referral   Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  amount     Float?
+  metadata   String?
+  createdAt  DateTime @default(now())
 
   @@index([referralId])
   @@index([createdAt])
 }
 
 model ApiUsageLog {
-  id            String   @id @default(cuid())
-  appId         String
-  app           App      @relation(fields: [appId], references: [id], onDelete: Cascade)
-  endpoint      String
-  timestamp     DateTime @default(now())
-  ipAddress     String?
-  userAgent     String?
+  id        String   @id @default(cuid())
+  appId     String
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  endpoint  String
+  timestamp DateTime @default(now())
+  ipAddress String?
+  userAgent String?
 
   @@index([appId])
   @@index([timestamp])
@@ -244,39 +251,39 @@ model ApiUsageLog {
 // ===== Phase 2 Models =====
 
 model PricingPlan {
-  id              String   @id @default(cuid())
-  name            String
-  type            PlanType @unique
-  monthlyPrice    Float
-  yearlyPrice     Float?
-  apiLimit        Int
-  maxApps         Int
-  overagePrice    Float    // per 1000 API calls
-  features        String   // JSON array of features
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  type         PlanType @unique
+  monthlyPrice Float
+  yearlyPrice  Float?
+  apiLimit     Int
+  maxApps      Int
+  overagePrice Float // per 1000 API calls
+  features     String // JSON array of features
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  subscriptions   Subscription[]
+  subscriptions Subscription[]
 
   @@index([type])
 }
 
 model Subscription {
-  id                String             @id @default(cuid())
-  partnerId         String             @unique
-  partner           Partner            @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  planId            String
-  plan              PricingPlan        @relation(fields: [planId], references: [id])
-  status            SubscriptionStatus @default(ACTIVE)
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  stripeCustomerId   String?
+  id                   String             @id @default(cuid())
+  partnerId            String             @unique
+  partner              Partner            @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  planId               String
+  plan                 PricingPlan        @relation(fields: [planId], references: [id])
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  stripeCustomerId     String?
   stripeSubscriptionId String?
-  cancelAtPeriodEnd  Boolean           @default(false)
-  trialEndsAt        DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  cancelAtPeriodEnd    Boolean            @default(false)
+  trialEndsAt          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   @@index([partnerId])
   @@index([planId])
@@ -284,19 +291,19 @@ model Subscription {
 }
 
 model Invoice {
-  id              String   @id @default(cuid())
-  partnerId       String
-  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  amount          Float
-  currency        String   @default("USD")
-  status          String   // paid, pending, failed
+  id                 String    @id @default(cuid())
+  partnerId          String
+  partner            Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount             Float
+  currency           String    @default("USD")
+  status             String // paid, pending, failed
   billingPeriodStart DateTime
   billingPeriodEnd   DateTime
-  apiUsage        Int
-  overageAmount   Float    @default(0)
-  stripeInvoiceId String?
-  paidAt          DateTime?
-  createdAt       DateTime @default(now())
+  apiUsage           Int
+  overageAmount      Float     @default(0)
+  stripeInvoiceId    String?
+  paidAt             DateTime?
+  createdAt          DateTime  @default(now())
 
   @@index([partnerId])
   @@index([status])
@@ -304,33 +311,33 @@ model Invoice {
 }
 
 model Webhook {
-  id              String   @id @default(cuid())
-  appId           String
-  app             App      @relation(fields: [appId], references: [id], onDelete: Cascade)
-  url             String
-  secret          String   // for signature verification
-  events          String   // JSON array of WebhookEventType
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  appId     String
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  url       String
+  secret    String // for signature verification
+  events    String // JSON array of WebhookEventType
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  deliveries      WebhookDelivery[]
+  deliveries WebhookDelivery[]
 
   @@index([appId])
 }
 
 model WebhookDelivery {
-  id              String            @id @default(cuid())
-  webhookId       String
-  webhook         Webhook           @relation(fields: [webhookId], references: [id], onDelete: Cascade)
-  eventType       WebhookEventType
-  payload         String            // JSON
-  response        String?           // response from webhook URL
-  statusCode      Int?
-  success         Boolean           @default(false)
-  retryCount      Int               @default(0)
-  nextRetryAt     DateTime?
-  createdAt       DateTime          @default(now())
+  id          String           @id @default(cuid())
+  webhookId   String
+  webhook     Webhook          @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  eventType   WebhookEventType
+  payload     String // JSON
+  response    String? // response from webhook URL
+  statusCode  Int?
+  success     Boolean          @default(false)
+  retryCount  Int              @default(0)
+  nextRetryAt DateTime?
+  createdAt   DateTime         @default(now())
 
   @@index([webhookId])
   @@index([success])
@@ -338,18 +345,18 @@ model WebhookDelivery {
 }
 
 model TeamMember {
-  id              String   @id @default(cuid())
-  partnerId       String
-  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  email           String
-  name            String?
-  role            TeamRole
-  inviteToken     String?  @unique
+  id               String    @id @default(cuid())
+  partnerId        String
+  partner          Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  email            String
+  name             String?
+  role             TeamRole
+  inviteToken      String?   @unique
   inviteAcceptedAt DateTime?
-  lastLoginAt     DateTime?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lastLoginAt      DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@unique([partnerId, email])
   @@index([partnerId])
@@ -357,17 +364,17 @@ model TeamMember {
 }
 
 model FraudFlag {
-  id              String    @id @default(cuid())
-  appId           String
-  app             App       @relation(fields: [appId], references: [id], onDelete: Cascade)
-  referralCode    String
-  fraudType       FraudType
-  description     String
-  metadata        String?   // JSON with details
-  isResolved      Boolean   @default(false)
-  resolvedBy      String?   // admin user id
-  resolvedAt      DateTime?
-  createdAt       DateTime  @default(now())
+  id           String    @id @default(cuid())
+  appId        String
+  app          App       @relation(fields: [appId], references: [id], onDelete: Cascade)
+  referralCode String
+  fraudType    FraudType
+  description  String
+  metadata     String? // JSON with details
+  isResolved   Boolean   @default(false)
+  resolvedBy   String? // admin user id
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
 
   @@index([appId])
   @@index([referralCode])
@@ -376,29 +383,79 @@ model FraudFlag {
 }
 
 model FeatureFlag {
-  id              String   @id @default(cuid())
-  key             String   @unique
-  name            String
-  description     String?
-  isEnabled       Boolean  @default(false)
-  rolloutPercent  Int      @default(0)
-  targetPartners  String?  // JSON array of partner IDs
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  key            String   @unique
+  name           String
+  description    String?
+  isEnabled      Boolean  @default(false)
+  rolloutPercent Int      @default(0)
+  targetPartners String? // JSON array of partner IDs
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([key])
   @@index([isEnabled])
 }
 
 model SystemLog {
-  id          String   @id @default(cuid())
-  level       String   // INFO, WARN, ERROR, DEBUG
-  message     String
-  source      String?
-  metadata    String?  // JSON
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  level     String // INFO, WARN, ERROR, DEBUG
+  message   String
+  source    String?
+  metadata  String? // JSON
+  createdAt DateTime @default(now())
 
   @@index([level])
   @@index([source])
+  @@index([createdAt])
+}
+
+// ===== Email & Notification Models =====
+
+enum NotificationType {
+  REFERRAL_CONVERTED
+  REFERRAL_CODE_GENERATED
+  TEAM_INVITE_ACCEPTED
+  CUSTOM_ADMIN
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  metadata  String? // JSON with additional data
+  status    NotificationStatus @default(UNREAD)
+  readAt    DateTime?
+  createdAt DateTime           @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id        String    @id @default(cuid())
+  to        String
+  subject   String
+  template  String // email template name
+  status    String // sent, failed, pending
+  error     String?
+  metadata  String? // JSON with additional data
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([to])
+  @@index([status])
+  @@index([template])
   @@index([createdAt])
 }

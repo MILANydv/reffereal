@@ -13,6 +13,8 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   useEffect(() => {
     if (searchParams?.get('signup') === 'success') {
@@ -24,9 +26,27 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setEmailNotVerified(false);
     setLoading(true);
 
     try {
+      // Check email verification status first
+      const checkResponse = await fetch('/api/auth/check-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.emailNotVerified) {
+          setEmailNotVerified(true);
+          setError('Please verify your email address before logging in. Check your inbox for the verification link.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const result = await signIn('credentials', {
         email,
         password,
@@ -35,6 +55,7 @@ function LoginForm() {
 
       if (result?.error) {
         setError('Invalid email or password');
+        setEmailNotVerified(false);
       } else {
         // Check if user needs to complete onboarding
         try {
@@ -149,11 +170,42 @@ function LoginForm() {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3 animate-in fade-in slide-in-from-top-2">
-                <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm font-medium text-red-800">{error}</p>
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex flex-col space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm font-medium text-red-800 flex-1">{error}</p>
+                </div>
+                {emailNotVerified && (
+                  <div className="ml-8">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setResendingVerification(true);
+                        try {
+                          const response = await fetch('/api/auth/resend-verification', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email }),
+                          });
+                          if (response.ok) {
+                            setError('Verification email sent! Please check your inbox.');
+                            setEmailNotVerified(false);
+                          }
+                        } catch (err) {
+                          setError('Failed to resend verification email. Please try again.');
+                        } finally {
+                          setResendingVerification(false);
+                        }
+                      }}
+                      disabled={resendingVerification}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
+                    >
+                      {resendingVerification ? 'Sending...' : 'Resend verification email'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

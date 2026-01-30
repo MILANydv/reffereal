@@ -38,6 +38,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        // Check email verification for PARTNER role
+        // Return null to prevent login if email is not verified
+        // The login page will check this separately and show appropriate error
+        if (user.role === UserRole.PARTNER && !user.emailVerified) {
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,

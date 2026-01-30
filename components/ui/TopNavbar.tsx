@@ -1,7 +1,8 @@
 'use client';
 
 import { AppSwitcher } from './AppSwitcher';
-import { Search, Bell, LayoutGrid, Zap, Sun, Moon, LogOut, UserCircle } from 'lucide-react';
+import { NotificationDropdown } from './NotificationDropdown';
+import { Search, LayoutGrid, Zap, Sun, Moon, LogOut, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useAppStore, useThemeStore } from '@/lib/store';
@@ -143,10 +144,7 @@ export function TopNavbar() {
           {mounted ? (theme === 'light' ? <Moon size={20} /> : <Sun size={20} />) : <Moon size={20} />}
         </button>
 
-        <button className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
-        </button>
+        <NotificationDropdown />
 
         <button className="p-2 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
           <LayoutGrid size={20} />

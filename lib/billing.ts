@@ -1,5 +1,6 @@
 import { prisma } from './db';
 import { createStripeInvoice } from './stripe';
+import { sendBillingInvoiceEmail } from './email';
 
 export async function calculateMonthlyUsage(partnerId: string) {
   const partner = await prisma.partner.findUnique({
@@ -101,6 +102,26 @@ export async function generateMonthlyInvoices() {
           ),
         },
       });
+
+      // Send billing email to partner
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: partner.userId },
+        });
+        
+        if (user) {
+          await sendBillingInvoiceEmail(user.email, {
+            id: invoice.id,
+            amount: invoice.amount,
+            currency: invoice.currency,
+            billingPeriodStart: invoice.billingPeriodStart,
+            billingPeriodEnd: invoice.billingPeriodEnd,
+            apiUsage: invoice.apiUsage,
+          }, user.name || undefined);
+        }
+      } catch (error) {
+        console.error(`Failed to send billing email for partner ${partner.id}:`, error);
+      }
 
       console.log(`Invoice generated for partner ${partner.id}: $${usage.totalCost}`);
     } catch (error) {

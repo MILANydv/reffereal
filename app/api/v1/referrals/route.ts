@@ -4,6 +4,7 @@ import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
 import { generateReferralCode } from '@/lib/api-key';
 import { detectFraud } from '@/lib/fraud-detection';
 import { triggerWebhook } from '@/lib/webhooks';
+import { notifyReferralCodeGenerated } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -71,6 +72,24 @@ export async function POST(request: NextRequest) {
       refereeId,
       campaignId,
     });
+
+    // Send notification to partner
+    try {
+      const partner = await prisma.partner.findUnique({
+        where: { id: app.partnerId },
+        include: { user: true },
+      });
+      
+      if (partner?.user) {
+        await notifyReferralCodeGenerated(partner.user.id, {
+          code: referral.referralCode,
+          campaignName: campaign.name,
+        });
+      }
+    } catch (error) {
+      console.error('[Notification] Error sending referral code notification:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({
       referralCode: referral.referralCode,
