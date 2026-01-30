@@ -46,16 +46,13 @@ export default function DashboardV2Page() {
 
   useEffect(() => {
     if (onboardingStatus.completed) {
-      if (selectedApp) {
-        fetchStats(selectedApp.id);
-        fetchActiveCampaigns(selectedApp.id);
-        fetchWebhookDeliveries(selectedApp.id);
-      } else {
-        fetchStats('global'); // Fallback or global logic if api supports it
-      }
+      // Always fetch platform-level data (independent of apps)
+      fetchStats('global');
+      fetchActiveCampaigns();
+      fetchWebhookDeliveries();
       fetchMetrics();
     }
-  }, [selectedApp, onboardingStatus.completed, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
+  }, [onboardingStatus.completed, fetchStats, fetchActiveCampaigns, fetchWebhookDeliveries, fetchMetrics]);
 
   const checkOnboardingStatus = async () => {
     try {
@@ -138,19 +135,11 @@ export default function DashboardV2Page() {
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {selectedApp ? `${selectedApp.name} Overview` : 'Global Dashboard'}
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
             <p className="text-gray-500 mt-1">
-              {selectedApp ? 'Real-time performance for this application.' : 'Aggregated performance across all your applications.'}
+              Aggregated performance across all your applications.
             </p>
           </div>
-          {selectedApp && (
-            <div className="flex space-x-2">
-              <Badge variant="success" className="h-6">Healthy</Badge>
-              <span className="text-xs text-gray-400 mt-1 font-mono">v1.2.0</span>
-            </div>
-          )}
         </div>
 
         {stats?.alerts && stats.alerts.length > 0 && (
@@ -174,9 +163,9 @@ export default function DashboardV2Page() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
-            title={selectedApp ? "API Requests (30d)" : "Total Applications"}
-            value={selectedApp ? (stats?.apiUsage.current.toLocaleString() || '0') : (stats?.totalApps.toString() || '0')}
-            icon={selectedApp ? <Zap size={24} /> : <TrendingUp size={24} />}
+            title="API Requests (30d)"
+            value={stats?.apiUsage?.current?.toLocaleString() || '0'}
+            icon={<Zap size={24} />}
             change={metricChanges?.apiCalls ? `${metricChanges.apiCalls > 0 ? '+' : ''}${metricChanges.apiCalls.toFixed(1)}%` : undefined}
           />
           <StatCard

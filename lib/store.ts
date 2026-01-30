@@ -362,8 +362,8 @@ interface AppStore {
   setSelectedApp: (app: App | null) => void;
   fetchApps: (force?: boolean) => Promise<void>;
   fetchStats: (appId: string | 'global') => Promise<void>;
-  fetchActiveCampaigns: (appId: string) => Promise<void>;
-  fetchWebhookDeliveries: (appId: string) => Promise<void>;
+  fetchActiveCampaigns: (appId?: string) => Promise<void>;
+  fetchWebhookDeliveries: (appId?: string) => Promise<void>;
   fetchMetrics: () => Promise<void>;
   fetchReferrals: (appId: string) => Promise<void>;
   fetchCampaigns: (appId: string) => Promise<void>;
@@ -459,11 +459,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   fetchActiveCampaigns: async (appId) => {
-    const key = `activeCampaigns-${appId}`;
+    const key = appId ? `activeCampaigns-${appId}` : 'activeCampaigns-all';
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch(`/api/partner/active-campaigns?appId=${appId}`);
+      const url = appId 
+        ? `/api/partner/active-campaigns?appId=${appId}`
+        : '/api/partner/active-campaigns';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         set({ activeCampaigns: data.campaigns || [] });
@@ -476,11 +479,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   fetchWebhookDeliveries: async (appId) => {
-    const key = `webhookDeliveries-${appId}`;
+    const key = appId ? `webhookDeliveries-${appId}` : 'webhookDeliveries-all';
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const response = await fetch(`/api/partner/webhook-deliveries?appId=${appId}&limit=10`);
+      const url = appId 
+        ? `/api/partner/webhook-deliveries?appId=${appId}&limit=10`
+        : '/api/partner/webhook-deliveries?limit=10';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         set({ webhookDeliveries: data.deliveries || [] });
