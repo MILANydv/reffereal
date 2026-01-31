@@ -1,6 +1,149 @@
 # API Testing Guide
 
-This guide provides examples for testing the Referral Infrastructure MVP API endpoints.
+This guide provides examples for testing the Referral Infrastructure MVP API endpoints, plus automated test suite details, performance testing, and a full test report.
+
+---
+
+## Test Suite Overview (Tests Conducted)
+
+The project includes automated tests across four categories:
+
+| Category | Purpose | Location | Run command |
+|----------|---------|----------|--------------|
+| **Unit tests** | Route handlers, middleware, auth, validation, status codes (mocked DB/auth) | `tests/api/`, `tests/lib/` | `npm run test` |
+| **Performance tests** | Latency (p50/p95/p99) for critical routes; SLO threshold checks | `tests/performance/`, `scripts/bench.ts` | `npm run test` (skips without API_KEY) or `npx tsx scripts/bench.ts` |
+| **DB query tests** | Query count and N+1 checks against a test database | `tests/db/` | `DATABASE_URL_TEST=... npm run test -- tests/db` |
+| **Load tests (Artillery)** | Throughput, error rate, p95 under ramp/sustained/spike | `artillery/v1-flow.yml` | `npm run test:load` |
+
+### Unit tests conducted
+
+- **API middleware** (`tests/lib/api-middleware.test.ts`): `authenticateApiKey` (missing/invalid header, invalid key, suspended app/partner, rate limit 429, success), `logApiUsage` (create + update calls). **8 tests**
+- **v1 API** (`tests/api/v1/`): POST clicks, referrals, conversions; GET stats. Success, 400/401/403/404/500, validation, auth. **24 tests**
+- **Auth** (`tests/api/auth/`): POST signup, GET verify-email, POST forgot-password. Validation, duplicates, redirects, generic reset message. **11 tests**
+- **Partner** (`tests/api/partner/`): GET dashboard-stats, GET campaigns. Session auth, appId, pagination. **8 tests**
+- **Admin** (`tests/api/admin/`): GET stats. SUPER_ADMIN role, aggregates. **2 tests**
+- **User** (`tests/api/user/`): GET/PATCH profile. Session auth, email-in-use. **6 tests**
+
+**Total unit tests: 59 passed.** Performance and DB query suites add 3 tests (skipped when env not set).
+
+---
+
+## Running the Test Suite
+
+```bash
+# Install dependencies (use legacy peer deps)
+npm ci --legacy-peer-deps
+
+# Run all tests (unit + performance + DB query; performance/DB skip without env)
+npm run test
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:coverage
+```
+
+Environment variables used by optional tests:
+
+- **Performance:** `BASE_URL`, `API_KEY`, `CAMPAIGN_ID`, `P95_THRESHOLD_MS`, `PERF_SAMPLE_SIZE`
+- **DB query:** `DATABASE_URL_TEST` (test database URL)
+- **Artillery:** `BASE_URL`, `API_KEY`, `CAMPAIGN_ID`
+
+---
+
+## Performance Testing
+
+### Vitest performance tests (`tests/performance/api-latency.test.ts`)
+
+- Send multiple requests to GET /api/v1/stats and POST /api/v1/referrals.
+- Compute p95 latency and assert it is under `P95_THRESHOLD_MS` (default 2000 ms).
+- **Skipped** when `API_KEY` is not set.
+
+```bash
+export API_KEY=your_key CAMPAIGN_ID=your_campaign
+npm run test -- --run tests/performance
+```
+
+### Benchmark script (`scripts/bench.ts`)
+
+- Quick p50/p95/p99 for GET /api/v1/stats and POST /api/v1/referrals.
+- Requires `API_KEY` and optionally `BASE_URL`, `CAMPAIGN_ID`, `BENCH_N` (default 20).
+
+```bash
+export API_KEY=your_key CAMPAIGN_ID=your_campaign
+npx tsx scripts/bench.ts
+```
+
+### Performance report (example)
+
+When run with valid `API_KEY` and server:
+
+- **GET /api/v1/stats:** p95 &lt; threshold (e.g. 2000 ms).
+- **POST /api/v1/referrals:** p95 &lt; threshold.
+- **Bench script:** Prints p50, p95, p99 per endpoint.
+
+---
+
+## Full Test Report
+
+### Summary
+
+| Metric | Value |
+|--------|--------|
+| Test files (total) | 14 |
+| Test files (run by default) | 12 passed, 2 skipped |
+| Tests (total) | 62 |
+| Tests (passed) | 59 |
+| Tests (skipped) | 3 (performance when no API_KEY, DB when no DATABASE_URL_TEST) |
+| Runner | Vitest |
+| Default duration | ~2–3 s |
+
+### Coverage by area
+
+| Area | Files | Tests | Notes |
+|------|--------|-------|--------|
+| API middleware | 1 | 8 | Auth, rate limit, log usage |
+| v1 (referrals, clicks, conversions, stats) | 4 | 24 | All methods, errors, validation |
+| Auth (signup, verify-email, forgot-password) | 3 | 11 | Redirects, validation, security |
+| Partner (dashboard-stats, campaigns) | 2 | 8 | Session, appId, pagination |
+| Admin (stats) | 1 | 2 | Role, aggregates |
+| User (profile) | 1 | 6 | GET/PATCH, email uniqueness |
+| Performance | 1 | 2 skipped* | Latency thresholds |
+| DB query | 1 | 1 skipped* | Query count (needs test DB) |
+
+\*Skipped unless required env vars are set.
+
+### Sample test run output
+
+```
+ RUN  v2.x.x
+ ✓ tests/lib/api-middleware.test.ts (8 tests)
+ ✓ tests/api/v1/clicks.test.ts (6 tests)
+ ✓ tests/api/v1/referrals.test.ts (7 tests)
+ ✓ tests/api/v1/conversions.test.ts (7 tests)
+ ✓ tests/api/v1/stats.test.ts (4 tests)
+ ✓ tests/api/auth/signup.test.ts (4 tests)
+ ✓ tests/api/auth/verify-email.test.ts (3 tests)
+ ✓ tests/api/auth/forgot-password.test.ts (4 tests)
+ ✓ tests/api/partner/dashboard-stats.test.ts (4 tests)
+ ✓ tests/api/partner/campaigns.test.ts (4 tests)
+ ✓ tests/api/admin/stats.test.ts (2 tests)
+ ✓ tests/api/user/profile.test.ts (6 tests)
+ Test Files  12 passed | 2 skipped (14)
+      Tests  59 passed | 3 skipped (62)
+   Duration  ~2–3s
+```
+
+### Load test report (Artillery)
+
+- **Scenarios:** v1 referral flow (referrals → clicks → conversions), v1 stats read.
+- **Phases:** Ramp-up (30 s), sustained (60 s), spike (20 s).
+- **Thresholds:** maxErrorRate 0.01, p95 2000 ms.
+- **Run:** `API_KEY=... CAMPAIGN_ID=... npm run test:load`
+- **Output:** Request counts, latency percentiles, error rate, pass/fail vs thresholds.
+
+---
 
 ## Prerequisites
 
@@ -297,6 +440,74 @@ Import these as a collection:
 4. **Get Stats**
    - GET: `{{baseUrl}}/stats?campaignId={{campaignId}}`
    - Headers: `Authorization: Bearer {{apiKey}}`
+
+## Artillery Load Testing
+
+Load tests use [Artillery](https://www.artillery.io/) to validate behavior under load (throughput, error rate, p95 latency).
+
+**Prerequisites:** Dev server running, `API_KEY` and `CAMPAIGN_ID` set (e.g. from dashboard).
+
+**Run locally:**
+```bash
+export API_KEY=your_api_key
+export CAMPAIGN_ID=your_campaign_id
+npm run test:load
+# Or: npx artillery run artillery/v1-flow.yml --environment local
+```
+
+**Scenarios:** v1 referral flow (POST referrals → clicks → conversions) and GET /api/v1/stats. Phases: ramp-up, sustained load, spike.
+
+**Thresholds:** Fail if `http.response_time.p95 > 2000` ms or `http.request_failed_rate > 0.01`. Adjust in `artillery/v1-flow.yml` under `config.ensure`.
+
+**Interpretation:** Artillery prints a summary with request counts, latency percentiles, and error rate. Use it to catch regressions and validate handling under concurrency.
+
+### Artillery Cloud (record runs to cloud)
+
+To record load-test runs to [Artillery Cloud](https://www.artillery.io/cloud) (dashboards, history, team sharing):
+
+1. **Get a cloud API key** from [Artillery Cloud](https://app.artillery.io/) (Settings → API keys). Example format: `a9_xxxxxxxxxxxx`.
+
+2. **Configure the key** (do not commit it):
+   - **Option A – environment variable:**
+     ```bash
+     export ARTILLERY_CLOUD_KEY=a9_xxxxxxxxxxxx
+     ```
+   - **Option B – `.env`** (ensure `.env` is in `.gitignore`):
+     ```
+     ARTILLERY_CLOUD_KEY=a9_xxxxxxxxxxxx
+     ```
+   - **Option C – inline** (only for one-off runs, avoid in shared scripts):
+     ```bash
+     ARTILLERY_CLOUD_KEY=a9_xxxxxxxxxxxx npm run test:load:cloud
+     ```
+
+3. **Run with recording** (same scenario file as local, results go to cloud):
+   ```bash
+   # With env var set:
+   npm run test:load:cloud
+
+   # Or call Artillery directly (use your scenario file and key):
+   npx artillery run artillery/v1-flow.yml --record --key $ARTILLERY_CLOUD_KEY
+   ```
+
+   To use a different scenario file (e.g. `test.yml` in project root):
+   ```bash
+   npx artillery run test.yml --record --key $ARTILLERY_CLOUD_KEY
+   ```
+
+4. **Optional: pass app env vars** so the same scenario hits your app:
+   ```bash
+   export API_KEY=your_app_api_key
+   export CAMPAIGN_ID=your_campaign_id
+   export BASE_URL=https://your-api.example.com
+   npm run test:load:cloud
+   ```
+
+**Script in `package.json`:**
+- `test:load` – local run only (no cloud).
+- `test:load:cloud` – runs `artillery/v1-flow.yml` with `--record --key $ARTILLERY_CLOUD_KEY` for cloud usage.
+
+**Security:** Keep `ARTILLERY_CLOUD_KEY` out of version control; use env vars or a local `.env` that is gitignored.
 
 ## Database Inspection
 

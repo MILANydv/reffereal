@@ -10,6 +10,11 @@
     "build": "prisma generate && prisma db push --accept-data-loss && next build && npm run seed",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:load": "npx artillery run artillery/v1-flow.yml --dotenv .env",
+    "test:load:cloud": "npx artillery run artillery/v1-flow.yml --dotenv .env --record --key $ARTILLERY_CLOUD_KEY",
     "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
@@ -47,6 +52,8 @@
     "prisma": "^7.2.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "artillery": "^2.0.0",
+    "vitest": "^2.1.0"
   }
 }

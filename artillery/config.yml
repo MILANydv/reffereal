@@ -1,0 +1,10 @@
+# Artillery environments. Use: npx artillery run artillery/v1-flow.yml --environment local
+# Or set env: BASE_URL, API_KEY, CAMPAIGN_ID
+
+environments:
+  local:
+    BASE_URL: "http://localhost:3000"
+    # API_KEY and CAMPAIGN_ID from process.env when running
+  ci:
+    BASE_URL: "http://localhost:3000"
+    # In CI, set API_KEY and CAMPAIGN_ID as secrets/env

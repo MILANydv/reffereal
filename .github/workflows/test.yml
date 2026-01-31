@@ -1,0 +1,72 @@
+# CI: unit tests, optional performance and Artillery (when env vars set)
+name: Test
+
+on:
+  push:
+    branches: [main, testing]
+  pull_request:
+    branches: [main, testing]
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --legacy-peer-deps
+      - run: npm run test
+        env:
+          CI: true
+
+  # Optional: run performance tests when API_KEY and CAMPAIGN_ID are set (e.g. in a scheduled job or manual workflow_dispatch)
+  performance:
+    runs-on: ubuntu-latest
+    if: vars.ENABLE_PERF == 'true' || github.event_name == 'workflow_dispatch'
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build
+      - name: Start server
+        run: npm run start &
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 -t 60000 || true
+      - name: Run performance tests
+        run: npm run test -- --run tests/performance
+        env:
+          BASE_URL: http://localhost:3000
+          API_KEY: ${{ secrets.TEST_API_KEY }}
+          CAMPAIGN_ID: ${{ secrets.TEST_CAMPAIGN_ID }}
+        continue-on-error: true
+
+  # Optional: run Artillery load test when API_KEY and CAMPAIGN_ID are set
+  load:
+    runs-on: ubuntu-latest
+    if: vars.ENABLE_LOAD == 'true' || github.event_name == 'workflow_dispatch'
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build
+      - name: Start server
+        run: npm run start &
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 -t 60000 || true
+      - name: Run Artillery
+        run: npx artillery run artillery/v1-flow.yml --environment ci
+        env:
+          BASE_URL: http://localhost:3000
+          API_KEY: ${{ secrets.TEST_API_KEY }}
+          CAMPAIGN_ID: ${{ secrets.TEST_CAMPAIGN_ID }}
+        continue-on-error: true

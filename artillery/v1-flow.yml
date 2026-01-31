@@ -1,0 +1,60 @@
+# Artillery load test: v1 referral flow and stats
+# Run with .env loaded: npx artillery run artillery/v1-flow.yml --dotenv .env
+# Or export API_KEY, CAMPAIGN_ID then: npm run test:load
+
+config:
+  target: "http://localhost:3000"
+  processor: "./processor.js"
+  phases:
+    - duration: 30
+      arrivalRate: 2
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 5
+      name: "Sustained load"
+    - duration: 20
+      arrivalRate: 10
+      name: "Spike"
+  ensure:
+    maxErrorRate: 0.01
+    p95: 2000
+
+scenarios:
+  - name: "v1 referral flow"
+    weight: 3
+    flow:
+      - post:
+          url: "/api/v1/referrals"
+          headers:
+            Authorization: "Bearer {{ apiKey }}"
+            Content-Type: "application/json"
+          json:
+            campaignId: "{{ campaignId }}"
+            referrerId: "user_{{ $randomString() }}"
+          capture:
+            - json: "$.referralCode"
+              as: "referralCode"
+      - post:
+          url: "/api/v1/clicks"
+          headers:
+            Authorization: "Bearer {{ apiKey }}"
+            Content-Type: "application/json"
+          json:
+            referralCode: "{{ referralCode }}"
+      - post:
+          url: "/api/v1/conversions"
+          headers:
+            Authorization: "Bearer {{ apiKey }}"
+            Content-Type: "application/json"
+          json:
+            referralCode: "{{ referralCode }}"
+            refereeId: "ref_{{ $randomString() }}"
+            amount: 100
+
+  - name: "v1 stats read"
+    weight: 2
+    flow:
+      - get:
+          url: "/api/v1/stats"
+          headers:
+            Authorization: "Bearer {{ apiKey }}"
