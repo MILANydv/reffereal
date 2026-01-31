@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       const partner = await prisma.partner.findUnique({
         where: { id: partnerId },
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               email: true,
@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
               active: true,
             },
           },
-          subscription: {
+          Subscription: {
             include: {
-              plan: true,
+              PricingPlan: true,
             },
           },
-          apps: {
+          App: {
             select: {
               id: true,
               name: true,
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
               monthlyLimit: true,
             },
           },
-          invoices: {
+          Invoice: {
             select: {
               id: true,
               amount: true,
@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
           },
           _count: {
             select: {
-              apps: true,
-              teamMembers: true,
+              App: true,
+              TeamMember: true,
             },
           },
         },
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     const partners = await prisma.partner.findMany({
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             email: true,
@@ -76,21 +76,21 @@ export async function GET(request: NextRequest) {
             active: true,
           },
         },
-        subscription: {
+        Subscription: {
           include: {
-            plan: {
+            PricingPlan: {
               select: {
                 type: true,
               },
             },
           },
         },
-        apps: {
+        App: {
           select: {
             currentUsage: true,
           },
         },
-        invoices: {
+        Invoice: {
           select: {
             status: true,
             amount: true,
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         },
         _count: {
           select: {
-            apps: true,
+            App: true,
           },
         },
       },
@@ -136,7 +136,7 @@ export async function PATCH(request: NextRequest) {
 
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
-      include: { user: true },
+      include: { User: true },
     });
 
     if (!partner) {
@@ -162,7 +162,7 @@ export async function PATCH(request: NextRequest) {
     const updatedPartner = await prisma.partner.findUnique({
       where: { id: partnerId },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             email: true,
@@ -170,21 +170,21 @@ export async function PATCH(request: NextRequest) {
             active: true,
           },
         },
-        subscription: {
+        Subscription: {
           include: {
-            plan: {
+            PricingPlan: {
               select: {
                 type: true,
               },
             },
           },
         },
-        apps: {
+        App: {
           select: {
             currentUsage: true,
           },
         },
-        invoices: {
+        Invoice: {
           select: {
             status: true,
             amount: true,
@@ -192,7 +192,7 @@ export async function PATCH(request: NextRequest) {
         },
         _count: {
           select: {
-            apps: true,
+            App: true,
           },
         },
       },
@@ -235,7 +235,7 @@ export async function DELETE(request: NextRequest) {
 
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
-      include: { user: true },
+      include: { User: true },
     });
 
     if (!partner) {
@@ -249,7 +249,7 @@ export async function DELETE(request: NextRequest) {
     await logger.warn(
       `Partner ${partnerId} deleted by admin`,
       'admin-api',
-      { partnerId, email: partner.user.email, adminId: session.user.id }
+      { partnerId, email: partner.User.email, adminId: session.user.id }
     );
 
     return NextResponse.json({ success: true, message: 'Partner deleted successfully' });

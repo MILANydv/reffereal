@@ -34,22 +34,22 @@ export async function GET(request: NextRequest) {
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
       include: {
-        apps: {
+        App: {
           where: appsWhere,
           include: {
-            campaigns: {
+            Campaign: {
               include: {
-                referrals: {
+                Referral: {
                   where: dateFilter.gte || dateFilter.lte ? {
                     createdAt: dateFilter,
                   } : undefined,
                   include: {
-                    conversions: true,
+                    Conversion: true,
                   },
                 },
               },
             },
-            apiUsageLogs: {
+            ApiUsageLog: {
               where: {
                 timestamp: dateFilter.gte || dateFilter.lte ? dateFilter : {
                   gte: new Date(new Date().setDate(1)),
@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        subscription: {
-          include: { plan: true },
+        Subscription: {
+          include: { PricingPlan: true },
         },
       },
     });
@@ -68,28 +68,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Partner not found' }, { status: 404 });
     }
 
-    const totalApps = partner.apps.length;
+    const totalApps = partner.App.length;
     let totalReferrals = 0;
     let totalClicks = 0;
     let totalConversions = 0;
     let totalRewards = 0;
 
-    for (const app of partner.apps || []) {
-      for (const campaign of app.campaigns || []) {
-        totalReferrals += campaign.referrals?.length || 0;
-        totalClicks += (campaign.referrals?.filter((r) => r.clickedAt) || []).length;
-        totalConversions += (campaign.referrals?.filter((r) => r.convertedAt) || []).length;
-        totalRewards += campaign.referrals?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0;
+    for (const app of partner.App || []) {
+      for (const campaign of app.Campaign || []) {
+        totalReferrals += campaign.Referral?.length || 0;
+        totalClicks += (campaign.Referral?.filter((r) => r.clickedAt) || []).length;
+        totalConversions += (campaign.Referral?.filter((r) => r.convertedAt) || []).length;
+        totalRewards += campaign.Referral?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0;
       }
     }
 
-    const apiUsageCurrent = partner.apps?.reduce((sum, app) => sum + (app.apiUsageLogs?.length || 0), 0) || 0;
-    const apiUsageLimit = partner.subscription?.plan.apiLimit || 10000;
+    const apiUsageCurrent = partner.App?.reduce((sum, app) => sum + (app.ApiUsageLog?.length || 0), 0) || 0;
+    const apiUsageLimit = partner.Subscription?.PricingPlan.apiLimit || 10000;
     const apiUsagePercentage = (apiUsageCurrent / apiUsageLimit) * 100;
 
     const recentReferralsWhere: any = {
-      campaign: {
-        app: appId ? { partnerId, id: appId } : { partnerId },
+      Campaign: {
+        App: appId ? { partnerId, id: appId } : { partnerId },
       },
     };
     if (dateFilter.gte || dateFilter.lte) {
@@ -101,9 +101,9 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: {
-        campaign: {
+        Campaign: {
           include: {
-            app: {
+            App: {
               select: {
                 id: true,
                 name: true,
@@ -117,11 +117,11 @@ export async function GET(request: NextRequest) {
     const recentActivity = recentReferrals.map((referral) => ({
       id: referral.id,
       type: referral.status,
-      description: `New referral in ${referral.campaign.name}`,
+      description: `New referral in ${referral.Campaign.name}`,
       timestamp: referral.createdAt.toISOString(),
       app: {
-        id: referral.campaign.app.id,
-        name: referral.campaign.app.name,
+        id: referral.Campaign.App.id,
+        name: referral.Campaign.App.name,
       },
     }));
 
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
 
     const fraudFlags = await prisma.fraudFlag.count({
       where: {
-        app: { partnerId },
+        App: { partnerId },
         isResolved: false,
       },
     });
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
     }
 
     const apiUsageChart = await generateApiUsageChart(
-      partner.apps || [],
+      partner.App || [],
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined
     );
@@ -214,7 +214,7 @@ async function generateApiUsageChart(
   const logs = await prisma.apiUsageLog.findMany({
     where: logsWhere,
     include: {
-      app: {
+      App: {
         select: {
           id: true,
           name: true,
@@ -249,7 +249,7 @@ async function generateApiUsageChart(
       : { weekday: 'short' };
     
     const dataPoint: any = {
-      name: d.toLocaleDateString('en-US', format),
+      name: d.toLocaleDateString('en-US', format as Intl.DateTimeFormatOptions),
       date: dateStr,
     };
 

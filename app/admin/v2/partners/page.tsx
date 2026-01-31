@@ -14,43 +14,43 @@ interface PartnerData {
   id: string;
   companyName: string | null;
   active: boolean;
-  user: {
+  User: {
     email: string;
   };
-  subscription: {
-    plan: {
+  Subscription: {
+    PricingPlan: {
       type: string;
     };
   } | null;
-  apps: Array<{
+  App: Array<{
     currentUsage: number;
   }>;
-  invoices: Array<{
+  Invoice: Array<{
     status: string;
     amount: number;
   }>;
   _count: {
-    apps: number;
+    App: number;
   };
 }
 
 interface ViewModalData extends PartnerData {
-  apps: Array<{
+  App: Array<{
     id: string;
     name: string;
     status: string;
     currentUsage: number;
     monthlyLimit: number;
   }>;
-  invoices: Array<{
+  Invoice: Array<{
     id: string;
     amount: number;
     status: string;
     createdAt: string;
   }>;
   _count: {
-    apps: number;
-    teamMembers: number;
+    App: number;
+    TeamMember: number;
   };
 }
 
@@ -243,23 +243,23 @@ export default function AdminPartnersPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded flex items-center justify-center font-bold text-xs">
-                            {partner.companyName?.charAt(0) || partner.user.email.charAt(0)}
+                            {partner.companyName?.charAt(0) || partner.User?.email?.charAt(0) || 'U'}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900 dark:text-gray-100">{partner.companyName || 'Unnamed Company'}</div>
-                            <div className="text-xs text-gray-500">{partner.user.email}</div>
+                            <div className="text-xs text-gray-500">{partner.User?.email || 'No email'}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant="default">{partner.subscription?.plan?.type || 'FREE'}</Badge>
+                        <Badge variant="default">{partner.Subscription?.PricingPlan?.type || 'FREE'}</Badge>
                       </td>
-                      <td className="px-6 py-4 font-medium">{partner._count.apps}</td>
+                      <td className="px-6 py-4 font-medium">{partner._count.App || 0}</td>
                       <td className="px-6 py-4 text-xs font-mono">
-                        {partner.apps?.reduce((acc: number, app: { currentUsage: number }) => acc + (app.currentUsage || 0), 0).toLocaleString()} hits
+                        {partner.App?.reduce((acc: number, app: { currentUsage: number }) => acc + (app.currentUsage || 0), 0).toLocaleString() || '0'} hits
                       </td>
                       <td className="px-6 py-4 font-medium">
-                        ${partner.invoices?.reduce((acc: number, inv: { status: string, amount: number }) => acc + (inv.status === 'paid' ? (inv.amount || 0) : 0), 0).toLocaleString()}
+                        ${partner.Invoice?.reduce((acc: number, inv: { status: string, amount: number }) => acc + (inv.status === 'paid' ? (inv.amount || 0) : 0), 0).toLocaleString() || '0'}
                       </td>
                       <td className="px-6 py-4">
                         <Badge variant={partner.active ? 'success' : 'error'}>
@@ -283,7 +283,7 @@ export default function AdminPartnersPage() {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteClick(partner.id, partner.user.email)}
+                            onClick={() => handleDeleteClick(partner.id, partner.User?.email || '')}
                             className="p-2 text-red-600 hover:text-red-700 transition-colors"
                             title="Delete Partner"
                           >
@@ -314,11 +314,11 @@ export default function AdminPartnersPage() {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Email</label>
-                  <div className="text-lg font-medium">{viewModal.user.email}</div>
+                  <div className="text-lg font-medium">{viewModal.User?.email || 'No email'}</div>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Plan</label>
-                  <div><Badge variant="default">{viewModal.subscription?.plan?.type || 'FREE'}</Badge></div>
+                  <div><Badge variant="default">{viewModal.Subscription?.PricingPlan?.type || 'FREE'}</Badge></div>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Status</label>
@@ -326,19 +326,19 @@ export default function AdminPartnersPage() {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Total Apps</label>
-                  <div className="text-lg font-medium">{viewModal._count.apps}</div>
+                  <div className="text-lg font-medium">{viewModal._count.App || 0}</div>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Team Members</label>
-                  <div className="text-lg font-medium">{viewModal._count.teamMembers}</div>
+                  <div className="text-lg font-medium">{viewModal._count.TeamMember || 0}</div>
                 </div>
               </div>
 
-              {viewModal.apps && viewModal.apps.length > 0 && (
+              {viewModal.App && viewModal.App.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Applications</h3>
                   <div className="space-y-2">
-                    {viewModal.apps.map((app: any) => (
+                    {viewModal.App.map((app: any) => (
                       <div key={app.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center">
                         <div>
                           <div className="font-medium">{app.name}</div>
@@ -351,11 +351,11 @@ export default function AdminPartnersPage() {
                 </div>
               )}
 
-              {viewModal.invoices && viewModal.invoices.length > 0 && (
+              {viewModal.Invoice && viewModal.Invoice.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Recent Invoices</h3>
                   <div className="space-y-2">
-                    {viewModal.invoices.map((invoice: any) => (
+                    {viewModal.Invoice.map((invoice: any) => (
                       <div key={invoice.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center">
                         <div>
                           <div className="font-medium">${invoice.amount}</div>

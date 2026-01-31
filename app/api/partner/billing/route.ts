@@ -16,7 +16,7 @@ export async function GET() {
     const subscription = await prisma.subscription.findUnique({
       where: { partnerId },
       include: {
-        plan: true,
+        PricingPlan: true,
       },
     });
 
@@ -46,8 +46,8 @@ export async function GET() {
         ? {
             ...subscription,
             plan: {
-              ...subscription.plan,
-              features: JSON.parse(subscription.plan.features),
+              ...subscription.PricingPlan,
+              features: JSON.parse(subscription.PricingPlan.features),
             },
           }
         : null,

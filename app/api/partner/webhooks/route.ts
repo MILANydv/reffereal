@@ -14,15 +14,15 @@ export async function GET() {
 
     const webhooks = await prisma.webhook.findMany({
       where: {
-        app: { partnerId },
+        App: { partnerId },
       },
       include: {
-        app: {
+        App: {
           select: { name: true },
         },
         _count: {
           select: {
-            deliveries: true,
+            WebhookDelivery: true,
           },
         },
       },
@@ -43,10 +43,10 @@ export async function GET() {
           events: JSON.parse(webhook.events),
           isActive: webhook.isActive,
           appId: webhook.appId,
-          appName: webhook.app.name,
+          appName: webhook.App.name,
           createdAt: webhook.createdAt,
           deliveryStats: {
-            total: webhook._count.deliveries,
+            total: webhook._count.WebhookDelivery,
             successful: successCount,
             failed: failedCount,
           },
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
     const webhook = await prisma.webhook.create({
       data: {
-        appId,
+        App: { connect: { id: appId } },
         url,
         secret,
         events: JSON.stringify(events),

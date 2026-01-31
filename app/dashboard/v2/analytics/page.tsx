@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
               <div className="flex items-end justify-between">
                 <div className="text-2xl font-bold">{totals.totalReferrals.toLocaleString()}</div>
                 <div className="text-green-600 text-xs font-bold flex items-center mb-1">
-                  <TrendingUp size={12} className="mr-0.5" /> {totals.clickRate.toFixed(1)}%
+                  <TrendingUp size={12} className="mr-0.5" /> {totals.clickRate?.toFixed(1) || '0'}%
                 </div>
               </div>
             </CardBody>
@@ -128,7 +128,7 @@ export default function AnalyticsPage() {
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Conversion Rate</div>
               <div className="flex items-end justify-between">
-                <div className="text-2xl font-bold">{totals.conversionRate.toFixed(1)}%</div>
+                <div className="text-2xl font-bold">{totals.conversionRate?.toFixed(1) || '0'}%</div>
                 <div className="text-green-600 text-xs font-bold flex items-center mb-1">
                   <TrendingUp size={12} className="mr-0.5" /> {totals.totalConversions}
                 </div>
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Reward Cost</div>
               <div className="flex items-end justify-between">
-                <div className="text-2xl font-bold">${totals.totalRewardValue.toLocaleString()}</div>
+                <div className="text-2xl font-bold">${totals.totalRewardValue?.toLocaleString() || '0'}</div>
                 <div className="text-amber-600 text-xs font-bold flex items-center mb-1">
                   <DollarSign size={12} className="mr-0.5" /> Cost
                 </div>

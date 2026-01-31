@@ -183,9 +183,21 @@ export function TopNavbar() {
                     Profile Settings
                   </Link>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setShowProfileMenu(false);
-                      signOut({ callbackUrl: '/login' });
+                      try {
+                        // Call backend logout route
+                        await fetch('/api/auth/logout', {
+                          method: 'POST',
+                          credentials: 'include',
+                        });
+                        // Then sign out from NextAuth client-side
+                        await signOut({ callbackUrl: '/login', redirect: true });
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                        // Fallback to client-side signout
+                        await signOut({ callbackUrl: '/login', redirect: true });
+                      }
                     }}
                     className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                   >

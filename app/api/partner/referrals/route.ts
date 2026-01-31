@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
 
     // Build where clause - if appId is provided, filter to that app; otherwise show all apps (platform-level)
     const whereClause: any = {
-      campaign: {
-        app: {
+      Campaign: {
+        App: {
           partnerId,
           ...(appId ? { id: appId } : {}),
         },
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (campaignId) {
-      whereClause.campaign.id = campaignId;
+      whereClause.Campaign.id = campaignId;
     }
 
     if (statusFilter && statusFilter !== 'all') {
@@ -64,9 +64,9 @@ export async function GET(request: NextRequest) {
     const referrals = await prisma.referral.findMany({
       where: whereClause,
       include: {
-        campaign: {
+        Campaign: {
           include: {
-            app: {
+            App: {
               select: {
                 name: true,
               },

@@ -71,6 +71,50 @@ export default function AdminV2Page() {
           />
         </div>
 
+        {/* Fraud Alerts */}
+        {stats?.fraudAlerts && stats.fraudAlerts.length > 0 && (
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertTriangle size={20} className="mr-2 text-orange-500" />
+                Recent Manual Fraud Flags
+              </CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-3">
+                {stats.fraudAlerts.slice(0, 5).map((alert: any) => (
+                  <div key={alert.id} className="flex items-start justify-between p-3 bg-orange-50 dark:bg-orange-900/10 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{alert.message}</p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span>App: {alert.appName}</span>
+                        <span>Code: <span className="font-mono">{alert.referralCode}</span></span>
+                        <span>{new Date(alert.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <a
+                      href="/admin/v2/fraud"
+                      className="ml-4 text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
+                    >
+                      View →
+                    </a>
+                  </div>
+                ))}
+                {stats.fraudAlerts.length > 5 && (
+                  <div className="text-center pt-2">
+                    <a
+                      href="/admin/v2/fraud"
+                      className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
+                    >
+                      View all {stats.fraudAlerts.length} alerts →
+                    </a>
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
             // Fallback: Create partner if doesn't exist
             partner = await prisma.partner.create({
                 data: {
-                    userId: session.user.id,
+                    User: { connect: { id: session.user.id } },
                 }
             });
         }
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
                 data: {
                     name: appName,
                     apiKey,
-                    partnerId: partner.id,
+                    Partner: { connect: { id: partner.id } },
                     monthlyLimit: 10000,
                     currentUsage: 0,
                     status: 'ACTIVE',

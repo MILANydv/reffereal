@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause - if appId is provided, filter to that app; otherwise show all apps (platform-level)
     const whereClause: any = {
-      app: {
+      App: {
         partnerId,
         ...(appId ? { id: appId } : {}),
       },
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       skip: (page - 1) * limit,
       take: limit,
       include: {
-        app: {
+        App: {
           select: {
             id: true,
             name: true,
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
           ipAddress: log.ipAddress || null,
           userAgent: log.userAgent || null,
           app: {
-            id: log.app.id,
-            name: log.app.name,
+            id: log.App.id,
+            name: log.App.name,
           },
           campaign: campaignName,
         };

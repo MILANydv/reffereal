@@ -8,6 +8,7 @@ async function main() {
     where: { type: 'FREE' },
     update: {},
     create: {
+      id: 'free-plan',
       name: 'Free',
       type: 'FREE',
       monthlyPrice: 0,
@@ -29,6 +30,7 @@ async function main() {
     where: { type: 'GROWTH' },
     update: {},
     create: {
+      id: 'growth-plan',
       name: 'Growth',
       type: 'GROWTH',
       monthlyPrice: 49,
@@ -52,6 +54,7 @@ async function main() {
     where: { type: 'PRO' },
     update: {},
     create: {
+      id: 'pro-plan',
       name: 'Pro',
       type: 'PRO',
       monthlyPrice: 199,
@@ -78,6 +81,7 @@ async function main() {
     where: { type: 'ENTERPRISE' },
     update: {},
     create: {
+      id: 'enterprise-plan',
       name: 'Enterprise',
       type: 'ENTERPRISE',
       monthlyPrice: 999,
@@ -130,7 +134,7 @@ async function main() {
       name: 'Test Partner',
       role: 'PARTNER',
       active: true,
-      partners: {
+      Partner: {
         create: {
           companyName: 'Test Company',
         },
@@ -150,8 +154,8 @@ async function main() {
       where: { partnerId: testPartner.id },
       update: {},
       create: {
-        partnerId: testPartner.id,
-        planId: freePlan.id,
+        Partner: { connect: { id: testPartner.id } },
+        PricingPlan: { connect: { id: freePlan.id } },
         status: 'ACTIVE',
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

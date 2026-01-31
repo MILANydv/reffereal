@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { createManualFraudFlag } from '@/lib/fraud-detection-enhanced';
 
 export async function POST(
   request: NextRequest,
@@ -14,15 +15,18 @@ export async function POST(
     }
 
     const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+    const reason = body.reason || 'Manually flagged by partner';
 
     // Verify referral belongs to partner's app
     const referral = await prisma.referral.findFirst({
       where: { id },
       include: {
-        campaign: {
+        Campaign: {
           include: {
-            app: {
+            App: {
               select: {
+                id: true,
                 partnerId: true,
               },
             },
@@ -35,7 +39,7 @@ export async function POST(
       return NextResponse.json({ error: 'Referral not found' }, { status: 404 });
     }
 
-    if (referral.campaign.app.partnerId !== session.user.partnerId) {
+    if (referral.Campaign.App.partnerId !== session.user.partnerId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -45,8 +49,18 @@ export async function POST(
       data: {
         isFlagged: true,
         status: 'FLAGGED',
+        flaggedBy: session.user.id,
+        flaggedAt: new Date(),
       },
     });
+
+    // Create fraud flag and notify admins
+    await createManualFraudFlag(
+      referral.Campaign.App.id,
+      referral.referralCode,
+      session.user.id,
+      `Partner manually flagged: ${reason}`
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

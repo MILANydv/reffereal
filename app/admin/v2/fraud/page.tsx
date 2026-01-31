@@ -32,22 +32,23 @@ export default function AdminFraudPage() {
               <div className="text-2xl font-bold text-red-600 dark:text-red-400">{flags.filter((f: any) => !f.isResolved).length}</div>
             </CardBody>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-orange-500">
             <CardBody className="p-4">
-              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Self-Referrals</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">42</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Manual Flags</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{flags.filter((f: any) => f.isManual && !f.isResolved).length}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Partner flagged</div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4">
-              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Duplicate IPs</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">156</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Auto-Detected</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{flags.filter((f: any) => !f.isManual && !f.isResolved).length}</div>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1">Resolved (30d)</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">842</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{flags.filter((f: any) => f.isResolved).length}</div>
             </CardBody>
           </Card>
         </div>
@@ -99,11 +100,23 @@ export default function AdminFraudPage() {
                   <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No fraud flags detected.</td></tr>
                 ) : (
                   flags.map((flag: any) => (
-                    <tr key={flag.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                    <tr 
+                      key={flag.id} 
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${
+                        flag.isManual ? 'bg-orange-50 dark:bg-orange-900/10 border-l-4 border-l-orange-500' : ''
+                      }`}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <AlertTriangle size={16} className="mr-2 text-red-500" />
-                          <span className="font-medium capitalize">{flag.fraudType.toLowerCase().replace('_', ' ')}</span>
+                          {flag.isManual ? (
+                            <ShieldAlert size={16} className="mr-2 text-orange-500" />
+                          ) : (
+                            <AlertTriangle size={16} className="mr-2 text-red-500" />
+                          )}
+                          <span className="font-medium capitalize">
+                            {flag.fraudType.toLowerCase().replace('_', ' ')}
+                            {flag.isManual && <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">(Manual)</span>}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -112,7 +125,14 @@ export default function AdminFraudPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm">{flag.description}</div>
-                        <div className="text-xs text-gray-400 mt-1">Code: <span className="font-mono">{flag.referralCode}</span></div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Code: <span className="font-mono">{flag.referralCode}</span>
+                          {flag.isManual && flag.app?.partner?.user && (
+                            <span className="ml-2 text-orange-600 dark:text-orange-400">
+                              • Flagged by: {flag.app.partner.user.name || flag.app.partner.user.email}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         {flag.isResolved ? (

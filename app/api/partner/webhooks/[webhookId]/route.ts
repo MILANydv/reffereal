@@ -20,7 +20,7 @@ export async function PATCH(
     const webhook = await prisma.webhook.findFirst({
       where: {
         id: webhookId,
-        app: { partnerId },
+        App: { partnerId },
       },
     });
 
@@ -57,7 +57,7 @@ export async function DELETE(
     const webhook = await prisma.webhook.findFirst({
       where: {
         id: webhookId,
-        app: { partnerId },
+        App: { partnerId },
       },
     });
 

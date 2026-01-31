@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
     const teamMember = await prisma.teamMember.findUnique({
       where: { inviteToken: token },
       include: {
-        partner: {
+        Partner: {
           include: {
-            user: true,
+            User: true,
           },
         },
       },
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify the partner who sent the invite
-    if (teamMember.partner?.user) {
-      await notifyTeamInviteAccepted(teamMember.partner.user.id, {
+    if (teamMember.Partner?.User) {
+      await notifyTeamInviteAccepted(teamMember.Partner.User.id, {
         name: teamMember.name || undefined,
         email: teamMember.email,
         role: teamMember.role,

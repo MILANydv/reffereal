@@ -19,9 +19,9 @@ export async function DELETE(
     const referral = await prisma.referral.findFirst({
       where: { id },
       include: {
-        campaign: {
+        Campaign: {
           include: {
-            app: {
+            App: {
               select: {
                 partnerId: true,
               },
@@ -35,7 +35,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Referral not found' }, { status: 404 });
     }
 
-    if (referral.campaign.app.partnerId !== session.user.partnerId) {
+    if (referral.Campaign.App.partnerId !== session.user.partnerId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

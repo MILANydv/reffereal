@@ -15,21 +15,21 @@ export async function GET(request: NextRequest) {
     const appId = searchParams.get('appId');
 
     const whereClause: { 
-      app: { partnerId: string; id?: string }; 
+      App: { partnerId: string; id?: string }; 
       status: 'ACTIVE' 
     } = {
-      app: { partnerId },
+      App: { partnerId },
       status: 'ACTIVE',
     };
 
     if (appId) {
-      whereClause.app.id = appId;
+      whereClause.App.id = appId;
     }
 
     const campaigns = await prisma.campaign.findMany({
       where: whereClause,
       include: {
-        app: {
+        App: {
           select: {
             id: true,
             name: true,
@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
         },
         _count: {
           select: {
-            referrals: true,
+            Referral: true,
           },
         },
-        referrals: {
+        Referral: {
           where: {
             status: 'CONVERTED',
           },
@@ -59,11 +59,11 @@ export async function GET(request: NextRequest) {
       id: campaign.id,
       name: campaign.name,
       status: campaign.status,
-      totalReferrals: campaign._count.referrals,
-      totalRewardCost: campaign.referrals?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0,
+      totalReferrals: campaign._count.Referral,
+      totalRewardCost: campaign.Referral?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0,
       app: {
-        id: campaign.app.id,
-        name: campaign.app.name,
+        id: campaign.App.id,
+        name: campaign.App.name,
       },
     }));
 

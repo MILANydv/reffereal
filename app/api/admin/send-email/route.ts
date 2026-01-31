@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     } else if (partnerId) {
       const partner = await prisma.partner.findUnique({
         where: { id: partnerId },
-        include: { user: true },
+        include: { User: true },
       });
-      user = partner?.user || null;
+      user = partner?.User || null;
     }
 
     const recipientEmail = user?.email || email;

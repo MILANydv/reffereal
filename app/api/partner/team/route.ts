@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     const member = await prisma.teamMember.create({
       data: {
-        partnerId,
+        Partner: { connect: { id: partnerId } },
         email,
         name,
         role,

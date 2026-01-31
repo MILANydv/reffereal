@@ -19,10 +19,10 @@ export async function GET() {
         orderBy: { createdAt: 'desc' },
         take: 100,
         include: {
-          partner: {
+          Partner: {
             select: {
               companyName: true,
-              user: {
+              User: {
                 select: {
                   email: true,
                 },
@@ -34,17 +34,17 @@ export async function GET() {
       
       prisma.subscription.findMany({
         include: {
-          partner: {
+          Partner: {
             select: {
               companyName: true,
-              user: {
+              User: {
                 select: {
                   email: true,
                 },
               },
             },
           },
-          plan: {
+          PricingPlan: {
             select: {
               name: true,
               type: true,
@@ -75,14 +75,14 @@ export async function GET() {
     const pendingRevenue = pendingInvoices.reduce((sum, inv) => sum + inv.amount, 0);
 
     const subscriptionByPlan = subscriptions.reduce((acc, sub) => {
-      const planType = sub.plan.type;
+      const planType = sub.PricingPlan.type;
       acc[planType] = (acc[planType] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     const monthlyRecurringRevenue = subscriptions
       .filter(sub => sub.status === 'ACTIVE')
-      .reduce((sum, sub) => sum + sub.plan.monthlyPrice, 0);
+      .reduce((sum, sub) => sum + sub.PricingPlan.monthlyPrice, 0);
 
     return NextResponse.json({
       totalRevenue,

@@ -131,24 +131,24 @@ export default function UsagePage() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-600 dark:text-gray-400">Click Rate</span>
-                        <span className="text-sm font-medium">{stats.referralStats.clickRate}%</span>
+                        <span className="text-sm font-medium">{stats.referralStats?.clickRate || 0}%</span>
                       </div>
                       <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full bg-blue-500"
-                          style={{ width: `${stats.referralStats.clickRate}%` }}
+                          style={{ width: `${stats.referralStats?.clickRate || 0}%` }}
                         />
                       </div>
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</span>
-                        <span className="text-sm font-medium">{stats.referralStats.conversionRate}%</span>
+                        <span className="text-sm font-medium">{stats.referralStats?.conversionRate || 0}%</span>
                       </div>
                       <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full bg-green-500"
-                          style={{ width: `${stats.referralStats.conversionRate}%` }}
+                          style={{ width: `${stats.referralStats?.conversionRate || 0}%` }}
                         />
                       </div>
                     </div>

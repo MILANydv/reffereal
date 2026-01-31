@@ -264,7 +264,7 @@ export default function AppOverviewPage() {
             <CardBody>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats?.apiUsageChart || []}>
+                  <AreaChart data={Array.isArray(stats?.apiUsageChart) ? stats.apiUsageChart : (stats?.apiUsageChart?.data || [])}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />

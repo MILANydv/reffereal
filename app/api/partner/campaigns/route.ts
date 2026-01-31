@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       include: {
         _count: {
           select: {
-            referrals: true,
+            Referral: true,
           },
         },
       },
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     const campaign = await prisma.campaign.create({
       data: {
-        appId,
+        App: { connect: { id: appId } },
         name,
         referralType,
         rewardModel,

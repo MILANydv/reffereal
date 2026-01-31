@@ -161,8 +161,8 @@ export default function ReferralsPage() {
                       <td className="px-6 py-4 font-mono text-xs">{referral.referrerId}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="font-medium">{referral.campaign.name}</div>
-                          {referral.campaign.app && (
+                          <div className="font-medium">{referral.campaign?.name || 'Unknown Campaign'}</div>
+                          {referral.campaign?.app && (
                             <div className="text-xs text-gray-500 mt-0.5">{referral.campaign.app.name}</div>
                           )}
                         </div>

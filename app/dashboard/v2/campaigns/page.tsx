@@ -242,7 +242,7 @@ export default function CampaignsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="capitalize">{campaign.referralType.toLowerCase().replace('_', ' ')}</span>
+                        <span className="capitalize">{(campaign.referralType || 'ONE_SIDED').toLowerCase().replace('_', ' ')}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
                         {campaign.rewardModel === 'FIXED_CURRENCY' ? `$${campaign.rewardValue}` : `${campaign.rewardValue}%`}
@@ -253,7 +253,7 @@ export default function CampaignsPage() {
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {campaign._count.referrals}
+                        {campaign._count?.referrals || 0}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <ActionDropdown

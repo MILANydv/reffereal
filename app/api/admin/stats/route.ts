@@ -63,16 +63,49 @@ export async function GET() {
       where: { isResolved: false },
     });
 
+    const manualFraudFlags = await prisma.fraudFlag.count({
+      where: { isManual: true, isResolved: false },
+    });
+
+    // Get recent manual flags for alerts
+    const recentManualFlags = await prisma.fraudFlag.findMany({
+      where: {
+        isManual: true,
+        isResolved: false,
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+        },
+      },
+      include: {
+        App: {
+          include: {
+            Partner: {
+              include: {
+                User: {
+                  select: {
+                    email: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
     const recentPartners = await prisma.partner.findMany({
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
-        user: {
+        User: {
           select: { email: true },
         },
-        subscription: {
+        Subscription: {
           include: {
-            plan: {
+            PricingPlan: {
               select: { type: true },
             },
           },
@@ -98,11 +131,21 @@ export async function GET() {
       })),
       activeSubscriptions,
       unresolvedFraudFlags,
+      manualFraudFlags,
+      fraudAlerts: recentManualFlags.map((flag) => ({
+        id: flag.id,
+        type: 'manual_fraud_flag',
+        message: `Partner "${flag.App.Partner.User.name || flag.App.Partner.User.email}" manually flagged referral "${flag.referralCode}" in app "${flag.App.name}"`,
+        appName: flag.App.name,
+        referralCode: flag.referralCode,
+        partnerEmail: flag.App.Partner.User.email,
+        createdAt: flag.createdAt,
+      })),
       recentPartners: recentPartners.map((p) => ({
         id: p.id,
         companyName: p.companyName,
-        userEmail: p.user.email,
-        planType: p.subscription?.plan.type || 'FREE',
+        userEmail: p.User.email,
+        planType: p.Subscription?.PricingPlan.type || 'FREE',
         createdAt: p.createdAt,
       })),
     });

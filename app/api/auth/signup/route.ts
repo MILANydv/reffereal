@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
         role: 'PARTNER',
         emailVerifyToken,
         emailVerifyExpiry,
-        partners: {
+        Partner: {
           create: {
             companyName,
           },
         },
       },
       include: {
-        partners: true,
+        Partner: true,
       },
     });
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       {
         message: 'User created successfully. Please check your email to verify your account.',
         userId: user.id,
-        partnerId: user.partners[0].id,
+        partnerId: user.Partner[0].id,
       },
       { status: 201 }
     );

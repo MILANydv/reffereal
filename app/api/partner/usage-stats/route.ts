@@ -18,12 +18,12 @@ export async function GET(request: NextRequest) {
     const partner = await prisma.partner.findUnique({
       where: { id: partnerId },
       include: {
-        subscription: {
-          include: { plan: true },
+        Subscription: {
+          include: { PricingPlan: true },
         },
-        apps: {
+        App: {
           include: {
-            apiUsageLogs: {
+            ApiUsageLog: {
               where: {
                 timestamp: {
                   gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -41,12 +41,12 @@ export async function GET(request: NextRequest) {
     }
 
     // If appId is provided, filter to that app; otherwise show all apps (platform-level)
-    let apps = partner.apps;
+    let apps = partner.App;
     if (appId) {
       apps = apps.filter(app => app.id === appId);
     }
 
-    const allLogs = apps.flatMap(app => app.apiUsageLogs);
+    const allLogs = apps.flatMap(app => app.ApiUsageLog);
     
     // Get referral stats for platform-level view
     let referralStats = null;
@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
       // Platform-level: get all referrals across all apps
       const allReferrals = await prisma.referral.findMany({
         where: {
-          campaign: {
-            app: {
+          Campaign: {
+            App: {
               partnerId,
             },
           },
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
           },
         },
         include: {
-          campaign: {
+          Campaign: {
             select: {
               appId: true,
             },

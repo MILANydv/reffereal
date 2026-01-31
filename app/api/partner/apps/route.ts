@@ -17,11 +17,11 @@ export async function GET() {
     const apps = await prisma.app.findMany({
       where: { partnerId: session.user.partnerId },
       include: {
-        campaigns: true,
+        Campaign: true,
         _count: {
           select: {
-            campaigns: true,
-            apiUsageLogs: true,
+            Campaign: true,
+            ApiUsageLog: true,
           },
         },
       },
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         apiKey,
-        partnerId: session.user.partnerId,
+        Partner: { connect: { id: session.user.partnerId } },
         monthlyLimit: monthlyLimit || 10000,
       },
     });

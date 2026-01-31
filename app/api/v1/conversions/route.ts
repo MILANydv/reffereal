@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     const referral = await prisma.referral.findUnique({
       where: { referralCode },
       include: {
-        campaign: {
-          include: { app: true },
+        Campaign: {
+          include: { App: true },
         },
       },
     });
@@ -37,19 +37,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Referral code not found' }, { status: 404 });
     }
 
-    if (referral.campaign.appId !== app.id) {
+    if (referral.Campaign.appId !== app.id) {
       return NextResponse.json(
         { error: 'Referral does not belong to this app' },
         { status: 403 }
       );
     }
 
-    if (referral.campaign.status !== 'ACTIVE') {
+    if (referral.Campaign.status !== 'ACTIVE') {
       return NextResponse.json({ error: 'Campaign is not active' }, { status: 400 });
     }
 
     let rewardAmount = 0;
-    const campaign = referral.campaign;
+    const campaign = referral.Campaign;
 
     if (campaign.rewardModel === 'FIXED_CURRENCY') {
       rewardAmount = campaign.rewardValue;
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       }),
       prisma.conversion.create({
         data: {
-          referralId: referral.id,
+          Referral: { connect: { id: referral.id } },
           amount,
           metadata: metadata ? JSON.stringify(metadata) : null,
         },
@@ -102,11 +102,11 @@ export async function POST(request: NextRequest) {
     try {
       const partner = await prisma.partner.findUnique({
         where: { id: app.partnerId },
-        include: { user: true },
+        include: { User: true },
       });
       
-      if (partner?.user) {
-        await notifyReferralConversion(partner.user.id, {
+      if (partner?.User) {
+        await notifyReferralConversion(partner.User.id, {
           code: updatedReferral.referralCode,
           rewardAmount: updatedReferral.rewardAmount || undefined,
           campaignName: campaign.name,

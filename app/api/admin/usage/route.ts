@@ -49,13 +49,13 @@ export async function GET() {
         take: 100,
         orderBy: { timestamp: 'desc' },
         include: {
-          app: {
+          App: {
             select: {
               name: true,
-              partner: {
+              Partner: {
                 select: {
                   companyName: true,
-                  user: {
+                  User: {
                     select: {
                       email: true,
                     },
@@ -87,10 +87,10 @@ export async function GET() {
         name: true,
         currentUsage: true,
         monthlyLimit: true,
-        partner: {
+        Partner: {
           select: {
             companyName: true,
-            user: {
+            User: {
               select: {
                 email: true,
               },
@@ -107,14 +107,14 @@ export async function GET() {
       select: {
         id: true,
         companyName: true,
-        user: {
+        User: {
           select: {
             email: true,
           },
         },
-        subscription: {
+        Subscription: {
           select: {
-            plan: {
+            PricingPlan: {
               select: {
                 type: true,
                 apiLimit: true,
@@ -133,7 +133,7 @@ export async function GET() {
         calls: item._count.id || 0,
         currentUsage: app?.currentUsage || 0,
         monthlyLimit: app?.monthlyLimit || 0,
-        partner: app?.partner,
+        partner: app?.Partner,
       };
     });
 
@@ -142,9 +142,9 @@ export async function GET() {
       return {
         partnerId: item.partnerId,
         companyName: partner?.companyName || 'Unknown',
-        email: partner?.user.email || 'Unknown',
+        email: partner?.User.email || 'Unknown',
         usage: item._sum.currentUsage || 0,
-        plan: partner?.subscription?.plan,
+        plan: partner?.Subscription?.PricingPlan,
       };
     });
 
@@ -155,11 +155,11 @@ export async function GET() {
       timestamp: log.timestamp.toISOString(),
       ipAddress: log.ipAddress,
       userAgent: log.userAgent,
-      app: log.app ? {
-        name: log.app.name,
-        partner: log.app.partner ? {
-          companyName: log.app.partner.companyName,
-          email: log.app.partner.user?.email,
+      app: log.App ? {
+        name: log.App.name,
+        partner: log.App.Partner ? {
+          companyName: log.App.Partner.companyName,
+          email: log.App.Partner.User?.email,
         } : null,
       } : null,
     }));

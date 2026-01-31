@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
 import { generateReferralCode } from '@/lib/api-key';
-import { detectFraud } from '@/lib/fraud-detection';
+import { detectFraudEnhanced } from '@/lib/fraud-detection-enhanced';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralCodeGenerated } from '@/lib/notifications';
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
-      include: { app: true },
+      include: { App: true },
     });
 
     if (!campaign) {
@@ -47,19 +47,36 @@ export async function POST(request: NextRequest) {
     }
 
     const referralCode = generateReferralCode();
-    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null;
+    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+                      request.headers.get('x-real-ip') || null;
+    const userAgent = request.headers.get('user-agent') || null;
+    const acceptLanguage = request.headers.get('accept-language') || null;
 
-    const fraudCheck = await detectFraud(app.id, referralCode, referrerId, refereeId || null, ipAddress);
+    const fraudCheck = await detectFraudEnhanced(
+      app.id,
+      referralCode,
+      referrerId,
+      refereeId || null,
+      ipAddress,
+      userAgent,
+      acceptLanguage
+    );
+
+    // Generate device fingerprint
+    const { generateDeviceFingerprint } = await import('@/lib/fraud-detection-enhanced');
+    const deviceFingerprint = userAgent ? generateDeviceFingerprint(userAgent, ipAddress, acceptLanguage) : null;
 
     const referral = await prisma.referral.create({
       data: {
-        campaignId,
+        Campaign: { connect: { id: campaignId } },
         referrerId,
         refereeId,
         referralCode,
         status: fraudCheck.isFraud ? 'FLAGGED' : 'PENDING',
         ipAddress,
         isFlagged: fraudCheck.isFraud,
+        deviceFingerprint,
+        userAgent,
       },
     });
 
@@ -77,11 +94,11 @@ export async function POST(request: NextRequest) {
     try {
       const partner = await prisma.partner.findUnique({
         where: { id: app.partnerId },
-        include: { user: true },
+        include: { User: true },
       });
       
-      if (partner?.user) {
-        await notifyReferralCodeGenerated(partner.user.id, {
+      if (partner?.User) {
+        await notifyReferralCodeGenerated(partner.User.id, {
           code: referral.referralCode,
           campaignName: campaign.name,
         });
@@ -95,7 +112,11 @@ export async function POST(request: NextRequest) {
       referralCode: referral.referralCode,
       referralId: referral.id,
       status: referral.status,
-      ...(fraudCheck.isFraud && { warning: 'Referral flagged for review', reasons: fraudCheck.reasons }),
+      ...(fraudCheck.isFraud && { 
+        warning: 'Referral flagged for review', 
+        reasons: fraudCheck.reasons,
+        riskScore: fraudCheck.riskScore 
+      }),
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating referral:', error);

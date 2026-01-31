@@ -21,7 +21,7 @@ export function AppSwitcher() {
         setApps(data);
         if (data.length > 0 && !selectedApp) {
           // Check if there's a stored ID that matches one of these apps
-          const storedId = useAppStore.getState().selectedAppId;
+          const storedId = useAppStore.getState().selectedApp?.id;
           const matchedApp = data.find((a: App) => a.id === storedId);
           setSelectedApp(matchedApp || data[0]);
         }

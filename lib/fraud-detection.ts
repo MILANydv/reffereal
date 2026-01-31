@@ -26,7 +26,7 @@ export async function detectFraud(
   if (ipAddress) {
     const duplicateIpCount = await prisma.referral.count({
       where: {
-        campaign: { appId },
+        Campaign: { appId },
         ipAddress,
         createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
@@ -45,7 +45,7 @@ export async function detectFraud(
 
   const recentReferrals = await prisma.referral.count({
     where: {
-      campaign: { appId },
+        Campaign: { appId },
       referrerId,
       createdAt: { gte: new Date(Date.now() - RATE_LIMIT_WINDOW) },
     },
@@ -84,7 +84,7 @@ async function detectSuspiciousPattern(
 ): Promise<boolean> {
   const referrals = await prisma.referral.findMany({
     where: {
-      campaign: { appId },
+        Campaign: { appId },
       referrerId,
       createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },

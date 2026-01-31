@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         where: { appId: app.id },
         include: {
           _count: {
-            select: { referrals: true },
+            select: { Referral: true },
           },
         },
       });
@@ -161,19 +161,19 @@ export async function GET(request: NextRequest) {
       apps.map(async (app: { id: string; name: string; currentUsage: number; monthlyLimit: number }) => {
         const [totalReferrals, totalClicks, totalConversions, totalReward] = await Promise.all([
           prisma.referral.count({
-            where: { campaign: { appId: app.id } },
+            where: { Campaign: { appId: app.id } },
           }),
           prisma.referral.count({
             where: {
-              campaign: { appId: app.id },
+              Campaign: { appId: app.id },
               status: { in: ['CLICKED', 'CONVERTED'] },
             },
           }),
           prisma.referral.count({
-            where: { campaign: { appId: app.id }, status: 'CONVERTED' },
+            where: { Campaign: { appId: app.id }, status: 'CONVERTED' },
           }),
           prisma.referral.aggregate({
-            where: { campaign: { appId: app.id }, status: 'CONVERTED' },
+            where: { Campaign: { appId: app.id }, status: 'CONVERTED' },
             _sum: { rewardAmount: true },
           }),
         ]);

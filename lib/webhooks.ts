@@ -155,7 +155,7 @@ export async function retryFailedWebhooks() {
       nextRetryAt: { lte: new Date() },
     },
     include: {
-      webhook: true,
+      Webhook: true,
     },
   });
 
@@ -163,9 +163,9 @@ export async function retryFailedWebhooks() {
     const payload = JSON.parse(delivery.payload) as WebhookPayload;
     await deliverWebhook(
       delivery.id,
-      delivery.webhook.url,
+      delivery.Webhook.url,
       payload,
-      delivery.webhook.secret
+      delivery.Webhook.secret
     );
   }
 }

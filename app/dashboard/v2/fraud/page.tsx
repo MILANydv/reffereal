@@ -5,7 +5,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
 import { PageHeaderSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { useAppStore } from '@/lib/store';
 
@@ -40,7 +40,7 @@ export default function FraudPage() {
       if (response.ok) {
         invalidate(`fraud-${selectedApp?.id}`);
         if (selectedApp) {
-          loadFraudFlags(selectedApp.id, true);
+          loadFraudFlags(selectedApp.id);
         }
       }
     } catch (error) {
@@ -54,6 +54,10 @@ export default function FraudPage() {
       SELF_REFERRAL: 'Self Referral',
       RATE_LIMIT_EXCEEDED: 'Rate Limit',
       SUSPICIOUS_PATTERN: 'Suspicious Pattern',
+      VELOCITY_CHECK: 'Velocity Check',
+      DEVICE_FINGERPRINT: 'Device Fingerprint',
+      MANUAL_FLAG: 'Manual Flag',
+      VPN_PROXY_DETECTED: 'VPN/Proxy Detected',
     };
     return labels[type] || type;
   };
@@ -119,30 +123,42 @@ export default function FraudPage() {
         {filteredFlags.length > 0 ? (
           <div className="space-y-4">
             {filteredFlags.map((flag: any) => (
-              <Card key={flag.id}>
+              <Card 
+                key={flag.id}
+                className={flag.isManual ? 'border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-900/10' : ''}
+              >
                 <CardBody>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
                       {flag.isResolved ? (
                         <CheckCircle size={24} className="text-green-600 mt-1" />
+                      ) : flag.isManual ? (
+                        <ShieldAlert size={24} className="text-orange-600 mt-1" />
                       ) : (
                         <AlertTriangle size={24} className="text-red-600 mt-1" />
                       )}
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-semibold text-gray-900">{flag.appName}</h3>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{flag.appName}</h3>
                           <Badge
-                            variant={flag.isResolved ? 'success' : 'error'}
+                            variant={flag.isResolved ? 'success' : flag.isManual ? 'warning' : 'error'}
                             size="sm"
                           >
                             {getFraudTypeLabel(flag.fraudType)}
+                            {flag.isManual && ' (Manual)'}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-700 mb-2">{flag.description}</p>
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{flag.description}</p>
+                        <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                           <span>Code: {flag.referralCode}</span>
                           <span>•</span>
                           <span>{new Date(flag.createdAt).toLocaleString()}</span>
+                          {flag.isManual && (
+                            <>
+                              <span>•</span>
+                              <span className="text-orange-600 dark:text-orange-400 font-medium">Manually Flagged</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

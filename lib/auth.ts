@@ -21,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
           include: {
-            partners: true,
+            Partner: true,
           },
         });
 
@@ -50,7 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
-          partnerId: user.partners[0]?.id,
+          partnerId: user.Partner[0]?.id,
         };
       },
     }),

@@ -73,6 +73,16 @@ export interface DashboardStats {
     type: string;
     message: string;
   }>;
+  fraudAlerts?: Array<{
+    id: string;
+    type: string;
+    message: string;
+    appName: string;
+    referralCode: string;
+    partnerEmail: string;
+    createdAt: string;
+  }>;
+  manualFraudFlags?: number;
   apiUsage?: {
     current: number;
     limit: number;
@@ -283,6 +293,14 @@ export interface UsageStats {
   endpointBreakdown?: {
     byEndpoint: Array<{ endpoint: string; count: number; percentage: string }>;
     byCategory: Array<{ category: string; count: number; percentage: string }>;
+  };
+  referralStats?: {
+    totalReferrals: number;
+    totalClicks: number;
+    totalConversions: number;
+    totalRewards: number;
+    clickRate: string;
+    conversionRate: string;
   };
   recentLogs?: Array<{
     id: string;
@@ -945,6 +963,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       if (response.ok) {
         const data = await response.json();
         set({ fraud: Array.isArray(data) ? data : (data.flags || []) });
+        // Store fraud stats if available
+        if (data.stats) {
+          // You can add stats to state if needed
+        }
       }
     } catch (error) {
       console.error('Error fetching fraud:', error);

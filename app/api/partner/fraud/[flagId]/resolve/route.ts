@@ -20,7 +20,7 @@ export async function POST(
     const flag = await prisma.fraudFlag.findFirst({
       where: {
         id: flagId,
-        app: { partnerId },
+        App: { partnerId },
       },
     });
 

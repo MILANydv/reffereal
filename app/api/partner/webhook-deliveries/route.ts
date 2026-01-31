@@ -15,21 +15,21 @@ export async function GET(request: NextRequest) {
     const appId = searchParams.get('appId');
 
     const whereClause: { 
-      webhook: { app: { partnerId: string; id?: string } }
+      Webhook: { App: { partnerId: string; id?: string } }
     } = {
-      webhook: { app: { partnerId } },
+      Webhook: { App: { partnerId } },
     };
 
     if (appId) {
-      whereClause.webhook.app.id = appId;
+      whereClause.Webhook.App.id = appId;
     }
 
     const deliveries = await prisma.webhookDelivery.findMany({
       where: whereClause,
       include: {
-        webhook: {
+        Webhook: {
           include: {
-            app: {
+            App: {
               select: {
                 id: true,
                 name: true,
@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
     const recentDeliveries = deliveries.map(delivery => ({
       id: delivery.id,
       eventType: delivery.eventType,
-      url: delivery.webhook.url,
+      url: delivery.Webhook.url,
       statusCode: delivery.statusCode || 0,
       success: delivery.success,
       timestamp: delivery.createdAt.toISOString(),
       app: {
-        id: delivery.webhook.app.id,
-        name: delivery.webhook.app.name,
+        id: delivery.Webhook.App.id,
+        name: delivery.Webhook.App.name,
       },
     }));
 

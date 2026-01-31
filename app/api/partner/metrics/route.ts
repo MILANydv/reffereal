@@ -51,20 +51,20 @@ async function getMetricsForPeriod(partnerId: string, startDate: Date, endDate: 
   const [referrals, conversions, apiCalls] = await Promise.all([
     prisma.referral.count({
       where: {
-        campaign: { app: { partnerId } },
+        Campaign: { App: { partnerId } },
         createdAt: { gte: startDate, lte: endDate },
       },
     }),
     prisma.referral.count({
       where: {
-        campaign: { app: { partnerId } },
+        Campaign: { App: { partnerId } },
         status: 'CONVERTED',
         convertedAt: { gte: startDate, lte: endDate },
       },
     }),
     prisma.apiUsageLog.count({
       where: {
-        app: { partnerId },
+        App: { partnerId },
         timestamp: { gte: startDate, lte: endDate },
       },
     }),
@@ -72,7 +72,7 @@ async function getMetricsForPeriod(partnerId: string, startDate: Date, endDate: 
 
   const rewardSum = await prisma.referral.aggregate({
     where: {
-      campaign: { app: { partnerId } },
+      Campaign: { App: { partnerId } },
       status: 'CONVERTED',
       convertedAt: { gte: startDate, lte: endDate },
     },

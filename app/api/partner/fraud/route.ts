@@ -15,10 +15,10 @@ export async function GET(request: Request) {
     const partnerId = session.user.partnerId;
 
     const whereClause: {
-      app: { partnerId: string };
+      App: { partnerId: string };
       isResolved?: boolean;
     } = {
-      app: { partnerId },
+      App: { partnerId },
     };
 
     if (filter === 'unresolved') {
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     const flags = await prisma.fraudFlag.findMany({
       where: whereClause,
       include: {
-        app: {
+        App: {
           select: { name: true },
         },
       },
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       flags.map((flag) => ({
         ...flag,
-        appName: flag.app.name,
+        appName: flag.App.name,
       }))
     );
   } catch (error) {

@@ -35,7 +35,7 @@ export async function GET() {
         if (!partner) {
             partner = await prisma.partner.create({
                 data: {
-                    userId,
+                    User: { connect: { id: userId } },
                     onboardingCompleted: false,
                     onboardingStep: 1,
                 },

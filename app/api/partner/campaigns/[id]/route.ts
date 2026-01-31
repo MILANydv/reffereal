@@ -18,12 +18,12 @@ export async function GET(
     const campaign = await prisma.campaign.findFirst({
       where: {
         id,
-        app: {
+        App: {
           partnerId: session.user.partnerId,
         },
       },
       include: {
-        app: {
+        App: {
           select: {
             id: true,
             name: true,
@@ -31,7 +31,7 @@ export async function GET(
         },
         _count: {
           select: {
-            referrals: true,
+            Referral: true,
           },
         },
       },
@@ -68,7 +68,7 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: {
-        conversions: {
+        Conversion: {
           take: 1,
           orderBy: { createdAt: 'desc' },
         },
@@ -170,7 +170,7 @@ export async function DELETE(
     const campaign = await prisma.campaign.findFirst({
       where: {
         id,
-        app: {
+        App: {
           partnerId: session.user.partnerId,
         },
       },

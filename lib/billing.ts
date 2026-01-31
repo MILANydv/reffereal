@@ -6,12 +6,12 @@ export async function calculateMonthlyUsage(partnerId: string) {
   const partner = await prisma.partner.findUnique({
     where: { id: partnerId },
     include: {
-      subscription: {
-        include: { plan: true },
+      Subscription: {
+        include: { PricingPlan: true },
       },
-      apps: {
+      App: {
         include: {
-          apiUsageLogs: {
+          ApiUsageLog: {
             where: {
               timestamp: {
                 gte: new Date(new Date().setDate(1)),
@@ -23,16 +23,16 @@ export async function calculateMonthlyUsage(partnerId: string) {
     },
   });
 
-  if (!partner || !partner.subscription) {
+  if (!partner || !partner.Subscription) {
     throw new Error('Partner or subscription not found');
   }
 
-  const totalApiCalls = partner.apps?.reduce(
-    (sum, app) => sum + (app.apiUsageLogs?.length || 0),
+  const totalApiCalls = partner.App?.reduce(
+    (sum, app) => sum + (app.ApiUsageLog?.length || 0),
     0
   ) || 0;
 
-  const plan = partner.subscription.plan;
+  const plan = partner.Subscription.PricingPlan;
   const overage = Math.max(0, totalApiCalls - plan.apiLimit);
   const overageCost = (overage / 1000) * plan.overagePrice;
 
@@ -49,40 +49,40 @@ export async function calculateMonthlyUsage(partnerId: string) {
 export async function generateMonthlyInvoices() {
   const partners = await prisma.partner.findMany({
     include: {
-      subscription: {
+      Subscription: {
         where: {
           status: 'ACTIVE',
           currentPeriodEnd: {
             lte: new Date(),
           },
         },
-        include: { plan: true },
+        include: { PricingPlan: true },
       },
     },
   });
 
   for (const partner of partners) {
-    if (!partner.subscription) continue;
+    if (!partner.Subscription) continue;
 
     try {
       const usage = await calculateMonthlyUsage(partner.id);
 
       const invoice = await prisma.invoice.create({
         data: {
-          partnerId: partner.id,
+          Partner: { connect: { id: partner.id } },
           amount: usage.totalCost,
           currency: 'USD',
           status: 'pending',
-          billingPeriodStart: partner.subscription.currentPeriodStart,
-          billingPeriodEnd: partner.subscription.currentPeriodEnd,
+          billingPeriodStart: partner.Subscription.currentPeriodStart,
+          billingPeriodEnd: partner.Subscription.currentPeriodEnd,
           apiUsage: usage.totalApiCalls,
           overageAmount: usage.overageCost,
         },
       });
 
-      if (partner.subscription.stripeCustomerId && usage.overageCost > 0) {
+      if (partner.Subscription.stripeCustomerId && usage.overageCost > 0) {
         const stripeInvoice = await createStripeInvoice(
-          partner.subscription.stripeCustomerId,
+          partner.Subscription.stripeCustomerId,
           usage.overageCost,
           `API Overage - ${usage.overage.toLocaleString()} calls`
         );
@@ -94,11 +94,11 @@ export async function generateMonthlyInvoices() {
       }
 
       await prisma.subscription.update({
-        where: { id: partner.subscription.id },
+        where: { id: partner.Subscription.id },
         data: {
-          currentPeriodStart: partner.subscription.currentPeriodEnd,
+          currentPeriodStart: partner.Subscription.currentPeriodEnd,
           currentPeriodEnd: new Date(
-            partner.subscription.currentPeriodEnd.getTime() + 30 * 24 * 60 * 60 * 1000
+            partner.Subscription.currentPeriodEnd.getTime() + 30 * 24 * 60 * 60 * 1000
           ),
         },
       });
@@ -134,22 +134,22 @@ export async function enforceUsageLimits(appId: string) {
   const app = await prisma.app.findUnique({
     where: { id: appId },
     include: {
-      partner: {
+      Partner: {
         include: {
-          subscription: {
-            include: { plan: true },
+          Subscription: {
+            include: { PricingPlan: true },
           },
         },
       },
     },
   });
 
-  if (!app || !app.partner.subscription) {
+  if (!app || !app.Partner.Subscription) {
     return { allowed: false, reason: 'No subscription found' };
   }
 
-  const plan = app.partner.subscription.plan;
-  const currentPeriodStart = app.partner.subscription.currentPeriodStart;
+  const plan = app.Partner.Subscription.PricingPlan;
+  const currentPeriodStart = app.Partner.Subscription.currentPeriodStart;
 
   const usageCount = await prisma.apiUsageLog.count({
     where: {
@@ -179,14 +179,14 @@ export async function canCreateApp(partnerId: string): Promise<boolean> {
   const partner = await prisma.partner.findUnique({
     where: { id: partnerId },
     include: {
-      subscription: { include: { plan: true } },
-      apps: true,
+      Subscription: { include: { PricingPlan: true } },
+      App: true,
     },
   });
 
-  if (!partner || !partner.subscription) {
+  if (!partner || !partner.Subscription) {
     return false;
   }
 
-  return partner.apps.length < partner.subscription.plan.maxApps;
+  return partner.App.length < partner.Subscription.PricingPlan.maxApps;
 }

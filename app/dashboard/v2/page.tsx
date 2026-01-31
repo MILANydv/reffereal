@@ -285,7 +285,6 @@ export default function DashboardV2Page() {
                               boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                               backgroundColor: 'white',
                             }}
-                            className="dark:!bg-slate-800 dark:!border-slate-700"
                             formatter={(value: any, name: string) => {
                               if (value === 0 || value === null || value === undefined) return null;
                               return [`${value} calls`, name];

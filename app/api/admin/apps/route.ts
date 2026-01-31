@@ -19,17 +19,17 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { name: { contains: search } },
-        { partner: { companyName: { contains: search } } },
-        { partner: { user: { email: { contains: search } } } },
+        { Partner: { companyName: { contains: search } } },
+        { Partner: { User: { email: { contains: search } } } },
       ];
     }
 
     const apps = await prisma.app.findMany({
       where,
       include: {
-        partner: {
+        Partner: {
           include: {
-            user: {
+            User: {
               select: {
                 email: true,
                 name: true,
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
         },
         _count: {
           select: {
-            campaigns: true,
-            apiUsageLogs: true,
+            Campaign: true,
+            ApiUsageLog: true,
           },
         },
       },
@@ -84,9 +84,9 @@ export async function PATCH(request: NextRequest) {
       where: { id: appId },
       data: updateData,
       include: {
-        partner: {
+        Partner: {
           include: {
-            user: {
+            User: {
               select: {
                 email: true,
                 name: true,
@@ -96,8 +96,8 @@ export async function PATCH(request: NextRequest) {
         },
         _count: {
           select: {
-            campaigns: true,
-            apiUsageLogs: true,
+            Campaign: true,
+            ApiUsageLog: true,
           },
         },
       },
@@ -140,7 +140,7 @@ export async function DELETE(request: NextRequest) {
 
     const app = await prisma.app.findUnique({
       where: { id: appId },
-      include: { partner: true },
+      include: { Partner: true },
     });
 
     if (!app) {

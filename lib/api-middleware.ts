@@ -13,14 +13,14 @@ export async function authenticateApiKey(request: NextRequest) {
   
   const app = await prisma.app.findUnique({
     where: { apiKey },
-    include: { partner: true },
+    include: { Partner: true },
   });
 
   if (!app) {
     return { error: 'Invalid API key', status: 401 };
   }
 
-  if (app.status !== 'ACTIVE' || !app.partner.active) {
+  if (app.status !== 'ACTIVE' || !app.Partner.active) {
     return { error: 'App or partner is suspended', status: 403 };
   }
 
@@ -39,7 +39,7 @@ export async function logApiUsage(
   const [_, updatedApp] = await Promise.all([
     prisma.apiUsageLog.create({
       data: {
-        appId,
+        App: { connect: { id: appId } },
         endpoint,
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
         userAgent: request.headers.get('user-agent') || undefined,
@@ -49,9 +49,9 @@ export async function logApiUsage(
       where: { id: appId },
       data: { currentUsage: { increment: 1 } },
       include: {
-        partner: {
+        Partner: {
           include: {
-            user: true,
+            User: true,
           },
         },
       },
@@ -62,12 +62,12 @@ export async function logApiUsage(
   const usagePercentage = (updatedApp.currentUsage / updatedApp.monthlyLimit) * 100;
   
   // Send warning at 80%, 90%, and 95%
-  if ([80, 90, 95].includes(Math.floor(usagePercentage / 10) * 10) && updatedApp.partner?.user) {
+  if ([80, 90, 95].includes(Math.floor(usagePercentage / 10) * 10) && updatedApp.Partner?.User) {
     try {
       // Check if we've already sent a warning for this threshold
       const recentWarnings = await prisma.emailLog.findMany({
         where: {
-          to: updatedApp.partner.user.email,
+          to: updatedApp.Partner.User.email,
           template: 'api_usage_warning',
           createdAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
@@ -81,14 +81,14 @@ export async function logApiUsage(
 
       if (recentWarnings.length === 0) {
         await sendApiUsageWarningEmail(
-          updatedApp.partner.user.email,
+          updatedApp.Partner.User.email,
           {
             name: updatedApp.name,
             currentUsage: updatedApp.currentUsage,
             monthlyLimit: updatedApp.monthlyLimit,
           },
           Math.floor(usagePercentage / 10) * 10,
-          updatedApp.partner.user.name || undefined
+          updatedApp.Partner.User.name || undefined
         );
       }
     } catch (error) {

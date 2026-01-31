@@ -149,7 +149,21 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
           <div className="text-xs text-gray-500 dark:text-slate-400 capitalize">{userRole.toLowerCase().replace('_', ' ')}</div>
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={async () => {
+            try {
+              // Call backend logout route
+              await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+              });
+              // Then sign out from NextAuth client-side
+              await signOut({ callbackUrl: '/login', redirect: true });
+            } catch (error) {
+              console.error('Logout error:', error);
+              // Fallback to client-side signout
+              await signOut({ callbackUrl: '/login', redirect: true });
+            }
+          }}
           className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
         >
           <LogOut size={16} className="mr-2" />

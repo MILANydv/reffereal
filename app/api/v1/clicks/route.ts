@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     const referral = await prisma.referral.findUnique({
       where: { referralCode },
       include: {
-        campaign: {
-          include: { app: true },
+        Campaign: {
+          include: { App: true },
         },
       },
     });
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Referral code not found' }, { status: 404 });
     }
 
-    if (referral.campaign.appId !== app.id) {
+    if (referral.Campaign.appId !== app.id) {
       return NextResponse.json(
         { error: 'Referral does not belong to this app' },
         { status: 403 }
