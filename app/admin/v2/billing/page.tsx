@@ -222,9 +222,9 @@ export default function AdminBillingPage() {
                     <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {invoice.partner.companyName || 'Unnamed Partner'}
+                          {invoice.Partner?.companyName || 'Unnamed Partner'}
                         </div>
-                        <div className="text-xs text-gray-500">{invoice.partner.user.email}</div>
+                        <div className="text-xs text-gray-500">{invoice.Partner?.User?.email || 'No email'}</div>
                       </td>
                       <td className="px-6 py-3 font-semibold text-gray-900 dark:text-gray-100">
                         ${invoice.amount.toLocaleString()}
@@ -273,15 +273,15 @@ export default function AdminBillingPage() {
                     <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {sub.partner.companyName || 'Unnamed Partner'}
+                          {sub.Partner?.companyName || 'Unnamed Partner'}
                         </div>
-                        <div className="text-xs text-gray-500">{sub.partner.user.email}</div>
+                        <div className="text-xs text-gray-500">{sub.Partner?.User?.email || 'No email'}</div>
                       </td>
                       <td className="px-6 py-3">
-                        <Badge variant="default">{sub.plan.type}</Badge>
+                        <Badge variant="default">{sub.PricingPlan?.type || 'FREE'}</Badge>
                       </td>
                       <td className="px-6 py-3 font-semibold text-gray-900 dark:text-gray-100">
-                        ${sub.plan.monthlyPrice}/mo
+                        ${sub.PricingPlan?.monthlyPrice || 0}/mo
                       </td>
                       <td className="px-6 py-3">{getSubscriptionStatusBadge(sub.status)}</td>
                       <td className="px-6 py-3 text-xs text-gray-500">

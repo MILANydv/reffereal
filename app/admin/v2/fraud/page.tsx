@@ -120,16 +120,16 @@ export default function AdminFraudPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-gray-900 dark:text-gray-100 font-medium">{flag.app.name}</div>
+                        <div className="text-gray-900 dark:text-gray-100 font-medium">{flag.App?.name || 'Unknown App'}</div>
                         <div className="text-xs text-gray-500 font-mono">ID: {flag.appId}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm">{flag.description}</div>
                         <div className="text-xs text-gray-400 mt-1">
                           Code: <span className="font-mono">{flag.referralCode}</span>
-                          {flag.isManual && flag.app?.partner?.user && (
+                          {flag.isManual && flag.App?.Partner?.User && (
                             <span className="ml-2 text-orange-600 dark:text-orange-400">
-                              • Flagged by: {flag.app.partner.user.name || flag.app.partner.user.email}
+                              • Flagged by: {flag.App?.Partner?.User?.name || flag.App?.Partner?.User?.email}
                             </span>
                           )}
                         </div>

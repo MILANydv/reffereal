@@ -126,7 +126,7 @@ export default function AdminUsagePage() {
                       <div>
                         <div className="font-medium text-gray-900 dark:text-gray-100">{app.appName}</div>
                         <div className="text-xs text-gray-500">
-                          {app.partner.companyName || app.partner.user.email}
+                          {app.partner?.companyName || app.partner?.User?.email || 'Unknown'}
                         </div>
                       </div>
                       <div className="text-right">
@@ -218,9 +218,9 @@ export default function AdminUsagePage() {
                       <td className="px-6 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">
                         {log.endpoint}
                       </td>
-                      <td className="px-6 py-3 text-gray-900 dark:text-gray-100">{log.app.name}</td>
+                      <td className="px-6 py-3 text-gray-900 dark:text-gray-100">{log.app?.name || 'Unknown'}</td>
                       <td className="px-6 py-3 text-gray-500">
-                        {log.app.partner.companyName || log.app.partner.user.email}
+                        {log.app?.partner?.companyName || log.app?.partner?.email || 'Unknown'}
                       </td>
                       <td className="px-6 py-3 text-gray-500 text-xs">
                         {new Date(log.timestamp).toLocaleString()}

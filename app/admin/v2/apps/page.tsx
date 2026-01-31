@@ -71,8 +71,8 @@ export default function AdminAppsPage() {
   const filteredApps = apps.filter((app) => {
     const matchesSearch =
       app.name.toLowerCase().includes(search.toLowerCase()) ||
-      app.partner.companyName?.toLowerCase().includes(search.toLowerCase()) ||
-      app.partner.user.email.toLowerCase().includes(search.toLowerCase());
+      app.Partner?.companyName?.toLowerCase().includes(search.toLowerCase()) ||
+      app.Partner?.User?.email?.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
 
@@ -149,7 +149,7 @@ export default function AdminAppsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {apps.reduce((sum, a) => sum + a._count.apiUsageLogs, 0).toLocaleString()}
+                  {apps.reduce((sum, a) => sum + (a._count?.ApiUsageLog || 0), 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Total API Hits</div>
               </div>
@@ -216,9 +216,9 @@ export default function AdminAppsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-gray-900 dark:text-gray-100">
-                          {app.partner.companyName || 'Unnamed Partner'}
+                          {app.Partner?.companyName || 'Unnamed Partner'}
                         </div>
-                        <div className="text-xs text-gray-500">{app.partner.user.email}</div>
+                        <div className="text-xs text-gray-500">{app.Partner?.User?.email || 'No email'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="w-32">
@@ -334,19 +334,19 @@ export default function AdminAppsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-gray-500">Company</label>
-                    <div className="text-lg font-medium">{viewModal.partner.companyName || 'Unnamed'}</div>
+                    <div className="text-lg font-medium">{viewModal.Partner?.companyName || 'Unnamed'}</div>
                   </div>
                   <div>
                     <label className="text-sm text-gray-500">Email</label>
-                    <div className="text-lg font-medium">{viewModal.partner.user.email}</div>
+                    <div className="text-lg font-medium">{viewModal.Partner?.User?.email || 'No email'}</div>
                   </div>
                   <div>
                     <label className="text-sm text-gray-500">Campaigns</label>
-                    <div className="text-lg font-medium">{viewModal._count.campaigns}</div>
+                    <div className="text-lg font-medium">{viewModal._count?.Campaign || 0}</div>
                   </div>
                   <div>
                     <label className="text-sm text-gray-500">Total API Calls</label>
-                    <div className="text-lg font-medium">{viewModal._count.apiUsageLogs.toLocaleString()}</div>
+                    <div className="text-lg font-medium">{(viewModal._count?.ApiUsageLog || 0).toLocaleString()}</div>
                   </div>
                 </div>
               </div>
