@@ -15,14 +15,14 @@ export async function GET(request: NextRequest) {
 
   try {
     interface WhereClause {
-      campaign: {
+      Campaign: {
         appId: string;
       };
       campaignId?: string;
     }
 
     const whereClause: WhereClause = {
-      campaign: {
+      Campaign: {
         appId: app.id,
       },
     };

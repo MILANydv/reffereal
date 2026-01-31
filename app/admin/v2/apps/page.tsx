@@ -149,7 +149,7 @@ export default function AdminAppsPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {apps.reduce((sum, a) => sum + (a._count?.ApiUsageLog || 0), 0).toLocaleString()}
+                  {apps.reduce((sum, a) => sum + (a._count?.ApiUsageLog || a._count?.apiUsageLogs || 0), 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 uppercase font-semibold">Total API Hits</div>
               </div>

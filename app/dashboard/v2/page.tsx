@@ -372,8 +372,8 @@ export default function DashboardV2Page() {
                           <Badge variant="success" size="sm">Active</Badge>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
-                          {campaign.app && (
-                            <Badge variant="default" size="sm">{campaign.app.name}</Badge>
+                          {(campaign.App || campaign.app) && (
+                            <Badge variant="default" size="sm">{(campaign.App || campaign.app)?.name}</Badge>
                           )}
                         </div>
                         <div className="flex items-center text-xs text-gray-500">

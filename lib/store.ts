@@ -22,8 +22,19 @@ export interface Campaign {
   referralType?: string;
   rewardModel?: string;
   rewardValue?: number;
+  App?: {
+    id: string;
+    name: string;
+  };
+  // Legacy lowercase support
+  app?: {
+    id: string;
+    name: string;
+  };
   _count?: {
-    referrals: number;
+    Referral: number;
+    // Legacy
+    referrals?: number;
   };
 }
 
@@ -274,6 +285,13 @@ export interface Referral {
   rewardAmount?: number | null;
   isFlagged?: boolean;
   createdAt: string;
+  Campaign?: {
+    name: string;
+    App?: {
+      name: string;
+    };
+  };
+  // Legacy lowercase support (for backwards compatibility)
   campaign?: {
     name: string;
     app?: {
@@ -329,14 +347,26 @@ export interface AdminApp {
   monthlyLimit: number;
   currentUsage: number;
   createdAt: string;
-  partner: {
+  Partner?: {
+    companyName?: string | null;
+    User?: {
+      email: string;
+      name?: string | null;
+    };
+  };
+  // Legacy lowercase support
+  partner?: {
     companyName?: string;
-    user: {
+    user?: {
       email: string;
     };
   };
-  _count: {
-    apiUsageLogs: number;
+  _count?: {
+    Campaign: number;
+    ApiUsageLog: number;
+    // Legacy
+    campaigns?: number;
+    apiUsageLogs?: number;
   };
 }
 

@@ -61,6 +61,11 @@ export async function GET(request: NextRequest) {
       status: campaign.status,
       totalReferrals: campaign._count.Referral,
       totalRewardCost: campaign.Referral?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0,
+      App: {
+        id: campaign.App.id,
+        name: campaign.App.name,
+      },
+      // Legacy lowercase support
       app: {
         id: campaign.App.id,
         name: campaign.App.name,
