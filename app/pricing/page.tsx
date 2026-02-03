@@ -92,12 +92,7 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Referral Engine
-              </span>
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
             </Link>
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
@@ -122,26 +117,24 @@ export default function PricingPage() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             Choose the perfect plan for your needs. All plans include a 14-day free trial.
           </p>
-          
+
           {/* Billing Toggle */}
           <div className="inline-flex items-center bg-white rounded-lg p-1 shadow-lg border border-gray-200">
             <button
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-6 py-2 rounded-md font-medium transition-all ${
-                billingPeriod === 'monthly'
+              className={`px-6 py-2 rounded-md font-medium transition-all ${billingPeriod === 'monthly'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingPeriod('yearly')}
-              className={`px-6 py-2 rounded-md font-medium transition-all relative ${
-                billingPeriod === 'yearly'
+              className={`px-6 py-2 rounded-md font-medium transition-all relative ${billingPeriod === 'yearly'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               Yearly
               <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
@@ -166,24 +159,23 @@ export default function PricingPage() {
                 key={plan.name}
                 variants={fadeInUp}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className={`relative bg-white rounded-2xl shadow-xl overflow-hidden border-2 ${
-                  plan.popular ? 'border-purple-500 scale-105' : 'border-gray-200'
-                }`}
+                className={`relative bg-white rounded-2xl shadow-xl overflow-hidden border-2 ${plan.popular ? 'border-purple-500 scale-105' : 'border-gray-200'
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 text-sm font-semibold">
                     Most Popular
                   </div>
                 )}
-                
+
                 <div className="p-8">
                   <div className={`w-16 h-16 bg-gradient-to-br ${plan.color} rounded-xl flex items-center justify-center mb-6`}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
-                  
+
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                   <p className="text-gray-600 mb-6">{plan.description}</p>
-                  
+
                   <div className="mb-6">
                     {price ? (
                       <>
@@ -199,23 +191,22 @@ export default function PricingPage() {
                       <span className="text-5xl font-bold text-gray-900">Custom</span>
                     )}
                   </div>
-                  
+
                   <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <Link
                       href={plan.name === 'Enterprise' ? '/contact' : '/signup'}
-                      className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition-all ${
-                        plan.popular
+                      className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition-all ${plan.popular
                           ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-xl'
                           : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       {plan.cta}
                     </Link>
                   </motion.div>
-                  
+
                   <div className="mt-8 space-y-4">
                     {plan.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start space-x-3">

@@ -448,24 +448,23 @@ console.log("Infrastructure active.");`;
             <div className="col-span-2 space-y-8">
               <div className="flex items-center gap-3">
                 <img src="/logos/logo.png" alt="Incenta Logo" className="h-16 w-auto" />
-                <span className="text-2xl font-extrabold tracking-tighter">Incenta</span>
               </div>
               <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Nepal's next-generation referral architecture built for high-scale SaaS and subscription engines.</p>
             </div>
             <div className="space-y-6">
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Security</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
-                <li><a className="hover:text-primary transition-colors" href="#">Encryption</a></li>
-                <li><a className="hover:text-primary transition-colors" href="#">SOC2 Type II</a></li>
-                <li><a className="hover:text-primary transition-colors" href="#">Data Residency</a></li>
-                <li><a className="hover:text-primary transition-colors" href="#">Bug Bounty</a></li>
+                <li><Link href="/security" className="hover:text-primary transition-colors">Encryption</Link></li>
+                <li><Link href="/security" className="hover:text-primary transition-colors">SOC2 Type II</Link></li>
+                <li><Link href="/security" className="hover:text-primary transition-colors">Data Residency</Link></li>
+                <li><Link href="/security" className="hover:text-primary transition-colors">Bug Bounty</Link></li>
               </ul>
             </div>
             <div className="space-y-6">
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Compliance</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
-                <li><a className="hover:text-primary transition-colors" href="#">GDPR</a></li>
-                <li><a className="hover:text-primary transition-colors" href="#">CCPA</a></li>
+                <li><Link href="/compliance" className="hover:text-primary transition-colors">GDPR</Link></li>
+                <li><Link href="/compliance" className="hover:text-primary transition-colors">CCPA</Link></li>
                 <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
                 <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               </ul>
@@ -473,9 +472,9 @@ console.log("Infrastructure active.");`;
             <div className="space-y-6">
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">System</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
-                <li><a className="hover:text-primary transition-colors" href="#">Status Page</a></li>
-                <li><a className="hover:text-primary transition-colors" href="#">API Uptime</a></li>
-                <li><a className="hover:text-primary transition-colors" href="#">Integrations</a></li>
+                <li><Link href="/status" className="hover:text-primary transition-colors">Status Page</Link></li>
+                <li><Link href="/status" className="hover:text-primary transition-colors">API Uptime</Link></li>
+                <li><Link href="/docs" className="hover:text-primary transition-colors">Integrations</Link></li>
                 <li><Link href="/contact" className="hover:text-primary transition-colors">Support</Link></li>
               </ul>
             </div>
@@ -484,7 +483,7 @@ console.log("Infrastructure active.");`;
               <ul className="space-y-4 text-sm font-bold text-navy">
                 <li><Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
                 <li><Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link></li>
-                <li><a className="hover:text-primary transition-colors" href="#">Change Log</a></li>
+                <li><Link href="/docs" className="hover:text-primary transition-colors">Change Log</Link></li>
               </ul>
             </div>
           </div>
@@ -493,7 +492,7 @@ console.log("Infrastructure active.");`;
             <div className="flex gap-8">
               <Link href="/privacy" className="text-xs font-bold text-slate-400 hover:text-navy">Privacy</Link>
               <Link href="/terms" className="text-xs font-bold text-slate-400 hover:text-navy">Terms</Link>
-              <a className="text-xs font-bold text-slate-400 hover:text-navy" href="#">Cookie Policy</a>
+              <Link href="/cookie-policy" className="text-xs font-bold text-slate-400 hover:text-navy">Cookie Policy</Link>
             </div>
           </div>
         </div>

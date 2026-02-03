@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function DocsPage() {
   const [activeTab, setActiveTab] = useState<'quickstart' | 'auth' | 'endpoints' | 'examples'>('quickstart');
@@ -11,7 +12,10 @@ export default function DocsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-blue-600">Referral Engine API</h1>
+              <Link href="/">
+                <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto mr-4" />
+              </Link>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Incenta API</h1>
               <span className="ml-3 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">v1.0</span>
             </div>
             <div className="flex items-center">
@@ -33,41 +37,37 @@ export default function DocsPage() {
               <nav className="space-y-1">
                 <button
                   onClick={() => setActiveTab('quickstart')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'quickstart'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'quickstart'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   Quick Start
                 </button>
                 <button
                   onClick={() => setActiveTab('auth')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'auth'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'auth'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   Authentication
                 </button>
                 <button
                   onClick={() => setActiveTab('endpoints')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'endpoints'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'endpoints'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   API Endpoints
                 </button>
                 <button
                   onClick={() => setActiveTab('examples')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'examples'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'examples'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   Code Examples
                 </button>
@@ -93,10 +93,10 @@ function QuickStartSection() {
   return (
     <div className="prose max-w-none">
       <h1 className="text-3xl font-bold mb-6">Quick Start Guide</h1>
-      
+
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
         <p className="text-sm text-blue-700">
-          <strong>Welcome to Referral Engine API!</strong> This guide will help you integrate referral tracking into your application in minutes.
+          <strong>Welcome to Incenta API!</strong> This guide will help you integrate referral tracking into your application in minutes.
         </p>
       </div>
 
@@ -115,8 +115,8 @@ function QuickStartSection() {
       </ol>
 
       <h2 className="text-2xl font-semibold mt-8 mb-4">Step 3: Implement Referral Flow</h2>
-      <p className="mb-4">The referral lifecycle consists of three main steps:</p>
-      
+      <p className="mb-4">The Incenta cycle consists of three main steps:</p>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="border rounded-lg p-4">
           <div className="text-2xl font-bold text-blue-600 mb-2">1</div>
@@ -248,7 +248,7 @@ function EndpointsSection() {
             <code className="text-lg font-mono">/api/v1/referrals</code>
           </div>
           <p className="text-gray-700 mb-4">Create a new referral code for a user.</p>
-          
+
           <h4 className="font-semibold mb-2">Request Body</h4>
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-4 overflow-x-auto">
             <pre>{`{
@@ -273,7 +273,7 @@ function EndpointsSection() {
             <code className="text-lg font-mono">/api/v1/clicks</code>
           </div>
           <p className="text-gray-700 mb-4">Track when a user clicks on a referral link.</p>
-          
+
           <h4 className="font-semibold mb-2">Request Body</h4>
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-4 overflow-x-auto">
             <pre>{`{
@@ -298,7 +298,7 @@ function EndpointsSection() {
             <code className="text-lg font-mono">/api/v1/conversions</code>
           </div>
           <p className="text-gray-700 mb-4">Track when a referred user completes a conversion action.</p>
-          
+
           <h4 className="font-semibold mb-2">Request Body</h4>
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-4 overflow-x-auto">
             <pre>{`{
@@ -328,7 +328,7 @@ function EndpointsSection() {
             <code className="text-lg font-mono">/api/v1/stats</code>
           </div>
           <p className="text-gray-700 mb-4">Retrieve referral statistics for your app or a specific campaign.</p>
-          
+
           <h4 className="font-semibold mb-2">Query Parameters</h4>
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-4 overflow-x-auto">
             <pre>{`?campaignId=string  // Optional: Filter by campaign`}</pre>

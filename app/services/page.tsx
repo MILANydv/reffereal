@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  Settings, HeadphonesIcon, Rocket, Code2, BarChart3, 
+import {
+  Settings, HeadphonesIcon, Rocket, Code2, BarChart3,
   Shield, Users, Zap, CheckCircle2, ArrowRight, Sparkles,
   Globe, Lock, TrendingUp, Database
 } from 'lucide-react';
@@ -103,12 +103,7 @@ export default function ServicesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Referral Engine
-              </span>
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
             </Link>
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
@@ -136,7 +131,7 @@ export default function ServicesPage() {
               </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Get the most out of Referral Engine with our professional services. From setup to optimization, we're here to help.
+              Get the most out of Incenta with our professional services. From setup to optimization, we're here to help.
             </p>
           </motion.div>
         </div>
