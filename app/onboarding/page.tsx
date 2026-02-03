@@ -179,6 +179,9 @@ export default function OnboardingPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-20 w-auto" />
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Incenta</h1>
           <p className="text-xl text-gray-600">Nepal's viral growth platform. Let&apos;s get you set up in just a few steps</p>
         </div>

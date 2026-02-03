@@ -49,7 +49,7 @@ export default function SignupPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div>
             <Link href="/" className="flex items-center space-x-3 mb-12">
-              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-18 w-auto" />
             </Link>
             <div className="mt-20">
               <h1 className="text-4xl font-bold mb-4">Start your journey with Incenta</h1>
@@ -94,9 +94,9 @@ export default function SignupPage() {
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white">
         <div className="mx-auto w-full max-w-sm">
           {/* Mobile Logo */}
-          <div className="lg:hidden mb-10">
+          <div className="lg:hidden mb-12 text-center flex justify-center">
             <Link href="/" className="flex items-center space-x-3">
-              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-20 w-auto" />
             </Link>
           </div>
 

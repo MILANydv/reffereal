@@ -7,7 +7,7 @@ export default function PrivacyPage() {
       <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/" className="flex items-center space-x-3">
-            <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-12 w-auto" />
           </Link>
         </div>
       </header>

@@ -82,7 +82,7 @@ export function TopNavbar() {
     <header className="h-16 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-4 sticky top-0 z-30">
       <div className="flex items-center space-x-4">
         <Link href={isAdmin ? "/admin/v2" : "/dashboard/v2"} className="flex items-center space-x-2 mr-4">
-          <img src="/logos/logo.png" alt="Incenta Logo" className="h-8 w-auto" />
+          <img src="/logos/logo.png" alt="Incenta Logo" className="h-11 w-auto" />
         </Link>
 
         {!isAdmin && (

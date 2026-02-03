@@ -13,7 +13,7 @@ export default function Home() {
       <header className="fixed top-0 w-full z-[100] px-8 py-6">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between glass-panel px-8 py-4 rounded-3xl">
           <div className="flex items-center gap-2">
-            <img src="/logos/logo.png" alt="Incenta Logo" className="h-8 w-auto" />
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-12 w-auto" />
           </div>
           <nav className="hidden lg:flex items-center gap-10">
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#features">The Grid</a>
@@ -447,7 +447,7 @@ console.log("Infrastructure active.");`;
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 mb-24">
             <div className="col-span-2 space-y-8">
               <div className="flex items-center gap-3">
-                <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
+                <img src="/logos/logo.png" alt="Incenta Logo" className="h-16 w-auto" />
                 <span className="text-2xl font-extrabold tracking-tighter">Incenta</span>
               </div>
               <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Nepal's next-generation referral architecture built for high-scale SaaS and subscription engines.</p>
