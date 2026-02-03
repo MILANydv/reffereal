@@ -26,6 +26,7 @@ export default function Home() {
           <nav className="hidden lg:flex items-center gap-10">
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#features">The Grid</a>
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#developer">Infrastructure</a>
+            <Link className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="/blogs">Library</Link>
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#pricing">Plans</a>
           </nav>
           <div className="flex items-center gap-2 md:gap-4">
@@ -553,6 +554,7 @@ console.log("Infrastructure active.");`;
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Engineering</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
                 <li><Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link></li>
+                <li><Link href="/blogs" className="hover:text-primary transition-colors">Resource Hub</Link></li>
                 <li><Link href="/changelog" className="hover:text-primary transition-colors">Change Log</Link></li>
                 <li><Link href="/status" className="hover:text-primary transition-colors">System Status</Link></li>
               </ul>
