@@ -361,13 +361,18 @@ export interface AdminApp {
       email: string;
     };
   };
-  _count?: {
-    Campaign: number;
-    ApiUsageLog: number;
-    // Legacy
-    campaigns?: number;
-    apiUsageLogs?: number;
-  };
+};
+
+export interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  author: string;
+  content: string;
+  category: string;
+  status: 'DRAFT' | 'PUBLISHED';
+  publishedAt?: string;
+  createdAt: string;
 }
 
 export interface AdminPartner {
@@ -897,6 +902,7 @@ interface AdminStore {
   pricing: PricingPlan[];
   contacts: ContactInquiry[];
   changelogs: Changelog[];
+  blogs: Blog[];
   isLoading: Record<string, boolean>;
 
   fetchPartners: (force?: boolean) => Promise<void>;
@@ -910,6 +916,7 @@ interface AdminStore {
   fetchPricing: (force?: boolean) => Promise<void>;
   fetchContacts: (force?: boolean) => Promise<void>;
   fetchChangelogs: (force?: boolean) => Promise<void>;
+  fetchBlogs: (force?: boolean) => Promise<void>;
   invalidate: (key: string) => void;
 }
 
@@ -925,6 +932,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   pricing: [],
   contacts: [],
   changelogs: [],
+  blogs: [],
   isLoading: {},
 
   fetchPartners: async (force = false) => {
@@ -1145,6 +1153,25 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
   },
 
+  fetchBlogs: async (force = false) => {
+    const key = 'blogs';
+    if (!force && get().blogs.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/blogs');
+      if (response.ok) {
+        const data = await response.json();
+        set({ blogs: Array.isArray(data) ? data : [] });
+      }
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
   invalidate: (key) => {
     if (key === 'partners') {
       set({ partners: [] });
@@ -1168,6 +1195,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       set({ contacts: [] });
     } else if (key === 'changelogs') {
       set({ changelogs: [] });
+    } else if (key === 'blogs') {
+      set({ blogs: [] });
     }
   },
 }));

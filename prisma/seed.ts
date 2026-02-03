@@ -163,6 +163,95 @@ async function main() {
     });
     console.log('Free subscription created for test partner');
   }
+
+  // Create Blogs
+  const blog1 = await (prisma as any).blog.upsert({
+    where: { slug: 'scaling-referral-infrastructure-2024' },
+    update: {},
+    create: {
+      title: 'Scaling Referral Infrastructure in 2024',
+      slug: 'scaling-referral-infrastructure-2024',
+      author: 'Milan Ydv',
+      content: 'Detailed technical guide on scaling referral systems to handle millions of requests...',
+      category: 'Engineering',
+      status: 'PUBLISHED',
+      publishedAt: new Date(),
+    },
+  });
+
+  const blog2 = await (prisma as any).blog.upsert({
+    where: { slug: 'preventing-sybil-attacks-mlm' },
+    update: {},
+    create: {
+      title: 'Preventing Sybil Attacks in Multi-Level Marketing',
+      slug: 'preventing-sybil-attacks-mlm',
+      author: 'Milan Ydv',
+      content: 'Exploring advanced detection mechanisms for multi-account fraud in MLM networks...',
+      category: 'Security',
+      status: 'PUBLISHED',
+      publishedAt: new Date(),
+    },
+  });
+
+  const blog3 = await (prisma as any).blog.upsert({
+    where: { slug: 'new-sdk-support-go-ruby' },
+    update: {},
+    create: {
+      title: 'New SDK Support for Go and Ruby',
+      slug: 'new-sdk-support-go-ruby',
+      author: 'Engineering Team',
+      content: 'Announcing official support for Go and Ruby on Incenta SDK...',
+      category: 'Product',
+      status: 'DRAFT',
+    },
+  });
+
+  console.log('Blogs created');
+
+  // Create Changelogs
+  await (prisma as any).changelog.upsert({
+    where: { id: 'cl-1' },
+    update: {},
+    create: {
+      id: 'cl-1',
+      version: 'v2.1.0',
+      type: 'MAJOR',
+      title: 'Advanced Anti-Fraud Engine',
+      content: '### Key Changes \n- New IP fingerprinting \n- Velocity-based rate limiting',
+      status: 'PUBLISHED',
+      releaseDate: new Date('2024-02-01'),
+    },
+  });
+
+  await (prisma as any).changelog.upsert({
+    where: { id: 'cl-2' },
+    update: {},
+    create: {
+      id: 'cl-2',
+      version: 'v2.0.4',
+      type: 'MINOR',
+      title: 'Developer Experience Patch',
+      content: '### Key Changes \n- Faster integration with updated documentation',
+      status: 'PUBLISHED',
+      releaseDate: new Date('2024-01-15'),
+    },
+  });
+
+  await (prisma as any).changelog.upsert({
+    where: { id: 'cl-3' },
+    update: {},
+    create: {
+      id: 'cl-3',
+      version: 'v2.1.1',
+      type: 'PATCH',
+      title: 'Webhook Latency Optimization',
+      content: '### Key Changes \n- Reduced webhook delay by 200ms',
+      status: 'DRAFT',
+      releaseDate: new Date('2024-02-05'),
+    },
+  });
+
+  console.log('Changelogs created');
 }
 
 main()

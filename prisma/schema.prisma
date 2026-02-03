@@ -492,3 +492,24 @@ enum ChangelogStatus {
   DRAFT
   PUBLISHED
 }
+
+model Blog {
+  id        String     @id @default(cuid())
+  title     String
+  slug      String     @unique
+  author    String
+  content   String
+  category  String
+  status    BlogStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([status])
+  @@index([slug])
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
