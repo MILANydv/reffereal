@@ -7,10 +7,13 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && next build && npm run seed",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "seed": "tsx prisma/seed.ts",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push --accept-data-loss",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:setup": "prisma generate && prisma db push --accept-data-loss",
     "postinstall": "prisma generate"
   },
   "dependencies": {
