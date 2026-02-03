@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -67,7 +67,13 @@ function LoginForm() {
       if (result?.error) {
         setError('Invalid access credentials. Check your details.');
       } else {
-        router.push('/dashboard/v2');
+        // Fetch session to check role
+        const session = await getSession();
+        if (session?.user?.role === 'SUPER_ADMIN') {
+          router.push('/admin/v2');
+        } else {
+          router.push('/dashboard/v2');
+        }
         router.refresh();
       }
     } catch {
