@@ -2,91 +2,88 @@ import Link from 'next/link';
 
 export default function SecurityPage() {
     return (
-        <div className="min-h-screen bg-white">
-            {/* Header */}
-            <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <Link href="/" className="flex items-center space-x-3">
-                        <img src="/logos/logo.png" alt="Incenta Logo" className="h-12 w-auto" />
+        <div className="min-h-screen bg-white font-sans selection:bg-primary/10">
+            {/* Navigation */}
+            <nav className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100 h-20 flex items-center">
+                <div className="max-w-[1400px] mx-auto px-6 md:px-8 w-full flex items-center justify-between">
+                    <Link href="/">
+                        <img src="/logos/logo.png" alt="Incenta" className="h-10 md:h-12" />
                     </Link>
+                    <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-navy hover:text-primary transition-colors">
+                        Back to Home
+                    </Link>
+                </div>
+            </nav>
+
+            <header className="pt-40 pb-20 bg-slate-50/50 border-b border-slate-100 font-sans">
+                <div className="max-w-[800px] mx-auto px-6">
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.4em] text-primary mb-4 block">Infrastructure Security</span>
+                    <h1 className="text-4xl md:text-6xl font-extrabold text-navy tracking-tight mb-6">Security Architecture</h1>
+                    <p className="text-slate-500 font-medium tracking-tight">Enterprise-grade defense for referral velocity.</p>
                 </div>
             </header>
 
-            {/* Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="prose prose-lg max-w-none">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Security Architecture</h1>
-                    <p className="text-gray-600 mb-8">Enterprise-grade security is at the core of Incenta. We protect your data and your brand with multi-layered defense mechanisms.</p>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Data Encryption</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            All data transmitted to and from Incenta is encrypted using industry-standard TLS 1.3 encryption. At rest, sensitive data is protected using AES-256 encryption.
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">2. Fraud Protection</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            Our advanced fraud detection engine uses machine learning to identify and block suspicious referral activities. We monitor for:
-                        </p>
-                        <ul className="list-disc pl-6 text-gray-700 space-y-2 mb-4">
-                            <li>Self-referral detection</li>
-                            <li>IP and device fingerprinting</li>
-                            <li>Pattern-based anomaly detection</li>
-                            <li>Customizable velocity limits</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">3. Data Residency & Infrastructure</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            Incenta is hosted on world-class cloud infrastructure providers (AWS) with multiple availability zones for high availability and disaster recovery.
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">4. Compliance & SOC2</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            We are working towards our SOC2 Type II certification. Our internal processes follow strict security guidelines to ensure your data remains confidential and integral.
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">5. Responsible Disclosure</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            We operate a bug bounty program to encourage the responsible reporting of security vulnerabilities. We investigate all security reports diligently.
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">Contact Security</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            For security-related inquiries or to report a vulnerability, please contact us:
-                        </p>
-                        <div className="bg-gray-50 rounded-lg p-6 mt-4">
-                            <p className="text-gray-700 mb-2"><strong>Email:</strong> security@incenta.com</p>
+            <main className="max-w-[800px] mx-auto px-6 py-20 font-sans">
+                <div className="space-y-16">
+                    <section>
+                        <h2 className="text-2xl font-bold text-navy mb-6 flex items-center gap-3">
+                            <span className="text-xs font-mono text-slate-300">01</span>
+                            Data Encryption
+                        </h2>
+                        <div className="text-slate-600 leading-relaxed font-medium">
+                            <p>
+                                All data transmitted to and from Incenta is encrypted using industry-standard TLS 1.3 encryption. At rest, sensitive identities and payout data are protected using AES-256 encryption.
+                            </p>
                         </div>
                     </section>
-                </div>
 
-                {/* Footer */}
-                <div className="mt-12 pt-8 border-t border-gray-200">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-gray-600">
-                            © {new Date().getFullYear()} Incenta. All rights reserved.
-                        </p>
-                        <div className="flex space-x-6">
-                            <Link href="/privacy" className="text-sm text-blue-600 hover:text-blue-700">
-                                Privacy Policy
-                            </Link>
-                            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700">
-                                Home
-                            </Link>
+                    <section>
+                        <h2 className="text-2xl font-bold text-navy mb-6 flex items-center gap-3">
+                            <span className="text-xs font-mono text-slate-300">02</span>
+                            Fraud Protection Engine
+                        </h2>
+                        <div className="text-slate-600 leading-relaxed font-medium">
+                            <p className="mb-6">Our security fabric uses real-time heuristics to block suspicious activity:</p>
+                            <ul className="space-y-4 border-l-2 border-slate-100 pl-8">
+                                <li><span className="text-navy font-bold">Sybil Defense:</span> Multi-layered device fingerprinting to prevent duplicate identities.</li>
+                                <li><span className="text-navy font-bold">Velocity Tracking:</span> Automated blocking of anomalous referral surges.</li>
+                                <li><span className="text-navy font-bold">Bot Detection:</span> Hardware-level metadata analysis to filter automated traffic.</li>
+                            </ul>
                         </div>
-                    </div>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-navy mb-6 flex items-center gap-3">
+                            <span className="text-xs font-mono text-slate-300">03</span>
+                            Compliance
+                        </h2>
+                        <div className="text-slate-600 leading-relaxed font-medium">
+                            <p>
+                                We follow SOC2 Type II guidelines and maintain strict internal access controls. No PII is exposed to thirdnd-party analytics without explicit corporate environment consent.
+                            </p>
+                        </div>
+                    </section>
+
+                    <section className="pt-10 border-t border-slate-100">
+                        <h2 className="text-2xl font-bold text-navy mb-6">Security Disclosure</h2>
+                        <p className="text-slate-500 font-medium mb-8">Report vulnerabilities to our security operations center.</p>
+                        <div className="space-y-2">
+                            <p className="text-navy font-bold">security@incenta.io</p>
+                            <p className="text-slate-400 text-sm">Escalation PGP: 0x8A2C...</p>
+                        </div>
+                    </section>
                 </div>
             </main>
+
+            <footer className="border-t border-slate-100 py-20">
+                <div className="max-w-[800px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-sans">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">© 2024 Incenta. Built for security.</p>
+                    <div className="flex gap-8">
+                        <Link href="/terms" className="text-[10px] font-bold text-slate-400 hover:text-navy uppercase tracking-widest">Terms</Link>
+                        <Link href="/privacy" className="text-[10px] font-bold text-slate-400 hover:text-navy uppercase tracking-widest">Privacy</Link>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }

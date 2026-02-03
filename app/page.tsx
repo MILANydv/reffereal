@@ -2,109 +2,167 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [copied, setCopied] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="selection:bg-primary/20">
       {/* Header */}
-      <header className="fixed top-0 w-full z-[100] px-8 py-6">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between glass-panel px-8 py-4 rounded-3xl">
+      <header className="fixed top-0 w-full z-[100] px-4 md:px-8 py-4 md:py-6">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between glass-panel px-4 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-3xl">
           <div className="flex items-center gap-2">
-            <img src="/logos/logo.png" alt="Incenta Logo" className="h-12 w-auto" />
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-8 md:h-12 w-auto" />
           </div>
           <nav className="hidden lg:flex items-center gap-10">
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#features">The Grid</a>
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#developer">Infrastructure</a>
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#pricing">Plans</a>
           </nav>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-xs font-extrabold uppercase tracking-widest px-4">Login</Link>
-            <Link href="/signup" className="bg-navy text-white text-xs font-extrabold uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-primary transition-all">Get Started</Link>
+          <div className="flex items-center gap-2 md:gap-4">
+            <Link href="/login" className="text-[10px] md:text-xs font-extrabold uppercase tracking-widest px-2 md:px-4">Login</Link>
+            <Link href="/signup" className="bg-navy text-white text-[10px] md:text-xs font-extrabold uppercase tracking-widest px-4 md:px-6 py-2.5 md:py-3 rounded-lg md:rounded-xl hover:bg-primary transition-all">Get Started</Link>
           </div>
         </div>
       </header>
 
       <main>
         {/* Hero Section */}
-        <section className="min-h-[100vh] pt-44 pb-32 relative overflow-hidden">
-          <div className="gradient-glow size-[600px] bg-primary/20 -top-40 -left-40"></div>
-          <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <section className="min-h-[100vh] pt-32 md:pt-44 pb-20 md:pb-32 relative overflow-hidden flex items-center">
+          <div className="absolute inset-0 bg-dot-pattern"></div>
+          <div className="gradient-glow size-[300px] md:size-[600px] bg-primary/20 -top-20 md:-top-40 -left-20 md:-left-40"></div>
+          <div className="max-w-[1400px] mx-auto px-6 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative z-10 w-full">
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-[0.3em] mb-8">
-                <span className="w-10 h-px bg-primary"></span>
-                Automated Viral Growth
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8 animate-in slide-in-from-top-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-primary">v2.0 Infrastructure Live</span>
               </div>
-              <h1 className="text-7xl xl:text-9xl mb-8 font-light italic">
+              <h1 className="text-5xl md:text-7xl xl:text-9xl mb-6 md:mb-8 font-light italic leading-[1.1] md:leading-[0.9] animate-in slide-in-from-top-2 [animation-delay:200ms]">
                 Scale Your <br />
-                <span className="font-extrabold not-italic text-navy">Nepal SaaS</span>
+                <span className="font-extrabold not-italic bg-gradient-to-r from-navy via-primary to-navy bg-clip-text text-transparent">Nepal SaaS</span>
               </h1>
-              <p className="text-xl text-slate-500 max-w-lg leading-relaxed font-medium mb-12">
+              <p className="text-lg md:text-xl text-slate-500 max-w-lg leading-relaxed font-medium mb-8 md:mb-12 animate-in slide-in-from-top-2 [animation-delay:400ms]">
                 Automate referrals, eliminate fraud, and turn users into revenue with pixel-perfect tracking and seamless payouts.
               </p>
-              <div className="flex flex-col gap-10">
-                <div className="flex items-center gap-6">
-                  <Link href="/signup" className="tactile-btn text-lg">Claim Your Access</Link>
-                  <div className="flex -space-x-3">
-                    <div className="size-12 rounded-full border-4 border-white bg-slate-200"></div>
-                    <div className="size-12 rounded-full border-4 border-white bg-slate-300"></div>
-                    <div className="size-12 rounded-full border-4 border-white bg-slate-400"></div>
-                    <div className="size-12 rounded-full border-4 border-white bg-primary flex items-center justify-center text-[10px] text-white font-bold">+2k</div>
+              <div className="flex flex-col gap-10 animate-in slide-in-from-top-2 [animation-delay:600ms]">
+                <div className="flex flex-col sm:flex-row items-center gap-8 mb-16">
+                  <Link href="/signup" className="tactile-btn text-lg w-full sm:w-auto text-center">Claim Your Access</Link>
+                  <div className="flex items-center gap-4">
+                    <div className="flex -space-x-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className={`size-12 rounded-full border-4 border-white bg-slate-${i + 1}00 overflow-hidden shadow-xl relative z-${40 - i * 10}`}>
+                          <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300"></div>
+                        </div>
+                      ))}
+                      <div className="size-12 rounded-full border-4 border-white bg-primary flex items-center justify-center text-[10px] text-white font-bold shadow-xl relative z-0">+2k</div>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex text-amber-500 text-sm">
+                        {"★★★★★".split("").map((s, i) => <span key={i}>{s}</span>)}
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">from top founders</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Trusted by 500+ scaling teams</span>
-                  <div className="flex items-center gap-8 opacity-40 grayscale pointer-events-none">
-                    <div className="h-5 w-20 bg-slate-300 rounded"></div>
-                    <div className="h-5 w-20 bg-slate-300 rounded"></div>
-                    <div className="h-5 w-20 bg-slate-300 rounded"></div>
-                    <div className="h-5 w-20 bg-slate-300 rounded"></div>
+                <div className="flex flex-col gap-6 p-6 rounded-3xl bg-white/40 backdrop-blur-sm border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Trusted by 500+ scaling teams
+                  </span>
+                  <div className="flex items-center gap-8 md:gap-12 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-default">
+                    <div className="h-6 w-24 bg-slate-800/10 rounded-full flex items-center justify-center px-4">
+                      <div className="w-full h-2 bg-slate-400/40 rounded-full"></div>
+                    </div>
+                    <div className="h-6 w-20 bg-slate-800/10 rounded-full flex items-center justify-center px-4">
+                      <div className="w-full h-2 bg-slate-400/40 rounded-full"></div>
+                    </div>
+                    <div className="h-6 w-24 bg-slate-800/10 rounded-full flex items-center justify-center px-4">
+                      <div className="w-full h-2 bg-slate-400/40 rounded-full"></div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="relative h-[600px] flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl"></div>
+            <div className="relative h-[400px] md:h-[600px] flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-50"></div>
               <div className="relative w-full h-full flex items-center justify-center">
+                {/* Dashed Circles - Restored for all sizes */}
                 <motion.div
+                  initial={false}
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="absolute w-[400px] h-[400px] border border-dashed border-slate-300 rounded-full"
+                  transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                  className="absolute w-[280px] h-[280px] md:w-[450px] md:h-[450px] border border-dashed border-slate-200/60 rounded-full"
                 ></motion.div>
-                <div className="absolute w-[250px] h-[250px] border border-slate-200 rounded-full"></div>
+                <div className="absolute w-[180px] h-[180px] md:w-[280px] md:h-[280px] border border-slate-100 rounded-full scale-110"></div>
+
+                {/* SVG Lines - Restored and refined */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                  <motion.line
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.15 }}
+                    transition={{ duration: 2, delay: 1 }}
+                    stroke="currentColor" strokeWidth="1.5" x1="15%" x2="50%" y1="15%" y2="50%" strokeDasharray="5 5"></motion.line>
+                  <motion.line
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.15 }}
+                    transition={{ duration: 2, delay: 1.2 }}
+                    stroke="currentColor" strokeWidth="1.5" x1="85%" x2="50%" y1="80%" y2="50%" strokeDasharray="5 5"></motion.line>
+                  <motion.line
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.15 }}
+                    transition={{ duration: 2, delay: 1.4 }}
+                    stroke="currentColor" strokeWidth="1.5" x1="80%" x2="50%" y1="35%" y2="50%" strokeDasharray="5 5"></motion.line>
+                </svg>
+
+                {/* Nodes with conditional animation */}
                 <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="molecule-node top-10 left-20 z-20"
+                  initial={false}
+                  animate={isMobile ? {} : { y: [0, -15, 0] }}
+                  transition={isMobile ? {} : { duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  id="node-1"
+                  className="molecule-node top-10 left-10 md:left-20 z-20 scale-75 md:scale-100"
                 >
-                  <span className="material-symbols-outlined text-primary text-3xl">person_add</span>
+                  <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">person_add</span>
                 </motion.div>
+
                 <motion.div
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                  className="molecule-node bottom-20 right-10 z-20"
+                  initial={false}
+                  animate={isMobile ? {} : { y: [0, 15, 0] }}
+                  transition={isMobile ? {} : { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  id="node-2"
+                  className="molecule-node bottom-10 md:bottom-20 right-5 md:right-10 z-20 scale-75 md:scale-100"
                 >
-                  <span className="material-symbols-outlined text-emerald-500 text-3xl">redeem</span>
+                  <span className="material-symbols-outlined text-emerald-500 text-2xl md:text-3xl">redeem</span>
                 </motion.div>
-                <div className="molecule-node top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-24 bg-white/60 shadow-2xl !rounded-3xl">
-                  <div className="size-16 bg-navy rounded-2xl flex items-center justify-center text-white">
-                    <span className="material-symbols-outlined text-4xl">insights</span>
+
+                {/* Center Node with Incenta Logo */}
+                <div className="molecule-node top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 md:size-28 bg-white shadow-[0_0_50px_rgba(37,99,235,0.15)] !rounded-3xl z-30 border-2 border-primary/5 p-2">
+                  <div className="size-full bg-navy rounded-[1.25rem] flex items-center justify-center overflow-hidden">
+                    <img src="/android-chrome-192x192.png" alt="Incenta" className="size-10 md:size-14" />
                   </div>
                 </div>
+
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="molecule-node top-40 right-20"
+                  initial={false}
+                  animate={isMobile ? {} : { scale: [1, 1.1, 1] }}
+                  transition={isMobile ? {} : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  id="node-3"
+                  className="molecule-node top-32 md:top-40 right-10 md:right-20 scale-75 md:scale-100"
                 >
-                  <span className="material-symbols-outlined text-amber-500 text-2xl">bolt</span>
+                  <span className="material-symbols-outlined text-amber-500 text-xl md:text-2xl">bolt</span>
                 </motion.div>
-                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
-                  <line stroke="currentColor" strokeWidth="2" x1="25%" x2="50%" y1="15%" y2="50%"></line>
-                  <line stroke="currentColor" strokeWidth="2" x1="85%" x2="50%" y1="75%" y2="50%"></line>
-                  <line stroke="currentColor" strokeWidth="2" x1="75%" x2="50%" y1="35%" y2="50%"></line>
-                </svg>
               </div>
             </div>
           </div>
@@ -113,17 +171,17 @@ export default function Home() {
         {/* Features Grid */}
         <section className="py-[120px] bg-slate-50/50" id="features">
           <div className="max-w-[1400px] mx-auto px-8">
-            <header className="mb-20 space-y-4">
-              <h2 className="text-6xl font-extrabold tracking-tight">Engineered for Scale.</h2>
-              <p className="text-xl text-slate-500 max-w-xl">Deep attribution meets seamless rewards. A multi-layered approach to referral management.</p>
+            <header className="mb-12 md:mb-20 space-y-4">
+              <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">Engineered for Scale.</h2>
+              <p className="text-lg md:text-xl text-slate-500 max-w-xl">Deep attribution meets seamless rewards. A multi-layered approach to referral management.</p>
             </header>
             <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-6 h-auto md:min-h-[800px]">
-              <div className="md:col-span-3 bento-card rounded-bento p-12 bg-navy text-white overflow-hidden group">
+              <div className="md:col-span-3 bento-card rounded-bento p-8 md:p-12 bg-navy text-white overflow-hidden group">
                 <div className="gradient-glow size-96 bg-primary/20 -top-20 -right-20"></div>
                 <div className="relative z-10 max-w-sm">
                   <span className="inline-block px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6">Real-time Attribution</span>
-                  <h3 className="text-4xl font-bold mb-4">Live Performance Tracking</h3>
-                  <p className="text-slate-400 text-lg leading-relaxed">Watch your viral coefficient evolve in real-time with pixel-perfect accuracy across all touchpoints.</p>
+                  <h3 className="text-3xl md:text-4xl font-bold mb-4">Live Performance Tracking</h3>
+                  <p className="text-slate-400 text-base md:text-lg leading-relaxed">Watch your viral coefficient evolve in real-time with pixel-perfect accuracy across all touchpoints.</p>
                 </div>
                 <div className="absolute bottom-0 right-0 w-3/4 h-1/2 translate-y-10 group-hover:translate-y-5 transition-transform">
                   <div className="flex items-end gap-2 h-full px-12">
@@ -137,53 +195,44 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="md:col-span-1 bento-card rounded-bento p-10 flex flex-col justify-between">
-                <div className="size-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 shadow-sm mb-6">
-                  <span className="material-symbols-outlined text-3xl">verified_user</span>
+              <div className="md:col-span-1 bento-card rounded-bento p-10 flex flex-col justify-between group">
+                <div className="size-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 shadow-sm mb-6 group-hover:bg-red-500 group-hover:text-white transition-all">
+                  <span className="material-symbols-outlined text-3xl">fingerprint</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-extrabold mb-2">Anti-Fraud</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">AI-driven patterns to block duplicate identities and bot referrals.</p>
+                  <h3 className="text-xl font-extrabold mb-2">Advanced Security</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">Device fingerprinting, bot detection, and automated fraud prevention.</p>
                 </div>
               </div>
-              <div className="md:col-span-1 bento-card rounded-bento p-10 flex flex-col justify-between">
-                <div className="size-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 shadow-sm mb-6">
-                  <span className="material-symbols-outlined text-3xl">currency_exchange</span>
+              <div className="md:col-span-1 bento-card rounded-bento p-10 flex flex-col justify-between group">
+                <div className="size-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 shadow-sm mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                  <span className="material-symbols-outlined text-3xl">layers</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-extrabold mb-2">Global Payouts</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">Automated rewards in 135+ currencies via Stripe and PayPal.</p>
+                  <h3 className="text-xl font-extrabold mb-2">Multi-App Isolation</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">Independent API keys and analytics for multiple products or staging environments.</p>
                 </div>
               </div>
-              <div className="md:col-span-2 bento-card rounded-bento p-12 flex flex-col justify-between group overflow-hidden">
-                <div className="gradient-glow size-96 bg-indigo-500/10 -bottom-20 -left-20"></div>
+              <div className="md:col-span-2 bento-card rounded-bento p-8 md:p-12 flex flex-col justify-between group overflow-hidden bg-slate-50">
+                <div className="gradient-glow size-96 bg-primary/5 -bottom-20 -left-20"></div>
                 <div className="relative z-10">
-                  <h3 className="text-3xl font-extrabold mb-4">Branded Link Studio</h3>
-                  <p className="text-slate-500 text-lg">Generate clean, custom vanity URLs that match your domain perfectly.</p>
+                  <h3 className="text-2xl md:text-3xl font-extrabold mb-4">Two-Sided Rewards</h3>
+                  <p className="text-slate-500 text-base md:text-lg">Incentivize both the advocate and the referred friend with custom logic for any event.</p>
                 </div>
-                <div className="mt-12 bg-slate-50 p-6 rounded-2xl border border-slate-200/60 shadow-inner translate-y-4 group-hover:translate-y-0 transition-transform">
-                  <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm mb-4">
-                    <span className="text-slate-400 text-sm">refer.yourbrand.com/</span>
-                    <span className="text-primary font-bold text-sm">summer-sale-2024</span>
-                    <button
-                      onClick={() => {
-                        setCopied(true);
-                        navigator.clipboard.writeText('refer.yourbrand.com/summer-sale-2024');
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className="ml-auto text-slate-300 hover:text-primary transition-colors"
-                    >
-                      <span className="material-symbols-outlined">{copied ? 'check' : 'content_copy'}</span>
-                    </button>
+                <div className="mt-8 flex gap-4">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-[10px] font-bold text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    Advocate Reward
                   </div>
-                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full w-[65%] bg-primary"></div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-[10px] font-bold text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Friend Reward
                   </div>
                 </div>
               </div>
               <div className="md:col-span-1 bento-card rounded-bento bg-primary text-white p-10 flex flex-col justify-center text-center">
-                <span className="text-4xl font-extrabold mb-2">99.9%</span>
-                <p className="text-xs uppercase tracking-widest font-bold opacity-70">Uptime Reliability</p>
+                <span className="text-4xl font-extrabold mb-2">Scale</span>
+                <p className="text-xs uppercase tracking-widest font-bold opacity-70">Infrastructure First</p>
               </div>
             </div>
           </div>
@@ -207,9 +256,9 @@ export default function Home() {
         </section>
 
         {/* Developer Section */}
-        <section className="py-32" id="developer">
-          <div className="max-w-[1400px] mx-auto px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <section className="py-20 md:py-32" id="developer">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
               <div className="lg:col-span-7 bg-code-bg rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden group">
                 <div className="flex items-center gap-2 mb-8">
                   <div className="flex gap-1.5">
@@ -253,10 +302,10 @@ console.log("Infrastructure active.");`;
                   </button>
                 </div>
               </div>
-              <div className="lg:col-span-5 flex flex-col justify-center p-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
+              <div className="lg:col-span-5 flex flex-col justify-center p-8 md:p-12 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
                 <span className="text-primary font-bold text-xs uppercase tracking-widest mb-6">Developer First</span>
-                <h2 className="text-5xl font-extrabold mb-8 tracking-tight">API-Driven Architecture.</h2>
-                <p className="text-slate-500 text-lg leading-relaxed mb-10">
+                <h2 className="text-4xl md:text-5xl font-extrabold mb-6 md:mb-8 tracking-tight leading-tight">API-Driven Architecture.</h2>
+                <p className="text-slate-500 text-base md:text-lg leading-relaxed mb-8 md:mb-10">
                   Build custom referral experiences with our robust <span className="text-navy font-bold">REST APIs</span> and real-time <span className="text-navy font-bold">Webhooks</span>. We don&apos;t just provide a dashboard; we provide a platform.
                 </p>
                 <div className="space-y-4">
@@ -274,26 +323,60 @@ console.log("Infrastructure active.");`;
         </section>
 
         {/* Premium Service */}
-        <section className="pb-32">
+        <section className="pb-32 overflow-hidden">
           <div className="max-w-[1400px] mx-auto px-8">
-            <div className="bento-card rounded-bento bg-navy p-12 flex flex-col md:flex-row items-center justify-between gap-12 group">
-              <div className="relative z-10 max-w-xl">
-                <span className="text-primary font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Premium Service</span>
-                <h2 className="text-4xl md:text-5xl text-white font-extrabold mb-6 tracking-tight">Need a custom hand-off?</h2>
-                <p className="text-slate-400 text-xl leading-relaxed">Our <span className="text-white font-bold">Dedicated Account Managers</span> act as an extension of your engineering team, handling custom reward logic and API orchestrations.</p>
-              </div>
-              <div className="relative">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.3, 0.2] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="size-48 bg-primary rounded-full blur-[80px] opacity-20 absolute -z-10"
-                ></motion.div>
-                <div className="flex -space-x-4">
-                  <div className="size-20 rounded-3xl border-4 border-navy bg-slate-200 overflow-hidden shadow-2xl relative z-10">
-                    <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-400"></div>
+            <div className="bento-card rounded-bento bg-navy p-8 md:p-16 flex flex-col lg:flex-row items-center justify-between gap-16 group relative">
+              <div className="absolute inset-0 bg-grid-white opacity-10"></div>
+              <div className="relative z-10 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-widest mb-8">
+                  White-Glove Support
+                </div>
+                <h2 className="text-4xl md:text-6xl text-white font-extrabold mb-8 tracking-tight leading-tight">
+                  Your growth, <br />
+                  <span className="text-primary italic font-light">fully managed.</span>
+                </h2>
+                <p className="text-slate-400 text-lg md:text-xl leading-relaxed mb-12">
+                  Our <span className="text-white font-bold">Dedicated Account Managers</span> act as an extension of your engineering team, handling custom reward logic, API orchestrations, and strategy.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex items-center gap-4 text-white/80">
+                    <div className="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-xl">psychology</span>
+                    </div>
+                    <span className="font-bold text-sm">Strategic Mapping</span>
                   </div>
-                  <div className="size-20 rounded-3xl border-4 border-navy bg-primary flex items-center justify-center text-white relative z-20">
-                    <span className="material-symbols-outlined text-4xl">verified</span>
+                  <div className="flex items-center gap-4 text-white/80">
+                    <div className="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-xl">terminal</span>
+                    </div>
+                    <span className="font-bold text-sm">Custom API Logic</span>
+                  </div>
+                </div>
+              </div>
+              <div className="relative shrink-0">
+                <div className="size-[300px] md:size-[450px] relative flex items-center justify-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.4, 0.3] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    className="absolute inset-0 bg-primary rounded-full blur-[100px]"
+                  ></motion.div>
+                  <div className="relative z-10 bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-[3rem] shadow-2xl">
+                    <div className="flex -space-x-4 mb-8">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="size-16 rounded-2xl border-4 border-navy bg-slate-700 shadow-2xl overflow-hidden">
+                          <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800"></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-primary/20 border border-primary/30 rounded-2xl p-4 flex items-center gap-4">
+                      <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white">
+                        <span className="material-symbols-outlined">headset_mic</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-sm">Priority Support</p>
+                        <p className="text-primary text-[10px] font-bold uppercase tracking-widest">Active 24/7</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -304,12 +387,12 @@ console.log("Infrastructure active.");`;
         {/* Pricing */}
         <section className="py-32 bg-eggshell/50" id="pricing">
           <div className="max-w-[1400px] mx-auto px-8">
-            <header className="text-center mb-20">
-              <h2 className="text-6xl font-extrabold mb-6">Simple, Scaling Plans.</h2>
-              <p className="text-xl text-slate-500">No hidden fees. Choose the tier that matches your growth velocity.</p>
+            <header className="text-center mb-16 md:mb-20">
+              <h2 className="text-4xl md:text-6xl font-extrabold mb-6">Simple, Scaling Plans.</h2>
+              <p className="text-lg md:text-xl text-slate-500">No hidden fees. Choose the tier that matches your growth velocity.</p>
             </header>
-            <div className="flex gap-8 overflow-x-auto pb-12 hide-scrollbar px-4">
-              <div className="min-w-[400px] bg-white p-12 rounded-[2.5rem] border border-slate-200/50 flex flex-col">
+            <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-stretch lg:justify-center">
+              <div className="w-full max-w-[400px] lg:min-w-[380px] bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-200/50 flex flex-col">
                 <div className="mb-6 flex flex-col gap-1">
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary">For early stage</span>
                   <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Startup</span>
@@ -330,7 +413,7 @@ console.log("Infrastructure active.");`;
                 </ul>
                 <Link href="/signup" className="w-full py-4 border-2 border-slate-200 rounded-2xl font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 transition-colors text-center block">Start Building</Link>
               </div>
-              <div className="min-w-[420px] bg-navy text-white p-12 rounded-[2.5rem] shadow-2xl shadow-primary/20 flex flex-col relative overflow-hidden scale-105">
+              <div className="w-full max-w-[420px] lg:min-w-[400px] bg-navy text-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl shadow-primary/20 flex flex-col relative overflow-hidden lg:scale-105 z-10">
                 <div className="absolute top-0 right-0 bg-primary px-6 py-2 rounded-bl-3xl text-[10px] font-bold uppercase tracking-widest">Most Popular</div>
                 <div className="mb-6 flex flex-col gap-1">
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary">For scaling teams</span>
@@ -356,7 +439,7 @@ console.log("Infrastructure active.");`;
                 </ul>
                 <Link href="/signup" className="w-full py-4 bg-primary text-white rounded-2xl font-extrabold uppercase tracking-widest text-xs hover:shadow-xl transition-all text-center block">Go Premium</Link>
               </div>
-              <div className="min-w-[400px] bg-white p-12 rounded-[2.5rem] border border-slate-200/50 flex flex-col">
+              <div className="w-full max-w-[400px] lg:min-w-[380px] bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-200/50 flex flex-col">
                 <div className="mb-6 flex flex-col gap-1">
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary">For high-volume platforms</span>
                   <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Enterprise</span>
@@ -388,38 +471,41 @@ console.log("Infrastructure active.");`;
         {/* FAQ */}
         <section className="py-32 bg-white">
           <div className="max-w-[800px] mx-auto px-8">
-            <header className="text-center mb-16">
-              <h2 className="text-5xl font-extrabold mb-4">Technical FAQ</h2>
-              <p className="text-slate-500 font-medium">Clear answers for your engineering team.</p>
+            <header className="mb-16">
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Technical FAQ</h2>
+              <p className="text-slate-500 font-medium text-lg">Infrastructure answers for scaling teams.</p>
             </header>
-            <div className="space-y-4">
-              <details className="faq-item group border-b border-slate-100 pb-6">
-                <summary className="flex items-center justify-between cursor-pointer list-none">
-                  <h3 className="text-xl font-bold text-navy group-hover:text-primary transition-colors">How do Webhooks work?</h3>
-                  <span className="faq-icon material-symbols-outlined transition-transform duration-300">expand_more</span>
-                </summary>
-                <p className="mt-4 text-slate-500 leading-relaxed font-medium">
-                  We send POST requests to your registered endpoint whenever a referral event occurs (signup, conversion, payout). You can verify payloads using the secret HMAC-SHA256 signature in the header.
-                </p>
-              </details>
-              <details className="faq-item group border-b border-slate-100 pb-6 pt-6">
-                <summary className="flex items-center justify-between cursor-pointer list-none">
-                  <h3 className="text-xl font-bold text-navy group-hover:text-primary transition-colors">Can I use my own domain?</h3>
-                  <span className="faq-icon material-symbols-outlined transition-transform duration-300">expand_more</span>
-                </summary>
-                <p className="mt-4 text-slate-500 leading-relaxed font-medium">
-                  Yes. You can configure custom CNAME records in your DNS settings. We provide automated SSL certificate provisioning for all custom domains.
-                </p>
-              </details>
-              <details className="faq-item group border-b border-slate-100 pb-6 pt-6">
-                <summary className="flex items-center justify-between cursor-pointer list-none">
-                  <h3 className="text-xl font-bold text-navy group-hover:text-primary transition-colors">Do you support custom rewards via API?</h3>
-                  <span className="faq-icon material-symbols-outlined transition-transform duration-300">expand_more</span>
-                </summary>
-                <p className="mt-4 text-slate-500 leading-relaxed font-medium">
-                  Absolutely. While we automate Stripe and PayPal, you can use our &apos;External Payout&apos; hook to trigger your own internal reward mechanisms, such as account credits or physical gifts.
-                </p>
-              </details>
+            <div className="divide-y divide-slate-100 border-t border-slate-100">
+              {[
+                {
+                  q: "How do Webhooks work?",
+                  a: "We send POST requests to your registered endpoint whenever a referral event occurs. You can verify payloads using the secret HMAC-SHA256 signature provided in your app settings.",
+                },
+                {
+                  q: "Can I use multiple API keys?",
+                  a: "Yes. Our platform allows you to create independent applications with their own unique API keys and webhooks, perfect for managing staging and production environments.",
+                },
+                {
+                  q: "Do you support custom rewards?",
+                  a: "Absolutely. You can use our 'External Payout' hook to trigger internal reward mechanisms like account credits, physical gifts, or NFT-styled badges.",
+                },
+                {
+                  q: "How does device fingerprinting work?",
+                  a: "We analyze multiple browser and hardware data points to create a unique identifier, preventing fraudulent signups even when attackers use VPNs or clear their cookies.",
+                }
+              ].map((item, i) => (
+                <details key={i} className="faq-item group">
+                  <summary className="flex items-center justify-between py-8 cursor-pointer list-none">
+                    <h3 className="text-xl font-bold text-navy group-hover:text-primary transition-colors">{item.q}</h3>
+                    <span className="material-symbols-outlined text-slate-300 group-open:rotate-180 transition-transform">add</span>
+                  </summary>
+                  <div className="pb-8">
+                    <p className="text-slate-500 leading-relaxed font-medium text-base">
+                      {item.a}
+                    </p>
+                  </div>
+                </details>
+              ))}
             </div>
           </div>
         </section>
@@ -427,16 +513,16 @@ console.log("Infrastructure active.");`;
         {/* Final CTA */}
         <section className="py-40 bg-navy relative overflow-hidden">
           <div className="gradient-glow size-[800px] bg-primary/20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="max-w-[1000px] mx-auto px-8 text-center relative z-10">
-            <h2 className="text-white text-7xl md:text-9xl mb-12 italic font-light">
+          <div className="max-w-[1000px] mx-auto px-6 md:px-8 text-center relative z-10">
+            <h2 className="text-white text-5xl md:text-7xl lg:text-9xl mb-12 italic font-light leading-tight">
               Ready to <span className="not-italic font-extrabold">scale?</span>
             </h2>
             <div className="flex justify-center">
-              <Link href="/signup" className="tactile-btn text-2xl !px-16 !py-8">
+              <Link href="/signup" className="tactile-btn text-xl md:text-2xl !px-10 md:!px-16 !py-6 md:!py-8">
                 Launch Your Program
               </Link>
             </div>
-            <p className="mt-12 text-slate-500 font-bold text-sm uppercase tracking-[0.4em]">14-Day Free Trial • No Credit Card</p>
+            <p className="mt-12 text-slate-500 font-bold text-xs md:text-sm uppercase tracking-[0.4em]">14-Day Free Trial • No Credit Card</p>
           </div>
         </section>
       </main>
@@ -452,47 +538,40 @@ console.log("Infrastructure active.");`;
               <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Nepal's next-generation referral architecture built for high-scale SaaS and subscription engines.</p>
             </div>
             <div className="space-y-6">
-              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Security</h4>
+              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Governance</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
-                <li><Link href="/security" className="hover:text-primary transition-colors">Encryption</Link></li>
-                <li><Link href="/security" className="hover:text-primary transition-colors">SOC2 Type II</Link></li>
-                <li><Link href="/security" className="hover:text-primary transition-colors">Data Residency</Link></li>
-                <li><Link href="/security" className="hover:text-primary transition-colors">Bug Bounty</Link></li>
+                <li><Link href="/security" className="hover:text-primary transition-colors">Security Architecture</Link></li>
+                <li><Link href="/compliance" className="hover:text-primary transition-colors">Compliance Hub</Link></li>
               </ul>
             </div>
             <div className="space-y-6">
-              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Compliance</h4>
+              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Engineering</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
-                <li><Link href="/compliance" className="hover:text-primary transition-colors">GDPR</Link></li>
-                <li><Link href="/compliance" className="hover:text-primary transition-colors">CCPA</Link></li>
-                <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link></li>
+                <li><Link href="/status" className="hover:text-primary transition-colors">System Status</Link></li>
               </ul>
             </div>
             <div className="space-y-6">
-              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">System</h4>
-              <ul className="space-y-4 text-sm font-bold text-navy">
-                <li><Link href="/status" className="hover:text-primary transition-colors">Status Page</Link></li>
-                <li><Link href="/status" className="hover:text-primary transition-colors">API Uptime</Link></li>
-                <li><Link href="/docs" className="hover:text-primary transition-colors">Integrations</Link></li>
-                <li><Link href="/contact" className="hover:text-primary transition-colors">Support</Link></li>
-              </ul>
-            </div>
-            <div className="space-y-6">
-              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Product</h4>
+              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Growth</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
                 <li><Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
-                <li><Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link></li>
-                <li><Link href="/docs" className="hover:text-primary transition-colors">Change Log</Link></li>
+                <li><Link href="/contact" className="hover:text-primary transition-colors">Support Protocol</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-6">
+              <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Infrastructure</h4>
+              <ul className="space-y-4 text-sm font-bold text-navy">
+                <li><Link href="/login" className="hover:text-primary transition-colors">System Ingress</Link></li>
+                <li><Link href="/signup" className="hover:text-primary transition-colors">New Deployment</Link></li>
               </ul>
             </div>
           </div>
           <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
-            <p className="text-xs font-bold text-slate-400">© 2024 Incenta. Engineered for Nepal's viral velocity.</p>
+            <p className="text-xs font-bold text-slate-400">© 2024 Incenta. Engineered for technical excellence.</p>
             <div className="flex gap-8">
-              <Link href="/privacy" className="text-xs font-bold text-slate-400 hover:text-navy">Privacy</Link>
-              <Link href="/terms" className="text-xs font-bold text-slate-400 hover:text-navy">Terms</Link>
-              <Link href="/cookie-policy" className="text-xs font-bold text-slate-400 hover:text-navy">Cookie Policy</Link>
+              <Link href="/terms" className="text-xs font-bold text-slate-400 hover:text-navy transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="text-xs font-bold text-slate-400 hover:text-navy transition-colors">Privacy Policy</Link>
+              <Link href="/cookie-policy" className="text-xs font-bold text-slate-400 hover:text-navy transition-colors">Cookies</Link>
             </div>
           </div>
         </div>

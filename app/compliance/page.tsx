@@ -2,77 +2,76 @@ import Link from 'next/link';
 
 export default function CompliancePage() {
     return (
-        <div className="min-h-screen bg-white">
-            {/* Header */}
-            <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <Link href="/" className="flex items-center space-x-3">
-                        <img src="/logos/logo.png" alt="Incenta Logo" className="h-12 w-auto" />
+        <div className="min-h-screen bg-white font-sans selection:bg-primary/10">
+            {/* Navigation */}
+            <nav className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100 h-20 flex items-center">
+                <div className="max-w-[1400px] mx-auto px-6 md:px-8 w-full flex items-center justify-between">
+                    <Link href="/">
+                        <img src="/logos/logo.png" alt="Incenta" className="h-10 md:h-12" />
                     </Link>
+                    <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-navy hover:text-primary transition-colors">
+                        Back to Home
+                    </Link>
+                </div>
+            </nav>
+
+            <header className="pt-40 pb-20 bg-slate-50/50 border-b border-slate-100 font-sans">
+                <div className="max-w-[800px] mx-auto px-6">
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.4em] text-primary mb-4 block">Regulatory Framework</span>
+                    <h1 className="text-4xl md:text-6xl font-extrabold text-navy tracking-tight mb-6">Compliance & Protection</h1>
+                    <p className="text-slate-500 font-medium tracking-tight">Our commitment to global and regional data standards.</p>
                 </div>
             </header>
 
-            {/* Content */}
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="prose prose-lg max-w-none">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Compliance & Data Protection</h1>
-                    <p className="text-gray-600 mb-8">Incenta is committed to global data privacy standards. We provide the tools you need to stay compliant with regional and international regulations.</p>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. GDPR Compliance</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            We are fully committed to GDPR compliance. For our customers in the EEA and UK, we provide:
-                        </p>
-                        <ul className="list-disc pl-6 text-gray-700 space-y-2 mb-4">
-                            <li>Data Processing Agreements (DPA)</li>
-                            <li>Right to be forgotten tools</li>
-                            <li>Data portability features</li>
-                            <li>Strict data sub-processor management</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">2. CCPA / CPRA</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            We support our customers in meeting their obligations under the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA).
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">3. Data Privacy in Nepal</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            As a leader in Nepal's SaaS ecosystem, we stay ahead of local data protection guidelines to ensure that our platform remains the most trusted for regional enterprises.
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">Contact Compliance</h2>
-                        <p className="text-gray-700 leading-relaxed mb-4">
-                            For compliance-related inquiries, please contact our legal team:
-                        </p>
-                        <div className="bg-gray-50 rounded-lg p-6 mt-4">
-                            <p className="text-gray-700 mb-2"><strong>Email:</strong> legal@incenta.com</p>
+            <main className="max-w-[800px] mx-auto px-6 py-20 font-sans">
+                <div className="space-y-16">
+                    <section>
+                        <h2 className="text-2xl font-bold text-navy mb-6 flex items-center gap-3">
+                            <span className="text-xs font-mono text-slate-300">01</span>
+                            GDPR & Privacy Framework
+                        </h2>
+                        <div className="text-slate-600 leading-relaxed font-medium">
+                            <p className="mb-6 mb-6">Incenta is engineered for GDPR readiness. We provide the requisite tools for:</p>
+                            <ul className="space-y-4 border-l-2 border-slate-100 pl-8">
+                                <li>Right to Erasure (RTBF) protocol implementation.</li>
+                                <li>Standard Data Processing Agreements (DPA).</li>
+                                <li>Granular sub-processor transparency.</li>
+                            </ul>
                         </div>
                     </section>
-                </div>
 
-                {/* Footer */}
-                <div className="mt-12 pt-8 border-t border-gray-200">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-gray-600">
-                            © {new Date().getFullYear()} Incenta. All rights reserved.
-                        </p>
-                        <div className="flex space-x-6">
-                            <Link href="/privacy" className="text-sm text-blue-600 hover:text-blue-700">
-                                Privacy Policy
-                            </Link>
-                            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700">
-                                Home
-                            </Link>
+                    <section>
+                        <h2 className="text-2xl font-bold text-navy mb-6 flex items-center gap-3">
+                            <span className="text-xs font-mono text-slate-300">02</span>
+                            Regional Excellence: Nepal
+                        </h2>
+                        <div className="text-slate-600 leading-relaxed font-medium">
+                            <p>
+                                As a leader in Nepal's tech ecosystem, we maintain strict adherence to local data protection guidelines, ensuring that our platform remains the most trusted for regional enterprise growth.
+                            </p>
                         </div>
-                    </div>
+                    </section>
+
+                    <section className="pt-10 border-t border-slate-100">
+                        <h2 className="text-2xl font-bold text-navy mb-6">Compliance Desk</h2>
+                        <p className="text-slate-500 font-medium mb-8">Direct your regulatory inquiries to our legal compliance officer.</p>
+                        <div className="space-y-2">
+                            <p className="text-navy font-bold">compliance@incenta.io</p>
+                            <p className="text-slate-400 text-sm">Response Target: 72 Business Hours</p>
+                        </div>
+                    </section>
                 </div>
             </main>
+
+            <footer className="border-t border-slate-100 py-20">
+                <div className="max-w-[800px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 font-sans">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">© 2024 Incenta. Compliance by design.</p>
+                    <div className="flex gap-8">
+                        <Link href="/terms" className="text-[10px] font-bold text-slate-400 hover:text-navy uppercase tracking-widest">Terms</Link>
+                        <Link href="/privacy" className="text-[10px] font-bold text-slate-400 hover:text-navy uppercase tracking-widest">Privacy</Link>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }

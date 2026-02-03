@@ -1,15 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 }
-};
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -22,218 +15,157 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
   };
 
-  const contactInfo = [
-    {
-      icon: Mail,
-      title: 'Email',
-      content: 'support@incenta.com',
-      link: 'mailto:support@incenta.com'
-    },
-    {
-      icon: Phone,
-      title: 'Phone',
-      content: '+1 (555) 123-4567',
-      link: 'tel:+15551234567'
-    },
-    {
-      icon: MapPin,
-      title: 'Office',
-      content: 'San Francisco, CA',
-      link: '#'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-white font-sans selection:bg-primary/10">
       {/* Navigation */}
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link href="/" className="flex items-center space-x-2">
-              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
-                Back to Home
-              </Link>
+      <nav className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-8 h-20 flex items-center justify-between">
+          <Link href="/" className="shrink-0">
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 md:h-12 w-auto" />
+          </Link>
+          <Link href="/" className="text-xs font-bold uppercase tracking-widest text-navy hover:text-primary transition-colors">
+            Back to Home
+          </Link>
+        </div>
+      </nav>
+
+      <main className="pt-40 pb-20">
+        <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20">
+
+          {/* Left Column: Context */}
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.4em] text-primary block">Support Ingress</span>
+              <h1 className="text-5xl md:text-7xl font-extrabold text-navy tracking-tight leading-[0.9]">
+                Let's discuss <br />
+                <span className="text-primary italic font-light">your scale.</span>
+              </h1>
+              <p className="text-slate-500 text-lg md:text-xl font-medium max-w-md leading-relaxed">
+                Whether you're mapping custom reward logic or need high-volume API support, our engineering team is ready to assist.
+              </p>
+            </div>
+
+            <div className="space-y-8 pt-10 border-t border-slate-100">
+              <div className="space-y-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Direct Protocol</p>
+                <p className="text-xl font-bold text-navy hover:text-primary transition-colors cursor-pointer underline decoration-slate-200 underline-offset-8">hello@incenta.com</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Technical Briefings</p>
+                <p className="text-sm font-bold text-navy">Kathmandu, Nepal • Remote First</p>
+              </div>
+
+              <div className="flex items-center gap-4 pt-4">
+                <div className="size-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest">Support Core: Operational</span>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
-            Get in Touch
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Contact Info */}
-          <motion.div
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            className="space-y-6"
-          >
-            {contactInfo.map((info, index) => {
-              const Icon = info.icon;
-              return (
-                <motion.a
-                  key={info.title}
-                  href={info.link}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
-                  whileHover={{ x: 5 }}
-                  className="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">{info.title}</h3>
-                    <p className="text-gray-600">{info.content}</p>
-                  </div>
-                </motion.a>
-              );
-            })}
-          </motion.div>
-
-          {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="lg:col-span-2"
-          >
-            <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+          {/* Right Column: Clean Form */}
+          <div className="relative">
+            <AnimatePresence mode="wait">
               {submitted ? (
                 <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-center py-12"
+                  key="success"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="h-full flex flex-col justify-center items-center text-center space-y-6 py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200"
                 >
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
+                  <div className="size-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-4xl font-bold">check</span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Message Sent!</h3>
-                  <p className="text-gray-600">We'll get back to you soon.</p>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-navy">Signal Received</h3>
+                    <p className="text-slate-500 font-medium">Our team will initialize contact within 24 hours.</p>
+                  </div>
                 </motion.div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Name *
-                      </label>
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-8"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Identity</label>
                       <input
                         type="text"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                        placeholder="Your name"
+                        className="w-full px-0 py-4 bg-transparent border-b-2 border-slate-100 focus:border-primary transition-all outline-none font-bold text-navy placeholder:text-slate-200 placeholder:font-medium text-lg"
+                        placeholder="Your Name"
                       />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email *
-                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Endpoint</label>
                       <input
                         type="email"
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                        placeholder="your@email.com"
+                        className="w-full px-0 py-4 bg-transparent border-b-2 border-slate-100 focus:border-primary transition-all outline-none font-bold text-navy placeholder:text-slate-200 placeholder:font-medium text-lg"
+                        placeholder="email@protocol.io"
                       />
-                    </motion.div>
+                    </div>
                   </div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company
-                    </label>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Environment / Company</label>
                     <input
                       type="text"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                      placeholder="Your company"
+                      className="w-full px-0 py-4 bg-transparent border-b-2 border-slate-100 focus:border-primary transition-all outline-none font-bold text-navy placeholder:text-slate-200 placeholder:font-medium text-lg"
+                      placeholder="SaaS Platform"
                     />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Message *
-                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Message Payload</label>
                     <textarea
                       required
+                      rows={4}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      rows={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all resize-none"
-                      placeholder="Tell us about your project..."
+                      className="w-full px-0 py-4 bg-transparent border-b-2 border-slate-100 focus:border-primary transition-all outline-none font-bold text-navy placeholder:text-slate-200 placeholder:font-medium text-lg resize-none"
+                      placeholder="Tell us about your referral requirements..."
                     />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="tactile-btn w-full !py-6 !rounded-2xl flex items-center justify-center gap-3 group"
                   >
-                    <motion.button
-                      type="submit"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2"
-                    >
-                      <Send className="w-5 h-5" />
-                      <span>Send Message</span>
-                    </motion.button>
-                  </motion.div>
-                </form>
+                    Dispatch Message
+                    <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">send</span>
+                  </button>
+                </motion.form>
               )}
-            </div>
-          </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-100 py-20">
+        <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+          <p className="text-xs font-bold text-slate-400">© 2024 Incenta. Technical support for technical teams.</p>
+          <div className="flex gap-8">
+            <Link href="/terms" className="text-xs font-bold text-slate-400 hover:text-navy transition-colors">Terms</Link>
+            <Link href="/privacy" className="text-xs font-bold text-slate-400 hover:text-navy transition-colors">Privacy</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
-
-
-
-

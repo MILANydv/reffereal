@@ -6,14 +6,14 @@
   --color-eggshell: #FDFCF8;
   --color-background-light: #F8FAFC;
   --color-code-bg: #0B1120;
-  
+
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
   --font-display: var(--font-display);
   --font-mono: "Menlo", "Monaco", "Courier New", monospace;
-  
+
   --radius-bento: 2rem;
-  
+
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
@@ -21,20 +21,20 @@
   --color-slate-400: #94a3b8;
   --color-slate-500: #64748b;
   --color-slate-600: #475569;
-  
+
   --color-red-50: #fef2f2;
   --color-red-500: #ef4444;
-  
+
   --color-emerald-50: #ecfdf5;
   --color-emerald-400: #34d399;
   --color-emerald-500: #10b981;
-  
+
   --color-amber-500: #f59e0b;
-  
+
   --color-indigo-500: #6366f1;
-  
+
   --color-pink-400: #f472b6;
-  
+
   --color-blue-400: #60a5fa;
 }
 
@@ -42,57 +42,85 @@
   body {
     @apply bg-background-light text-navy antialiased;
   }
-  h1, h2 {
+
+  h1,
+  h2 {
     @apply font-serif leading-[0.9];
   }
 }
 
 @layer components {
   .bento-card {
-    @apply relative overflow-hidden bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500;
+    @apply relative overflow-hidden bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)] transition-all duration-500;
   }
+
   .bento-card:hover {
-    @apply shadow-[0_20px_50px_rgba(37,99,235,0.1)] -translate-y-1;
+    @apply shadow-[0_20px_50px_rgba(37, 99, 235, 0.1)] -translate-y-1;
   }
+
   .rounded-bento {
     border-radius: 2rem;
   }
+
   .gradient-glow {
     @apply absolute -z-10 blur-[100px] opacity-30 rounded-full;
   }
+
   .glass-panel {
     @apply bg-white/40 backdrop-blur-xl border border-white/20 shadow-xl;
   }
+
   .molecule-node {
     @apply absolute size-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/40 flex items-center justify-center shadow-2xl;
   }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .tactile-btn {
-    @apply bg-primary text-white font-extrabold px-12 py-6 rounded-2xl shadow-[0_20px_40px_rgba(37,99,235,0.3)] hover:shadow-[0_10px_20px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200;
+    @apply bg-primary text-white font-extrabold px-8 md:px-12 py-4 md:py-6 rounded-xl md:rounded-2xl shadow-[0_10px_30px_rgba(37, 99, 235, 0.25)] md:shadow-[0_20px_40px_rgba(37, 99, 235, 0.3)] hover:shadow-[0_10px_20px_rgba(37, 99, 235, 0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300;
   }
+
+  .bg-dot-pattern {
+    background-image: radial-gradient(#2563EB 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
+    opacity: 0.1;
+  }
+
+  .bg-grid-white {
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
   .faq-item[open] .faq-icon {
     @apply rotate-180;
   }
+
   .code-syntax-keyword {
     @apply text-pink-400;
   }
+
   .code-syntax-string {
     @apply text-emerald-400;
   }
+
   .code-syntax-function {
     @apply text-blue-400;
   }
+
   .code-syntax-comment {
     @apply text-slate-500;
   }
+
   .bg-grid-pattern {
-    background-image: 
+    background-image:
       linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
@@ -103,12 +131,15 @@
   0% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(30px, -50px) scale(1.1);
   }
+
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
+
   100% {
     transform: translate(0px, 0px) scale(1);
   }
@@ -126,6 +157,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -135,6 +167,7 @@
   from {
     transform: translateY(-8px);
   }
+
   to {
     transform: translateY(0);
   }
