@@ -16,14 +16,19 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
+      let isStreamOpen = true;
 
       // Send event helper
       const sendEvent = (data: any) => {
+        if (!isStreamOpen) return;
+
         try {
           const message = `data: ${JSON.stringify(data)}\n\n`;
           controller.enqueue(encoder.encode(message));
         } catch (error) {
           console.error('[SSE] Error sending event:', error);
+          // If we fail to send, the stream is likely closed
+          isStreamOpen = false;
         }
       };
 
@@ -37,26 +42,36 @@ export async function GET(request: NextRequest) {
 
       // Listen for notification events
       const handleNotificationCreated = async (data: { userId: string; notificationId: string }) => {
+        if (!isStreamOpen) return;
         if (data.userId === userId) {
           // Fetch updated unread count
-          const unreadCount = await getUnreadCount(userId);
-          sendEvent({ type: 'unread_count', count: unreadCount });
-          
-          // Optionally send the new notification
-          const { notifications } = await getNotifications(userId, { limit: 1, status: 'UNREAD' });
-          if (notifications.length > 0 && notifications[0].id === data.notificationId) {
-            sendEvent({ 
-              type: 'new_notification', 
-              notification: notifications[0] 
-            });
+          try {
+            const unreadCount = await getUnreadCount(userId);
+            sendEvent({ type: 'unread_count', count: unreadCount });
+
+            // Optionally send the new notification
+            const { notifications } = await getNotifications(userId, { limit: 1, status: 'UNREAD' });
+            if (notifications.length > 0 && notifications[0].id === data.notificationId) {
+              sendEvent({
+                type: 'new_notification',
+                notification: notifications[0]
+              });
+            }
+          } catch (error) {
+            console.error('Error in handleNotificationCreated:', error);
           }
         }
       };
 
       const handleNotificationRead = async (data: { userId: string; notificationId: string }) => {
+        if (!isStreamOpen) return;
         if (data.userId === userId) {
-          const unreadCount = await getUnreadCount(userId);
-          sendEvent({ type: 'unread_count', count: unreadCount });
+          try {
+            const unreadCount = await getUnreadCount(userId);
+            sendEvent({ type: 'unread_count', count: unreadCount });
+          } catch (error) {
+            console.error('Error in handleNotificationRead:', error);
+          }
         }
       };
 
@@ -66,18 +81,22 @@ export async function GET(request: NextRequest) {
 
       // Keep connection alive with heartbeat
       const heartbeatInterval = setInterval(() => {
-        try {
-          sendEvent({ type: 'heartbeat', timestamp: Date.now() });
-        } catch (error) {
+        if (!isStreamOpen) {
           clearInterval(heartbeatInterval);
+          return;
         }
+        sendEvent({ type: 'heartbeat', timestamp: Date.now() });
       }, 30000); // Every 30 seconds
 
       // Cleanup on close
       const cleanup = () => {
+        if (!isStreamOpen) return;
+        isStreamOpen = false;
+
         notificationEvents.removeListener(NOTIFICATION_CREATED, handleNotificationCreated);
         notificationEvents.removeListener(NOTIFICATION_READ, handleNotificationRead);
         clearInterval(heartbeatInterval);
+
         try {
           controller.close();
         } catch (error) {
