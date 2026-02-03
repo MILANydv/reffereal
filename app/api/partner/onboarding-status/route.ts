@@ -16,6 +16,7 @@ export async function GET() {
             return NextResponse.json({
                 onboardingCompleted: true,
                 step: 4,
+                role: 'SUPER_ADMIN',
                 data: {}
             });
         }
@@ -52,6 +53,7 @@ export async function GET() {
         return NextResponse.json({
             onboardingCompleted: partner.onboardingCompleted,
             step: partner.onboardingStep,
+            role: 'PARTNER',
             data: {
                 userType: partner.userType,
                 companyName: partner.companyName || '',

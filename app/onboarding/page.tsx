@@ -82,7 +82,7 @@ export default function OnboardingPage() {
     }
 
     if (session?.user?.role === 'SUPER_ADMIN') {
-      router.push('/dashboard/v2');
+      router.push('/admin/v2');
       return;
     }
 

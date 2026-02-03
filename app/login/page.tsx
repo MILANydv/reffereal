@@ -21,11 +21,11 @@ function LoginForm() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 5000);
     }
-    
+
     // Handle email verification results
     const verified = searchParams?.get('verified');
     const error = searchParams?.get('error');
-    
+
     if (verified === 'success') {
       setShowSuccess(true);
       setError('Email verified successfully! You can now log in.');
@@ -71,7 +71,7 @@ function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      
+
       if (checkResponse.ok) {
         const checkData = await checkResponse.json();
         if (checkData.emailNotVerified) {
@@ -92,11 +92,19 @@ function LoginForm() {
         setError('Invalid email or password');
         setEmailNotVerified(false);
       } else {
-        // Check if user needs to complete onboarding
+        // Check if user needs to complete onboarding and handle role-based redirection
         try {
           const response = await fetch('/api/partner/onboarding-status');
           if (response.ok) {
             const data = await response.json();
+
+            // Handle role-based redirection
+            if (data.role === 'SUPER_ADMIN') {
+              router.push('/admin/v2');
+              router.refresh();
+              return;
+            }
+
             if (!data.onboardingCompleted) {
               router.push('/onboarding');
               return;
@@ -105,7 +113,7 @@ function LoginForm() {
         } catch (error) {
           console.error('Error checking onboarding status:', error);
         }
-        
+
         router.push('/dashboard/v2');
         router.refresh();
       }
