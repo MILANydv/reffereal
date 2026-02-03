@@ -7,10 +7,7 @@ export default function PrivacyPage() {
       <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">R</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-gray-900">ReferralSystem</span>
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
           </Link>
         </div>
       </header>
@@ -24,7 +21,7 @@ export default function PrivacyPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Introduction</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Welcome to ReferralSystem ("we," "our," or "us"). We are committed to protecting your privacy and ensuring you have a positive experience on our website and in using our products and services. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our referral management platform.
+              Welcome to Incenta ("we," "our," or "us"). We are committed to protecting your privacy and ensuring you have a positive experience on our website and in using our products and services. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our referral management platform.
             </p>
           </section>
 
@@ -103,7 +100,7 @@ export default function PrivacyPage() {
               <li>Withdrawal of consent</li>
             </ul>
             <p className="text-gray-700 leading-relaxed mb-4">
-              To exercise these rights, please contact us at privacy@referralsystem.com.
+              To exercise these rights, please contact us at privacy@incenta.com.
             </p>
           </section>
 
@@ -148,7 +145,7 @@ export default function PrivacyPage() {
               If you have any questions about this Privacy Policy, please contact us:
             </p>
             <div className="bg-gray-50 rounded-lg p-6 mt-4">
-              <p className="text-gray-700 mb-2"><strong>Email:</strong> privacy@referralsystem.com</p>
+              <p className="text-gray-700 mb-2"><strong>Email:</strong> privacy@incenta.com</p>
               <p className="text-gray-700 mb-2"><strong>Address:</strong> [Your Company Address]</p>
             </div>
           </section>
@@ -158,7 +155,7 @@ export default function PrivacyPage() {
         <div className="mt-12 pt-8 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-600">
-              © {new Date().getFullYear()} ReferralSystem. All rights reserved.
+              © {new Date().getFullYear()} Incenta. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link href="/terms" className="text-sm text-blue-600 hover:text-blue-700">

@@ -7,10 +7,7 @@ export default function TermsPage() {
       <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">R</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-gray-900">ReferralSystem</span>
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
           </Link>
         </div>
       </header>
@@ -24,14 +21,14 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Agreement to Terms</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              By accessing or using ReferralSystem ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, you may not access the Service. These Terms apply to all visitors, users, and others who access or use the Service.
+              By accessing or using Incenta ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, you may not access the Service. These Terms apply to all visitors, users, and others who access or use the Service.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">2. Description of Service</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              ReferralSystem provides a referral management platform that enables businesses to create, manage, and track referral programs. Our services include API access, campaign management, analytics, fraud detection, and related features as described on our website.
+              Incenta provides a referral management platform that enables businesses to create, manage, and track referral programs. Our services include API access, campaign management, analytics, fraud detection, and related features as described on our website.
             </p>
           </section>
 
@@ -94,7 +91,7 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">6. Intellectual Property</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              The Service and its original content, features, and functionality are owned by ReferralSystem and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of our Service without our express written permission.
+              The Service and its original content, features, and functionality are owned by Incenta and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of our Service without our express written permission.
             </p>
           </section>
 
@@ -132,14 +129,14 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">11. Limitation of Liability</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW, REFERRALSYSTEM SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES RESULTING FROM YOUR USE OF THE SERVICE.
+              TO THE MAXIMUM EXTENT PERMITTED BY LAW, INCENTA SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES RESULTING FROM YOUR USE OF THE SERVICE.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">12. Indemnification</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              You agree to indemnify, defend, and hold harmless ReferralSystem and its officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from your use of the Service, violation of these Terms, or infringement of any rights of another.
+              You agree to indemnify, defend, and hold harmless Incenta and its officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from your use of the Service, violation of these Terms, or infringement of any rights of another.
             </p>
           </section>
 
@@ -163,7 +160,7 @@ export default function TermsPage() {
               If you have any questions about these Terms, please contact us:
             </p>
             <div className="bg-gray-50 rounded-lg p-6 mt-4">
-              <p className="text-gray-700 mb-2"><strong>Email:</strong> legal@referralsystem.com</p>
+              <p className="text-gray-700 mb-2"><strong>Email:</strong> legal@incenta.com</p>
               <p className="text-gray-700 mb-2"><strong>Address:</strong> [Your Company Address]</p>
             </div>
           </section>
@@ -173,7 +170,7 @@ export default function TermsPage() {
         <div className="mt-12 pt-8 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-600">
-              © {new Date().getFullYear()} ReferralSystem. All rights reserved.
+              © {new Date().getFullYear()} Incenta. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link href="/privacy" className="text-sm text-blue-600 hover:text-blue-700">

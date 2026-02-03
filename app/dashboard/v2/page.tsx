@@ -157,8 +157,8 @@ export default function DashboardV2Page() {
           <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-3xl flex items-center justify-center mb-6">
             <Zap size={40} />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Welcome to Referral Platform</h1>
-          <p className="text-gray-500 max-w-md mb-8">Get started by creating your first application to manage your referral campaigns.</p>
+          <h1 className="text-3xl font-bold mb-2">Welcome to Incenta</h1>
+          <p className="text-gray-500 max-w-md mb-8">Nepal's leading growth engine. Get started by creating your first application.</p>
           <Link
             href="/dashboard/v2/apps/new"
             className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
@@ -238,13 +238,13 @@ export default function DashboardV2Page() {
             <CardBody>
               {(() => {
                 // Handle both new format (with apps) and old format (array)
-                const chartData = stats?.apiUsageChart && 'data' in stats.apiUsageChart 
-                  ? stats.apiUsageChart.data 
-                  : Array.isArray(stats?.apiUsageChart) 
-                    ? stats.apiUsageChart 
+                const chartData = stats?.apiUsageChart && 'data' in stats.apiUsageChart
+                  ? stats.apiUsageChart.data
+                  : Array.isArray(stats?.apiUsageChart)
+                    ? stats.apiUsageChart
                     : [];
-                const chartApps = stats?.apiUsageChart && 'apps' in stats.apiUsageChart 
-                  ? stats.apiUsageChart.apps 
+                const chartApps = stats?.apiUsageChart && 'apps' in stats.apiUsageChart
+                  ? stats.apiUsageChart.apps
                   : [];
 
                 if (chartData.length > 0 && chartApps.length > 0) {
@@ -265,23 +265,23 @@ export default function DashboardV2Page() {
                             })}
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-slate-700" />
-                          <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fontSize: 12, fill: '#9ca3af' }} 
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 12, fill: '#9ca3af' }}
                             className="dark:text-slate-400"
                           />
-                          <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fontSize: 12, fill: '#9ca3af' }} 
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 12, fill: '#9ca3af' }}
                             className="dark:text-slate-400"
                           />
-                          <Tooltip 
-                            contentStyle={{ 
-                              borderRadius: '12px', 
-                              border: 'none', 
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: '12px',
+                              border: 'none',
                               boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                               backgroundColor: 'white',
                             }}
@@ -291,7 +291,7 @@ export default function DashboardV2Page() {
                             }}
                             labelFormatter={(label) => `Date: ${label}`}
                           />
-                          <Legend 
+                          <Legend
                             wrapperStyle={{ paddingTop: '20px' }}
                             iconType="circle"
                             formatter={(value) => value}
@@ -416,21 +416,21 @@ export default function DashboardV2Page() {
                 <>
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     {webhookDeliveries.slice(0, 5).map((delivery: any) => (
-                    <div key={delivery.id} className="px-6 py-4 flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <div className={`w-2 h-2 rounded-full ${delivery.success ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-medium">{delivery.eventType}</p>
-                            {delivery.app && (
-                              <Badge variant="default" size="sm">{delivery.app.name}</Badge>
-                            )}
+                      <div key={delivery.id} className="px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className={`w-2 h-2 rounded-full ${delivery.success ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="text-sm font-medium">{delivery.eventType}</p>
+                              {delivery.app && (
+                                <Badge variant="default" size="sm">{delivery.app.name}</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 truncate max-w-[200px]">{delivery.url}</p>
                           </div>
-                          <p className="text-xs text-gray-500 truncate max-w-[200px]">{delivery.url}</p>
                         </div>
+                        <span className="text-xs font-mono text-gray-400">{delivery.statusCode}</span>
                       </div>
-                      <span className="text-xs font-mono text-gray-400">{delivery.statusCode}</span>
-                    </div>
                     ))}
                   </div>
                   {webhookDeliveries.length > 5 && (
@@ -458,18 +458,18 @@ export default function DashboardV2Page() {
                 <>
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     {stats.recentActivity.slice(0, 5).map((activity: any) => (
-                    <div key={activity.id} className="flex items-start justify-between p-4 px-6">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>
-                          {activity.app && (
-                            <Badge variant="default" size="sm">{activity.app.name}</Badge>
-                          )}
+                      <div key={activity.id} className="flex items-start justify-between p-4 px-6">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{activity.description}</p>
+                            {activity.app && (
+                              <Badge variant="default" size="sm">{activity.app.name}</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
+                        <Badge variant="default" size="sm">{activity.type}</Badge>
                       </div>
-                      <Badge variant="default" size="sm">{activity.type}</Badge>
-                    </div>
                     ))}
                   </div>
                   {stats.recentActivity.length > 5 && (

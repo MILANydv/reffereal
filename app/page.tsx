@@ -13,10 +13,7 @@ export default function Home() {
       <header className="fixed top-0 w-full z-[100] px-8 py-6">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between glass-panel px-8 py-4 rounded-3xl">
           <div className="flex items-center gap-2">
-            <div className="size-8 bg-navy rounded-lg flex items-center justify-center text-white">
-              <span className="material-symbols-outlined text-xl">hub</span>
-            </div>
-            <span className="text-xl font-extrabold tracking-tighter">ReferralSystem</span>
+            <img src="/logos/logo.png" alt="Incenta Logo" className="h-8 w-auto" />
           </div>
           <nav className="hidden lg:flex items-center gap-10">
             <a className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#features">The Grid</a>
@@ -41,8 +38,8 @@ export default function Home() {
                 Automated Viral Growth
               </div>
               <h1 className="text-7xl xl:text-9xl mb-8 font-light italic">
-                Scale Your <br/>
-                <span className="font-extrabold not-italic text-navy">SaaS Growth</span>
+                Scale Your <br />
+                <span className="font-extrabold not-italic text-navy">Nepal SaaS</span>
               </h1>
               <p className="text-xl text-slate-500 max-w-lg leading-relaxed font-medium mb-12">
                 Automate referrals, eliminate fraud, and turn users into revenue with pixel-perfect tracking and seamless payouts.
@@ -225,14 +222,14 @@ export default function Home() {
                 <pre className="font-mono text-sm md:text-base leading-relaxed overflow-x-auto text-slate-300">
                   <span className="code-syntax-comment">// Initialize referral webhook</span>{'\n'}
                   <span className="code-syntax-keyword">const</span> referral = <span className="code-syntax-keyword">await</span> client.<span className="code-syntax-function">events</span>.<span className="code-syntax-function">create</span>({'{'}
-{'\n'}  <span className="code-syntax-string">"type"</span>: <span className="code-syntax-string">"reward.qualified"</span>,
-{'\n'}  <span className="code-syntax-string">"callback_url"</span>: <span className="code-syntax-string">"https://api.yourbrand.com/v1/webhooks"</span>,
-{'\n'}  <span className="code-syntax-string">"metadata"</span>: {'{'}
-{'\n'}    <span className="code-syntax-string">"campaign_id"</span>: <span className="code-syntax-string">"growth_q4"</span>,
-{'\n'}    <span className="code-syntax-string">"user_tier"</span>: <span className="code-syntax-string">"pro"</span>
-{'\n'}  {'}'}
-{'\n'}{'}'});
-{'\n'}<span className="code-syntax-function">console</span>.<span className="code-syntax-function">log</span>(<span className="code-syntax-string">"Infrastructure active."</span>);
+                  {'\n'}  <span className="code-syntax-string">"type"</span>: <span className="code-syntax-string">"reward.qualified"</span>,
+                  {'\n'}  <span className="code-syntax-string">"callback_url"</span>: <span className="code-syntax-string">"https://api.yourbrand.com/v1/webhooks"</span>,
+                  {'\n'}  <span className="code-syntax-string">"metadata"</span>: {'{'}
+                  {'\n'}    <span className="code-syntax-string">"campaign_id"</span>: <span className="code-syntax-string">"growth_q4"</span>,
+                  {'\n'}    <span className="code-syntax-string">"user_tier"</span>: <span className="code-syntax-string">"pro"</span>
+                  {'\n'}  {'}'}
+                  {'\n'}{'}'});
+                  {'\n'}<span className="code-syntax-function">console</span>.<span className="code-syntax-function">log</span>(<span className="code-syntax-string">"Infrastructure active."</span>);
                 </pre>
                 <div className="absolute bottom-8 right-8">
                   <button
@@ -450,12 +447,10 @@ console.log("Infrastructure active.");`;
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 mb-24">
             <div className="col-span-2 space-y-8">
               <div className="flex items-center gap-3">
-                <div className="size-10 bg-navy rounded-xl flex items-center justify-center text-white">
-                  <span className="material-symbols-outlined text-2xl">hub</span>
-                </div>
-                <span className="text-2xl font-extrabold tracking-tighter">ReferralSystem</span>
+                <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
+                <span className="text-2xl font-extrabold tracking-tighter">Incenta</span>
               </div>
-              <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Next-generation referral architecture built for high-scale SaaS and subscription engines.</p>
+              <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Nepal's next-generation referral architecture built for high-scale SaaS and subscription engines.</p>
             </div>
             <div className="space-y-6">
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Security</h4>
@@ -494,7 +489,7 @@ console.log("Infrastructure active.");`;
             </div>
           </div>
           <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
-            <p className="text-xs font-bold text-slate-400">© 2024 ReferralSystem. Engineered for viral velocity.</p>
+            <p className="text-xs font-bold text-slate-400">© 2024 Incenta. Engineered for Nepal's viral velocity.</p>
             <div className="flex gap-8">
               <Link href="/privacy" className="text-xs font-bold text-slate-400 hover:text-navy">Privacy</Link>
               <Link href="/terms" className="text-xs font-bold text-slate-400 hover:text-navy">Terms</Link>

@@ -120,11 +120,11 @@ export async function sendSignupEmail(email: string, name?: string) {
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to ReferralSystem!</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Incenta!</h1>
         </div>
         <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
           <p style="font-size: 16px; margin-bottom: 20px;">Hi ${name || 'there'},</p>
-          <p style="font-size: 16px; margin-bottom: 20px;">Thank you for signing up for ReferralSystem! We're excited to have you on board.</p>
+          <p style="font-size: 16px; margin-bottom: 20px;">Thank you for signing up for Incenta! We're excited to have you on board.</p>
           <p style="font-size: 16px; margin-bottom: 20px;">Your account has been created successfully. You can now:</p>
           <ul style="font-size: 16px; margin-bottom: 20px; padding-left: 20px;">
             <li>Create your first app</li>
@@ -137,7 +137,7 @@ export async function sendSignupEmail(email: string, name?: string) {
           <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">If you have any questions, feel free to reach out to our support team.</p>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -145,7 +145,7 @@ export async function sendSignupEmail(email: string, name?: string) {
 
   return sendEmail({
     to: email,
-    subject: 'Welcome to ReferralSystem!',
+    subject: 'Welcome to Incenta!',
     html,
     metadata: { template: 'signup', name },
   });
@@ -177,7 +177,7 @@ export async function sendVerificationEmail(email: string, token: string, name?:
           <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">This link will expire in 24 hours.</p>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -217,7 +217,7 @@ export async function sendPasswordResetEmail(email: string, token: string, name?
           <p style="font-size: 14px; color: #ef4444; margin-top: 20px;">If you didn't request this, please ignore this email.</p>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -271,7 +271,7 @@ export async function sendBillingInvoiceEmail(
           </div>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -322,7 +322,7 @@ export async function sendApiUsageWarningEmail(
           </div>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -389,7 +389,7 @@ export async function sendMonthlyReportEmail(
           </div>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -418,7 +418,7 @@ export async function sendCustomEmail(
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">ReferralSystem</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">Incenta</h1>
         </div>
         <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
           ${name ? `<p style="font-size: 16px; margin-bottom: 20px;">Hi ${name},</p>` : ''}
@@ -427,7 +427,7 @@ export async function sendCustomEmail(
           </div>
         </div>
         <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} ReferralSystem. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Incenta. All rights reserved.</p>
         </div>
       </body>
     </html>

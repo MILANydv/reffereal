@@ -22,7 +22,7 @@ export function TopNavbar() {
     console.log('[TopNavbar] Component mounted, initializing theme');
     initializeTheme();
   }, [initializeTheme]);
-  
+
   // Listen for theme changes and force re-render
   useEffect(() => {
     const handleThemeChange = () => {
@@ -33,14 +33,14 @@ export function TopNavbar() {
       // Force a state update to trigger re-render
       setUsage(prev => ({ ...prev }));
     };
-    
+
     window.addEventListener('themechange', handleThemeChange as EventListener);
-    
+
     return () => {
       window.removeEventListener('themechange', handleThemeChange as EventListener);
     };
   }, []);
-  
+
   // Log theme changes
   useEffect(() => {
     console.log('[TopNavbar] Theme changed to:', theme);
@@ -82,10 +82,7 @@ export function TopNavbar() {
     <header className="h-16 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-4 sticky top-0 z-30">
       <div className="flex items-center space-x-4">
         <Link href={isAdmin ? "/admin/v2" : "/dashboard/v2"} className="flex items-center space-x-2 mr-4">
-          <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">
-            R
-          </div>
-          <span className="font-bold text-lg hidden md:block">Referral</span>
+          <img src="/logos/logo.png" alt="Incenta Logo" className="h-8 w-auto" />
         </Link>
 
         {!isAdmin && (
@@ -113,7 +110,7 @@ export function TopNavbar() {
               <span>{usage.current.toLocaleString()} / {usage.limit.toLocaleString()} API hits</span>
             </div>
             <div className="w-32 h-1 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div 
+              <div
                 className={`h-full rounded-full ${usagePercentage > 90 ? 'bg-red-500' : 'bg-blue-500'}`}
                 style={{ width: `${usagePercentage}%` }}
               />
@@ -130,7 +127,7 @@ export function TopNavbar() {
           </div>
         )}
 
-        <button 
+        <button
           onClick={() => {
             console.log('[TopNavbar] Theme toggle button clicked');
             console.log('[TopNavbar] Current theme from store:', theme);

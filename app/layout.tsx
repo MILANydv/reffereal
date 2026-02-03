@@ -25,8 +25,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Refined Enterprise | ReferralSystem",
-  description: "Automate referrals, eliminate fraud, and turn users into revenue",
+  title: "Incenta | Nepal's Leading Referral Platform",
+  description: "Automate referrals, eliminate fraud, and turn users into revenue with Incenta",
 };
 
 export default function RootLayout({

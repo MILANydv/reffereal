@@ -132,15 +132,12 @@ function LoginForm() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div>
             <Link href="/" className="flex items-center space-x-3 mb-12">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold">R</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight">ReferralSystem</span>
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
             </Link>
             <div className="mt-20">
-              <h1 className="text-4xl font-bold mb-4">Welcome back</h1>
+              <h1 className="text-4xl font-bold mb-4">Welcome back to Incenta</h1>
               <p className="text-blue-100 text-lg leading-relaxed max-w-md">
-                Manage your referral campaigns, track performance, and grow your business with powerful analytics.
+                Nepal's leading referral platform. Manage your campaigns, track performance, and grow your business with powerful analytics.
               </p>
             </div>
           </div>
@@ -182,10 +179,7 @@ function LoginForm() {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8">
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">R</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-gray-900">ReferralSystem</span>
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
             </Link>
           </div>
 
@@ -320,7 +314,7 @@ function LoginForm() {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">New to ReferralSystem?</span>
+                <span className="px-4 bg-white text-gray-500">New to Incenta?</span>
               </div>
             </div>
             <div className="mt-6">

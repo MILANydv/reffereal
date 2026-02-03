@@ -179,8 +179,8 @@ export default function OnboardingPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Referral Platform</h1>
-          <p className="text-xl text-gray-600">Let&apos;s get you set up in just a few steps</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Incenta</h1>
+          <p className="text-xl text-gray-600">Nepal's viral growth platform. Let&apos;s get you set up in just a few steps</p>
         </div>
 
         {/* Progress Steps */}
@@ -335,7 +335,7 @@ export default function OnboardingPage() {
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re all set!</h3>
                   <p className="text-gray-600">
-                    Welcome to the Referral Platform. Your dashboard is ready with your first application.
+                    Welcome to Incenta. Your dashboard is ready with your first application.
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">

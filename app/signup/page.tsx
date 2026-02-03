@@ -49,15 +49,12 @@ export default function SignupPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div>
             <Link href="/" className="flex items-center space-x-3 mb-12">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold">R</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight">ReferralSystem</span>
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
             </Link>
             <div className="mt-20">
-              <h1 className="text-4xl font-bold mb-4">Start your journey</h1>
+              <h1 className="text-4xl font-bold mb-4">Start your journey with Incenta</h1>
               <p className="text-blue-100 text-lg leading-relaxed max-w-md">
-                Join thousands of businesses using ReferralSystem to grow their customer base through powerful referral programs.
+                Join thousands of businesses in Nepal using Incenta to grow their customer base through powerful referral programs.
               </p>
             </div>
           </div>
@@ -99,10 +96,7 @@ export default function SignupPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-10">
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">R</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-gray-900">ReferralSystem</span>
+              <img src="/logos/logo.png" alt="Incenta Logo" className="h-10 w-auto" />
             </Link>
           </div>
 
