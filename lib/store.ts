@@ -99,7 +99,7 @@ export interface DashboardStats {
     limit: number;
   };
   apiUsageChart?: {
-    data: Array<{ name: string; date: string; [appName: string]: any }>;
+    data: Array<{ name: string; date: string;[appName: string]: any }>;
     apps: Array<{ id: string; name: string }>;
   } | Array<{ name: string; value: number }>;
   recentActivity?: Array<{
@@ -391,13 +391,33 @@ export interface FeatureFlag {
   targetPartners?: string;
   createdAt: string;
 }
-
 export interface SystemLog {
   id: string;
   level: string;
   message: string;
   source?: string;
   metadata?: string;
+  createdAt: string;
+}
+export interface ContactInquiry {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  subject?: string;
+  message: string;
+  status: 'NEW' | 'READ' | 'REPLIED';
+  createdAt: string;
+}
+
+export interface Changelog {
+  id: string;
+  version: string;
+  type: 'MAJOR' | 'MINOR' | 'PATCH';
+  title: string;
+  content: string;
+  status: 'DRAFT' | 'PUBLISHED';
+  releaseDate: string;
   createdAt: string;
 }
 
@@ -528,9 +548,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
       if (dateRange?.endDate) {
         params.append('endDate', dateRange.endDate.toISOString());
       }
-      
+
       const url = `/api/partner/dashboard-stats${params.toString() ? `?${params.toString()}` : ''}`;
-      
+
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
@@ -548,7 +568,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const url = appId 
+      const url = appId
         ? `/api/partner/active-campaigns?appId=${appId}`
         : '/api/partner/active-campaigns';
       const response = await fetch(url);
@@ -568,7 +588,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const url = appId 
+      const url = appId
         ? `/api/partner/webhook-deliveries?appId=${appId}&limit=10`
         : '/api/partner/webhook-deliveries?limit=10';
       const response = await fetch(url);
@@ -725,16 +745,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const key = 'usage';
     const selectedApp = get().selectedApp;
     const cacheKey = selectedApp ? `usage-${selectedApp.id}` : 'usage';
-    
+
     if (!force && get().usage !== null) return;
 
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
-      const url = selectedApp 
+      const url = selectedApp
         ? `/api/partner/usage-stats?appId=${selectedApp.id}`
         : '/api/partner/usage-stats';
-      
+
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
@@ -875,6 +895,8 @@ interface AdminStore {
   usage: UsageStats | null;
   billing: BillingInfo | null;
   pricing: PricingPlan[];
+  contacts: ContactInquiry[];
+  changelogs: Changelog[];
   isLoading: Record<string, boolean>;
 
   fetchPartners: (force?: boolean) => Promise<void>;
@@ -886,6 +908,8 @@ interface AdminStore {
   fetchUsage: (force?: boolean) => Promise<void>;
   fetchBilling: (force?: boolean) => Promise<void>;
   fetchPricing: (force?: boolean) => Promise<void>;
+  fetchContacts: (force?: boolean) => Promise<void>;
+  fetchChangelogs: (force?: boolean) => Promise<void>;
   invalidate: (key: string) => void;
 }
 
@@ -899,6 +923,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   usage: null,
   billing: null,
   pricing: [],
+  contacts: [],
+  changelogs: [],
   isLoading: {},
 
   fetchPartners: async (force = false) => {
@@ -1081,6 +1107,44 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
   },
 
+  fetchContacts: async (force = false) => {
+    const key = 'contacts';
+    if (!force && get().contacts.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/contacts');
+      if (response.ok) {
+        const data = await response.json();
+        set({ contacts: Array.isArray(data) ? data : [] });
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
+  fetchChangelogs: async (force = false) => {
+    const key = 'changelogs';
+    if (!force && get().changelogs.length > 0) return;
+
+    set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
+
+    try {
+      const response = await fetch('/api/admin/changelog');
+      if (response.ok) {
+        const data = await response.json();
+        set({ changelogs: Array.isArray(data) ? data : [] });
+      }
+    } catch (error) {
+      console.error('Error fetching changelogs:', error);
+    } finally {
+      set((state) => ({ isLoading: { ...state.isLoading, [key]: false } }));
+    }
+  },
+
   invalidate: (key) => {
     if (key === 'partners') {
       set({ partners: [] });
@@ -1100,6 +1164,10 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       set({ billing: null });
     } else if (key === 'pricing') {
       set({ pricing: [] });
+    } else if (key === 'contacts') {
+      set({ contacts: [] });
+    } else if (key === 'changelogs') {
+      set({ changelogs: [] });
     }
   },
 }));
@@ -1117,16 +1185,16 @@ interface ThemeStore {
 export const useThemeStore = create<ThemeStore>((set, get) => ({
   theme: 'light',
   mounted: false,
-  
+
   setTheme: (theme: 'light' | 'dark') => {
     console.log('[ThemeStore] setTheme called with:', theme);
-    
+
     if (typeof window !== 'undefined') {
       const root = document.documentElement;
-      
+
       // Update DOM FIRST for immediate visual feedback
       root.classList.remove('dark', 'light');
-      
+
       if (theme === 'dark') {
         console.log('[ThemeStore] Adding dark class to documentElement');
         root.classList.add('dark');
@@ -1134,17 +1202,17 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         console.log('[ThemeStore] Removing dark class from documentElement');
         root.classList.remove('dark');
       }
-      
+
       // Update localStorage
       console.log('[ThemeStore] Setting localStorage theme to:', theme);
       localStorage.setItem('theme', theme);
-      
+
       // Update state to trigger React re-renders
       set({ theme });
-      
+
       // Dispatch custom event for any listeners
       window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
-      
+
       console.log('[ThemeStore] Current documentElement classes:', root.classList.toString());
     } else {
       // SSR: only update state
@@ -1152,7 +1220,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       console.log('[ThemeStore] Window is undefined, only updating state');
     }
   },
-  
+
   toggleTheme: () => {
     const currentTheme = get().theme;
     console.log('[ThemeStore] toggleTheme called, current theme:', currentTheme);
@@ -1160,14 +1228,14 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     console.log('[ThemeStore] Toggling to new theme:', newTheme);
     get().setTheme(newTheme);
   },
-  
+
   initializeTheme: () => {
     if (typeof window === 'undefined') return;
-    
+
     // Read from DOM (which was already set by the inline script in layout.tsx)
     const root = document.documentElement;
     const hasDarkClass = root.classList.contains('dark');
-    
+
     // Sync state with what's already on the DOM
     const initialTheme = hasDarkClass ? 'dark' : 'light';
     set({ theme: initialTheme, mounted: true });

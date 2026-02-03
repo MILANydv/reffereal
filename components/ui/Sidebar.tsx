@@ -19,6 +19,9 @@ import {
   ShieldAlert,
   Flag,
   Zap,
+  FileText,
+  History as HistoryIcon,
+  Mail,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useAppStore } from '@/lib/store';
@@ -79,6 +82,9 @@ const adminNavigation: NavSection[] = [
       { name: 'Pricing Plans', href: '/admin/v2/pricing', icon: <Box size={20} /> },
       { name: 'Abuse & Fraud', href: '/admin/v2/fraud', icon: <ShieldAlert size={20} /> },
       { name: 'Feature Flags', href: '/admin/v2/features', icon: <Flag size={20} /> },
+      { name: 'Manage Blogs', href: '/admin/v2/blogs', icon: <FileText size={20} /> },
+      { name: 'Changelog', href: '/admin/v2/changelog', icon: <HistoryIcon size={20} /> },
+      { name: 'Contact Inquiries', href: '/admin/v2/contacts', icon: <Mail size={20} /> },
       { name: 'System Logs', href: '/admin/v2/logs', icon: <Terminal size={20} /> },
     ],
   },
@@ -125,10 +131,9 @@ export function Sidebar({ userRole, userEmail }: SidebarProps) {
                     href={item.href}
                     className={`
                       flex items-center px-6 py-2 text-sm font-medium transition-colors
-                      ${
-                        isActive
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-4 border-blue-600'
-                          : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
+                      ${isActive
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-4 border-blue-600'
+                        : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
                       }
                     `}
                   >

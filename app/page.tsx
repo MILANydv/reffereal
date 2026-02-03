@@ -536,6 +536,11 @@ console.log("Infrastructure active.");`;
                 <img src="/logos/logo.png" alt="Incenta Logo" className="h-16 w-auto" />
               </div>
               <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Nepal's next-generation referral architecture built for high-scale SaaS and subscription engines.</p>
+              <div className="pt-4 flex items-center gap-3">
+                <span className="size-2 rounded-full bg-primary animate-pulse"></span>
+                <span className="text-[10px] font-bold font-mono text-navy uppercase tracking-widest">Latest: v2.1.0 (Feb 2024)</span>
+                <Link href="/changelog" className="text-[10px] font-bold text-primary hover:underline">View Timeline →</Link>
+              </div>
             </div>
             <div className="space-y-6">
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Governance</h4>
@@ -548,6 +553,7 @@ console.log("Infrastructure active.");`;
               <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Engineering</h4>
               <ul className="space-y-4 text-sm font-bold text-navy">
                 <li><Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link></li>
+                <li><Link href="/changelog" className="hover:text-primary transition-colors">Change Log</Link></li>
                 <li><Link href="/status" className="hover:text-primary transition-colors">System Status</Link></li>
               </ul>
             </div>

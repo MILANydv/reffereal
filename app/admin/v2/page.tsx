@@ -5,8 +5,9 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge } from '@/components/ui/Badge';
 import { useEffect, useState } from 'react';
-import { Users, Building2, DollarSign, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
+import { Users, Building2, DollarSign, TrendingUp, AlertTriangle, Zap, History as HistoryIcon, Mail } from 'lucide-react';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
+import Link from 'next/link';
 
 import { useAdminStore } from '@/lib/store';
 
@@ -171,18 +172,41 @@ export default function AdminV2Page() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <AlertTriangle size={18} className="mr-2 text-red-500" />
-                Fraud Alerts
+                <HistoryIcon size={18} className="mr-2 text-primary" />
+                Support & Updates
               </CardTitle>
             </CardHeader>
             <CardBody>
-              <div className="text-center">
-                <AlertTriangle size={32} className={`mx-auto mb-2 ${(stats?.unresolvedFraudFlags || 0) > 0 ? 'text-red-600' : 'text-gray-400'}`} />
-                <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{stats?.unresolvedFraudFlags || 0}</div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">unresolved flags</p>
-                {(stats?.unresolvedFraudFlags || 0) > 0 && (
-                  <Badge variant="error" size="sm" className="mt-2">Requires attention</Badge>
-                )}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
+                      <Mail size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-900 dark:text-gray-100">Contact Inquiries</p>
+                      <p className="text-[10px] text-gray-500">3 new messages</p>
+                    </div>
+                  </div>
+                  <Link href="/admin/v2/contacts" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                    Manage
+                  </Link>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                      <HistoryIcon size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-900 dark:text-gray-100">System Version</p>
+                      <p className="text-[10px] text-gray-500">v2.1.0 (Stable)</p>
+                    </div>
+                  </div>
+                  <Link href="/admin/v2/changelog" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                    Changelog
+                  </Link>
+                </div>
               </div>
             </CardBody>
           </Card>

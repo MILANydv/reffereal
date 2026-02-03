@@ -446,3 +446,49 @@ enum WebhookEventType {
   REWARD_CREATED
   USAGE_LIMIT_EXCEEDED
 }
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  subject   String?
+  message   String
+  status    InquiryStatus @default(NEW)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+enum InquiryStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+model Changelog {
+  id          String   @id @default(cuid())
+  version     String
+  type        ChangelogType
+  title       String
+  content     String
+  status      ChangelogStatus @default(DRAFT)
+  releaseDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([version])
+}
+
+enum ChangelogType {
+  MAJOR
+  MINOR
+  PATCH
+}
+
+enum ChangelogStatus {
+  DRAFT
+  PUBLISHED
+}
