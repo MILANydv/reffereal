@@ -8,7 +8,7 @@ import { notifyReferralCodeGenerated } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
-  
+
   if ('error' in authResult) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
   }
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     const referralCode = generateReferralCode();
-    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
-                      request.headers.get('x-real-ip') || null;
+    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') || null;
     const userAgent = request.headers.get('user-agent') || null;
     const acceptLanguage = request.headers.get('accept-language') || null;
 
@@ -96,26 +96,56 @@ export async function POST(request: NextRequest) {
         where: { id: app.partnerId },
         include: { User: true },
       });
-      
+
       if (partner?.User) {
+        // Standard notification
         await notifyReferralCodeGenerated(partner.User.id, {
           code: referral.referralCode,
           campaignName: campaign.name,
         });
+
+        // Fraud notification if applicable
+        if (fraudCheck.isFraud) {
+          const { notifyPartnerFraud } = await import('@/lib/notifications');
+          await notifyPartnerFraud(partner.User.id, {
+            referralCode: referral.referralCode,
+            appName: app.name,
+            fraudType: fraudCheck.reasons[0] || 'Suspected Fraud',
+          });
+        }
       }
     } catch (error) {
-      console.error('[Notification] Error sending referral code notification:', error);
+      console.error('[Notification] Error sending referral notifications:', error);
       // Don't fail the request if notification fails
+    }
+
+    // Notify Admins if fraud
+    if (fraudCheck.isFraud) {
+      try {
+        const { notifyAdminFraud } = await import('@/lib/notifications');
+        await notifyAdminFraud(
+          'Referral Creation Fraud Detected',
+          `High risk referral created in app "${app.name}". Code: "${referral.referralCode}". Reason: ${fraudCheck.reasons.join(', ')}`,
+          {
+            appId: app.id,
+            referralCode: referral.referralCode,
+            riskScore: fraudCheck.riskScore,
+            reasons: fraudCheck.reasons
+          }
+        );
+      } catch (err) {
+        console.error('Error notifying admins of fraud:', err);
+      }
     }
 
     return NextResponse.json({
       referralCode: referral.referralCode,
       referralId: referral.id,
       status: referral.status,
-      ...(fraudCheck.isFraud && { 
-        warning: 'Referral flagged for review', 
+      ...(fraudCheck.isFraud && {
+        warning: 'Referral flagged for review',
         reasons: fraudCheck.reasons,
-        riskScore: fraudCheck.riskScore 
+        riskScore: fraudCheck.riskScore
       }),
     }, { status: 201 });
   } catch (error) {

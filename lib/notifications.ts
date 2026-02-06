@@ -188,3 +188,47 @@ export async function notifyCustomAdmin(
     metadata,
   });
 }
+
+export async function notifyPartnerFraud(
+  userId: string,
+  alert: {
+    referralCode: string;
+    appName: string;
+    fraudType: string;
+  }
+) {
+  return createNotification({
+    userId,
+    type: NotificationType.FRAUD_ALERT,
+    title: 'Fraud Alert Detected',
+    message: `Suspicious activity detected for referral code "${alert.referralCode}" in "${alert.appName}". Type: ${alert.fraudType}.`,
+    metadata: {
+      referralCode: alert.referralCode,
+      fraudType: alert.fraudType,
+      appName: alert.appName,
+    },
+  });
+}
+
+export async function notifyAdminFraud(
+  title: string,
+  message: string,
+  metadata?: Record<string, any>
+) {
+  // Notify all SUPER_ADMINS
+  const admins = await prisma.user.findMany({
+    where: { role: 'SUPER_ADMIN', active: true },
+  });
+
+  return Promise.all(
+    admins.map(admin =>
+      createNotification({
+        userId: admin.id,
+        type: NotificationType.FRAUD_ALERT,
+        title: `[ADMIN] ${title}`,
+        message,
+        metadata,
+      })
+    )
+  );
+}

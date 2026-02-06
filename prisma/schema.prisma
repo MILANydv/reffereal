@@ -379,6 +379,7 @@ enum FraudType {
   DEVICE_FINGERPRINT
   MANUAL_FLAG
   VPN_PROXY_DETECTED
+  IMPOSSIBLE_CONVERSION_TIME
 }
 
 enum NotificationStatus {
@@ -392,6 +393,7 @@ enum NotificationType {
   REFERRAL_CODE_GENERATED
   TEAM_INVITE_ACCEPTED
   CUSTOM_ADMIN
+  FRAUD_ALERT
 }
 
 enum PlanType {

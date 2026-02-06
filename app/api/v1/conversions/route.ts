@@ -6,7 +6,7 @@ import { notifyReferralConversion } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
-  
+
   if ('error' in authResult) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
   }
@@ -61,14 +61,68 @@ export async function POST(request: NextRequest) {
       rewardAmount = campaign.rewardCap;
     }
 
+    // Fraud Detection Check
+    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') || null;
+
+    const { detectConversionFraud } = await import('@/lib/fraud-detection-enhanced');
+    const { notifyPartnerFraud, notifyAdminFraud } = await import('@/lib/notifications');
+
+    const fraudCheck = await detectConversionFraud(
+      app.id,
+      referral.id,
+      referralCode,
+      refereeId,
+      ipAddress
+    );
+
+    let status = 'CONVERTED';
+    if (fraudCheck.isFraud) {
+      status = 'FLAGGED';
+
+      // Notify Partner
+      try {
+        const partner = await prisma.partner.findUnique({
+          where: { id: app.partnerId },
+          include: { User: true },
+        });
+        if (partner?.User) {
+          await notifyPartnerFraud(partner.User.id, {
+            referralCode,
+            appName: app.name,
+            fraudType: fraudCheck.reasons[0] || 'Unknown Fraud',
+          });
+        }
+      } catch (err) {
+        console.error('Error notifying partner of fraud:', err);
+      }
+
+      // Notify Admins
+      try {
+        await notifyAdminFraud(
+          'Conversion Fraud Detected',
+          `High risk conversion in app "${app.name}" for code "${referralCode}". Reason: ${fraudCheck.reasons.join(', ')}`,
+          {
+            appId: app.id,
+            referralCode,
+            riskScore: fraudCheck.riskScore,
+            reasons: fraudCheck.reasons,
+          }
+        );
+      } catch (err) {
+        console.error('Error notifying admins of fraud:', err);
+      }
+    }
+
     const [updatedReferral, conversion] = await prisma.$transaction([
       prisma.referral.update({
         where: { id: referral.id },
         data: {
-          status: 'CONVERTED',
+          status: status as any, // Cast to avoid type issues if enum not updated in context
           refereeId,
           convertedAt: new Date(),
           rewardAmount,
+          isFlagged: fraudCheck.isFraud,
         },
       }),
       prisma.conversion.create({
@@ -104,7 +158,7 @@ export async function POST(request: NextRequest) {
         where: { id: app.partnerId },
         include: { User: true },
       });
-      
+
       if (partner?.User) {
         await notifyReferralConversion(partner.User.id, {
           code: updatedReferral.referralCode,

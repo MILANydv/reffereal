@@ -5,8 +5,9 @@ import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/lib/store';
-import { Play, CheckCircle, XCircle, Loader, Copy, ExternalLink } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Loader, Copy, ExternalLink, AlertTriangle, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 const API_BASE_URL = 'https://reffereal.vercel.app/api/v1';
 
@@ -47,7 +48,7 @@ export default function DemoPage() {
       });
 
       const data = await response.json();
-      
+
       return {
         success: response.ok,
         data: data,
@@ -65,7 +66,7 @@ export default function DemoPage() {
 
   const handleCreateReferral = async () => {
     if (!apiKey || !campaignId || !referrerId) {
-      alert('Please fill in API Key, Campaign ID, and Referrer ID');
+      toast.error('Please fill in API Key, Campaign ID, and Referrer ID');
       return;
     }
 
@@ -74,18 +75,39 @@ export default function DemoPage() {
       campaignId,
       referrerId,
     });
-    
+
     setResponses({ ...responses, create: response });
     setLoading(null);
-    
+
     if (response.success && response.data?.referralCode) {
       setReferralCode(response.data.referralCode);
+      if (response.data.warning) {
+        toast((t) => (
+          <div className="flex flex-col gap-1">
+            <span className="font-bold text-orange-600 flex items-center gap-1">
+              <AlertTriangle size={16} /> Fraud Warning
+            </span>
+            <span className="text-sm">{response.data.warning}</span>
+            {response.data.reasons && (
+              <ul className="list-disc pl-4 text-xs text-gray-600 mt-1">
+                {response.data.reasons.map((r: string, i: number) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ), { duration: 5000, icon: '⚠️' });
+      } else {
+        toast.success('Referral created successfully');
+      }
+    } else {
+      toast.error(response.error || 'Failed to create referral');
     }
   };
 
   const handleTrackClick = async () => {
     if (!apiKey || !referralCode) {
-      alert('Please create a referral first or enter a referral code');
+      toast.error('Please create a referral first or enter a referral code');
       return;
     }
 
@@ -93,14 +115,20 @@ export default function DemoPage() {
     const response = await makeRequest('/clicks', 'POST', {
       referralCode,
     });
-    
+
     setResponses({ ...responses, click: response });
     setLoading(null);
+
+    if (response.success) {
+      toast.success('Click tracked successfully');
+    } else {
+      toast.error(response.error || 'Failed to track click');
+    }
   };
 
   const handleTrackConversion = async () => {
     if (!apiKey || !referralCode) {
-      alert('Please create a referral first or enter a referral code');
+      toast.error('Please create a referral first or enter a referral code');
       return;
     }
 
@@ -114,9 +142,35 @@ export default function DemoPage() {
         timestamp: new Date().toISOString(),
       },
     });
-    
+
     setResponses({ ...responses, convert: response });
     setLoading(null);
+
+    if (response.success) {
+      if (response.data?.status === 'FLAGGED' || response.data?.warning || (response.data?.status === 'CONVERTED' && response.data?.reasons)) {
+        // Check if response contains fraud info directly or in status
+        const reasons = response.data.reasons || [];
+        toast((t) => (
+          <div className="flex flex-col gap-1">
+            <span className="font-bold text-red-600 flex items-center gap-1">
+              <ShieldAlert size={16} /> Fraud Detected
+            </span>
+            <span className="text-sm">Conversion flagged as suspicious.</span>
+            {reasons.length > 0 && (
+              <ul className="list-disc pl-4 text-xs text-gray-600 mt-1">
+                {reasons.map((r: string, i: number) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ), { duration: 6000, icon: '🛑' });
+      } else {
+        toast.success('Conversion tracked successfully');
+      }
+    } else {
+      toast.error(response.error || 'Failed to track conversion');
+    }
   };
 
   const handleGetStats = async () => {
@@ -128,7 +182,7 @@ export default function DemoPage() {
     setLoading('stats');
     const url = campaignId ? `/stats?campaignId=${campaignId}` : '/stats';
     const response = await makeRequest(url, 'GET');
-    
+
     setResponses({ ...responses, stats: response });
     setLoading(null);
   };
@@ -249,18 +303,17 @@ export default function DemoPage() {
                   </button>
                 </div>
                 <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
-{JSON.stringify({
-  campaignId,
-  referrerId,
-}, null, 2)}
+                  {JSON.stringify({
+                    campaignId,
+                    referrerId,
+                  }, null, 2)}
                 </pre>
               </div>
               {responses.create && (
-                <div className={`p-4 rounded-lg border ${
-                  responses.create.success
-                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
-                }`}>
+                <div className={`p-4 rounded-lg border ${responses.create.success
+                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                  }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {responses.create.success ? (
                       <CheckCircle className="text-green-600" size={16} />
@@ -268,7 +321,7 @@ export default function DemoPage() {
                       <XCircle className="text-red-600" size={16} />
                     )}
                     <span className="font-semibold text-sm">
-                      {responses.create.success ? 'Success' : 'Error'} 
+                      {responses.create.success ? 'Success' : 'Error'}
                       {responses.create.status && ` (${responses.create.status})`}
                     </span>
                   </div>
@@ -334,17 +387,16 @@ export default function DemoPage() {
                   </button>
                 </div>
                 <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
-{JSON.stringify({
-  referralCode,
-}, null, 2)}
+                  {JSON.stringify({
+                    referralCode,
+                  }, null, 2)}
                 </pre>
               </div>
               {responses.click && (
-                <div className={`p-4 rounded-lg border ${
-                  responses.click.success
-                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
-                }`}>
+                <div className={`p-4 rounded-lg border ${responses.click.success
+                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                  }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {responses.click.success ? (
                       <CheckCircle className="text-green-600" size={16} />
@@ -352,7 +404,7 @@ export default function DemoPage() {
                       <XCircle className="text-red-600" size={16} />
                     )}
                     <span className="font-semibold text-sm">
-                      {responses.click.success ? 'Success' : 'Error'} 
+                      {responses.click.success ? 'Success' : 'Error'}
                       {responses.click.status && ` (${responses.click.status})`}
                     </span>
                   </div>
@@ -445,22 +497,21 @@ export default function DemoPage() {
                   </button>
                 </div>
                 <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
-{JSON.stringify({
-  referralCode,
-  refereeId: refereeId || undefined,
-  amount: amount ? parseFloat(amount) : undefined,
-  metadata: {
-    orderId: 'order_123',
-  },
-}, null, 2)}
+                  {JSON.stringify({
+                    referralCode,
+                    refereeId: refereeId || undefined,
+                    amount: amount ? parseFloat(amount) : undefined,
+                    metadata: {
+                      orderId: 'order_123',
+                    },
+                  }, null, 2)}
                 </pre>
               </div>
               {responses.convert && (
-                <div className={`p-4 rounded-lg border ${
-                  responses.convert.success
-                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
-                }`}>
+                <div className={`p-4 rounded-lg border ${responses.convert.success
+                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                  }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {responses.convert.success ? (
                       <CheckCircle className="text-green-600" size={16} />
@@ -468,7 +519,7 @@ export default function DemoPage() {
                       <XCircle className="text-red-600" size={16} />
                     )}
                     <span className="font-semibold text-sm">
-                      {responses.convert.success ? 'Success' : 'Error'} 
+                      {responses.convert.success ? 'Success' : 'Error'}
                       {responses.convert.status && ` (${responses.convert.status})`}
                     </span>
                   </div>
@@ -523,11 +574,10 @@ export default function DemoPage() {
                 </div>
               </div>
               {responses.stats && (
-                <div className={`p-4 rounded-lg border ${
-                  responses.stats.success
-                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
-                }`}>
+                <div className={`p-4 rounded-lg border ${responses.stats.success
+                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                  }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {responses.stats.success ? (
                       <CheckCircle className="text-green-600" size={16} />
@@ -535,7 +585,7 @@ export default function DemoPage() {
                       <XCircle className="text-red-600" size={16} />
                     )}
                     <span className="font-semibold text-sm">
-                      {responses.stats.success ? 'Success' : 'Error'} 
+                      {responses.stats.success ? 'Success' : 'Error'}
                       {responses.stats.status && ` (${responses.stats.status})`}
                     </span>
                   </div>

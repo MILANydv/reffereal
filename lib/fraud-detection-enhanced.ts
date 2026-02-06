@@ -147,7 +147,7 @@ export async function detectFraudEnhanced(
   // 4. Rate limiting (enhanced with configurable thresholds)
   const recentReferrals = await prisma.referral.count({
     where: {
-        Campaign: { appId },
+      Campaign: { appId },
       referrerId,
       createdAt: {
         gte: new Date(Date.now() - (config.rateLimitWindow || 3600000)),
@@ -196,7 +196,7 @@ export async function detectFraudEnhanced(
   // 6. Device fingerprinting
   if (config.enableDeviceFingerprinting && userAgent) {
     const deviceFingerprint = generateDeviceFingerprint(userAgent, ipAddress, acceptLanguage);
-    
+
     const duplicateDeviceCount = await prisma.referral.count({
       where: {
         Campaign: { appId },
@@ -241,6 +241,67 @@ export async function detectFraudEnhanced(
   };
 }
 
+/**
+ * Detect fraud during conversion (Phase 1)
+ */
+export async function detectConversionFraud(
+  appId: string,
+  referralId: string,
+  referralCode: string,
+  refereeId: string,
+  ipAddress: string | null
+): Promise<{ isFraud: boolean; reasons: string[]; riskScore: number }> {
+  const reasons: string[] = [];
+  let riskScore = 0;
+
+  // Fetch referral to check timing
+  const referral = await prisma.referral.findUnique({
+    where: { id: referralId },
+    select: { createdAt: true, ipAddress: true, referrerId: true },
+  });
+
+  if (!referral) return { isFraud: false, reasons: [], riskScore: 0 };
+
+  // 1. Impossible conversion time (e.g. < 5 seconds from creation)
+  const timeDiff = Date.now() - referral.createdAt.getTime();
+  if (timeDiff < 5000) {
+    reasons.push('Impossible conversion time (< 5s)');
+    riskScore += 100; // Almost certainly a bot
+
+    await createFraudFlag(
+      appId,
+      referralCode,
+      FraudType.IMPOSSIBLE_CONVERSION_TIME,
+      `Conversion happened ${timeDiff}ms after referral creation. Bots likely.`,
+      { timeDiffMs: timeDiff }
+    );
+  }
+
+  // 2. IP Match Check (Referrer IP == Converter IP)
+  if (ipAddress && referral.ipAddress && ipAddress === referral.ipAddress) {
+    // If not self-referral (already checked at creation), this might be same household or testing
+    // We flag it but maybe with lower score effectively than self-referral
+    if (referral.referrerId !== refereeId) {
+      reasons.push('Conversion from same IP as Referrer');
+      riskScore += 60;
+
+      await createFraudFlag(
+        appId,
+        referralCode,
+        FraudType.DUPLICATE_IP,
+        'Conversion IP matches Referrer IP',
+        { ipAddress }
+      );
+    }
+  }
+
+  return {
+    isFraud: reasons.length > 0,
+    reasons,
+    riskScore,
+  };
+}
+
 async function detectSuspiciousPattern(
   appId: string,
   referrerId: string,
@@ -248,7 +309,7 @@ async function detectSuspiciousPattern(
 ): Promise<boolean> {
   const referrals = await prisma.referral.findMany({
     where: {
-        Campaign: { appId },
+      Campaign: { appId },
       referrerId,
       createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },
