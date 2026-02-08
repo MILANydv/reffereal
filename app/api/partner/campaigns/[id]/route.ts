@@ -153,6 +153,85 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.partnerId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const campaign = await prisma.campaign.findFirst({
+    where: {
+      id,
+      App: { partnerId: session.user.partnerId },
+    },
+  });
+
+  if (!campaign) {
+    return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+  }
+
+  try {
+    const body = await request.json();
+    const {
+      name,
+      status,
+      startDate,
+      endDate,
+      conversionWindow,
+      rewardExpiration,
+      rewardValue,
+      rewardCap,
+      level1Reward,
+      level2Reward,
+      level1Cap,
+      level2Cap,
+      tierConfig,
+      firstTimeUserOnly,
+    } = body;
+
+    if (startDate !== undefined && endDate !== undefined && new Date(endDate) < new Date(startDate)) {
+      return NextResponse.json(
+        { error: 'endDate must be on or after startDate' },
+        { status: 400 }
+      );
+    }
+
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) data.name = name;
+    if (status !== undefined) data.status = status;
+    if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
+    if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null;
+    if (conversionWindow !== undefined) data.conversionWindow = conversionWindow == null ? null : Number(conversionWindow);
+    if (rewardExpiration !== undefined) data.rewardExpiration = rewardExpiration == null ? null : Number(rewardExpiration);
+    if (rewardValue !== undefined) data.rewardValue = Number(rewardValue);
+    if (rewardCap !== undefined) data.rewardCap = rewardCap == null ? null : Number(rewardCap);
+    if (level1Reward !== undefined) data.level1Reward = level1Reward == null ? null : Number(level1Reward);
+    if (level2Reward !== undefined) data.level2Reward = level2Reward == null ? null : Number(level2Reward);
+    if (level1Cap !== undefined) data.level1Cap = level1Cap == null ? null : Number(level1Cap);
+    if (level2Cap !== undefined) data.level2Cap = level2Cap == null ? null : Number(level2Cap);
+    if (tierConfig !== undefined) data.tierConfig = tierConfig == null ? null : (typeof tierConfig === 'string' ? tierConfig : JSON.stringify(tierConfig));
+    if (firstTimeUserOnly !== undefined) data.firstTimeUserOnly = firstTimeUserOnly;
+
+    const updated = await prisma.campaign.update({
+      where: { id },
+      data: data as any,
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error('Error updating campaign:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

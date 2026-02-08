@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
+import { generateReferralCode } from '@/lib/api-key';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralConversion } from '@/lib/notifications';
 
@@ -48,16 +49,71 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Campaign is not active' }, { status: 400 });
     }
 
-    let rewardAmount = 0;
     const campaign = referral.Campaign;
+    const now = new Date();
+
+    if (campaign.endDate && now > campaign.endDate) {
+      return NextResponse.json(
+        { error: 'Campaign has ended; conversions are no longer accepted' },
+        { status: 400 }
+      );
+    }
+
+    if (campaign.conversionWindow != null && campaign.conversionWindow > 0) {
+      const cutoff = referral.clickedAt || referral.createdAt;
+      const windowEnd = new Date(cutoff.getTime() + campaign.conversionWindow * 24 * 60 * 60 * 1000);
+      if (now > windowEnd) {
+        return NextResponse.json(
+          { error: `Conversion window (${campaign.conversionWindow} days) has expired for this referral` },
+          { status: 400 }
+        );
+      }
+    }
+
+    let rewardAmount = 0;
 
     if (campaign.rewardModel === 'FIXED_CURRENCY') {
       rewardAmount = campaign.rewardValue;
     } else if (campaign.rewardModel === 'PERCENTAGE' && amount) {
       rewardAmount = (amount * campaign.rewardValue) / 100;
+    } else if (campaign.rewardModel === 'TIERED' && campaign.tierConfig) {
+      type Tier = { minConversions: number; rewardValue: number; rewardCap?: number };
+      let tiers: Tier[] = [];
+      try {
+        const parsed = JSON.parse(campaign.tierConfig) as { tiers?: Tier[] };
+        tiers = Array.isArray(parsed?.tiers) ? parsed.tiers : [];
+      } catch {
+        tiers = [];
+      }
+      const convertedCount = await prisma.referral.count({
+        where: {
+          campaignId: campaign.id,
+          referrerId: referral.referrerId,
+          status: 'CONVERTED',
+        },
+      });
+      tiers.sort((a, b) => (b.minConversions ?? 0) - (a.minConversions ?? 0));
+      let tier: Tier | null = null;
+      for (const t of tiers) {
+        if (convertedCount >= (t.minConversions ?? 0)) {
+          tier = t;
+          break;
+        }
+      }
+      if (tier) {
+        rewardAmount = tier.rewardValue;
+        if (tier.rewardCap != null && rewardAmount > tier.rewardCap) {
+          rewardAmount = tier.rewardCap;
+        }
+      } else {
+        rewardAmount = campaign.rewardValue;
+        if (campaign.rewardCap != null && rewardAmount > campaign.rewardCap) {
+          rewardAmount = campaign.rewardCap;
+        }
+      }
     }
 
-    if (campaign.rewardCap && rewardAmount > campaign.rewardCap) {
+    if (campaign.rewardCap != null && rewardAmount > campaign.rewardCap) {
       rewardAmount = campaign.rewardCap;
     }
 
@@ -133,6 +189,60 @@ export async function POST(request: NextRequest) {
         },
       }),
     ]);
+
+    // Multi-level: if referrer was referred by someone in this campaign, credit level-2 reward
+    if (
+      status === 'CONVERTED' &&
+      campaign.referralType === 'MULTI_LEVEL' &&
+      campaign.level2Reward != null &&
+      campaign.level2Reward > 0
+    ) {
+      const parentReferral = await prisma.referral.findFirst({
+        where: {
+          campaignId: campaign.id,
+          refereeId: referral.referrerId,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (parentReferral) {
+        let level2Amount = campaign.level2Reward;
+        if (campaign.level2Cap != null && level2Amount > campaign.level2Cap) {
+          level2Amount = campaign.level2Cap;
+        }
+        const l2Code = generateReferralCode();
+        const l2Referral = await prisma.$transaction(async (tx) => {
+          const r = await tx.referral.create({
+            data: {
+              Campaign: { connect: { id: campaign.id } },
+              referrerId: parentReferral.referrerId,
+              refereeId: referral.referrerId,
+              referralCode: l2Code,
+              status: 'CONVERTED',
+              convertedAt: new Date(),
+              rewardAmount: level2Amount,
+              level: 2,
+              parentReferralId: referral.id,
+            },
+          });
+          await tx.conversion.create({
+            data: {
+              Referral: { connect: { id: r.id } },
+              amount: null,
+              metadata: JSON.stringify({ type: 'level2', parentReferralId: referral.id }),
+            },
+          });
+          return r;
+        });
+        await triggerWebhook(app.id, 'REWARD_CREATED', {
+          referralId: l2Referral.id,
+          referrerId: l2Referral.referrerId,
+          rewardAmount: level2Amount,
+          campaignId: campaign.id,
+          level: 2,
+        });
+      }
+    }
 
     await logApiUsage(app.id, '/api/v1/conversions', request);
 

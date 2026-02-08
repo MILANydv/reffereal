@@ -21,10 +21,20 @@ export default function NewCampaignPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
-    referralType: 'ONE_SIDED',
-    rewardModel: 'FIXED_CURRENCY',
+    referralType: 'ONE_SIDED' as 'ONE_SIDED' | 'TWO_SIDED' | 'MULTI_LEVEL',
+    rewardModel: 'FIXED_CURRENCY' as 'FIXED_CURRENCY' | 'PERCENTAGE' | 'TIERED',
     rewardValue: 10,
+    rewardCap: null as number | null,
     firstTimeUserOnly: true,
+    startDate: '' as string,
+    endDate: '' as string,
+    conversionWindow: 30 as number | '',
+    rewardExpiration: null as number | null,
+    level1Reward: null as number | null,
+    level2Reward: null as number | null,
+    level1Cap: null as number | null,
+    level2Cap: null as number | null,
+    tierConfig: '' as string,
   });
 
   const handleNext = () => {
@@ -37,14 +47,39 @@ export default function NewCampaignPage() {
 
   const handleSubmit = async () => {
     if (!selectedApp) return;
-    
+
+    const payload: Record<string, unknown> = {
+      appId: selectedApp.id,
+      name: formData.name,
+      referralType: formData.referralType,
+      rewardModel: formData.rewardModel,
+      rewardValue: formData.rewardValue,
+      firstTimeUserOnly: formData.firstTimeUserOnly,
+    };
+    if (formData.rewardCap != null && formData.rewardCap !== '') payload.rewardCap = Number(formData.rewardCap);
+    if (formData.startDate) payload.startDate = formData.startDate;
+    if (formData.endDate) payload.endDate = formData.endDate;
+    if (formData.conversionWindow !== '' && formData.conversionWindow != null) payload.conversionWindow = Number(formData.conversionWindow);
+    if (formData.rewardExpiration != null && formData.rewardExpiration !== '') payload.rewardExpiration = Number(formData.rewardExpiration);
+    if (formData.level1Reward != null && formData.level1Reward !== '') payload.level1Reward = Number(formData.level1Reward);
+    if (formData.level2Reward != null && formData.level2Reward !== '') payload.level2Reward = Number(formData.level2Reward);
+    if (formData.level1Cap != null && formData.level1Cap !== '') payload.level1Cap = Number(formData.level1Cap);
+    if (formData.level2Cap != null && formData.level2Cap !== '') payload.level2Cap = Number(formData.level2Cap);
+    if (formData.tierConfig.trim()) {
+      try {
+        payload.tierConfig = JSON.parse(formData.tierConfig);
+      } catch {
+        payload.tierConfig = formData.tierConfig;
+      }
+    }
+
     try {
       const response = await fetch('/api/partner/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, appId: selectedApp.id }),
+        body: JSON.stringify(payload),
       });
-      
+
       if (response.ok) {
         router.push('/dashboard/v2/campaigns');
       }
@@ -188,7 +223,7 @@ export default function NewCampaignPage() {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Reward Model</label>
-                    <div className="flex space-x-4">
+                    <div className="flex flex-wrap gap-2">
                       {['FIXED_CURRENCY', 'PERCENTAGE', 'TIERED'].map((model) => (
                         <button 
                           key={model}
@@ -201,18 +236,93 @@ export default function NewCampaignPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reward Value</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reward Value (default or tier 0)</label>
                     <div className="relative max-w-[200px]">
                       {formData.rewardModel === 'FIXED_CURRENCY' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>}
                       <input 
                         type="number" 
                         className={`w-full ${formData.rewardModel === 'FIXED_CURRENCY' ? 'pl-7' : 'pl-4'} pr-10 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
                         value={formData.rewardValue}
-                        onChange={(e) => setFormData({ ...formData, rewardValue: parseFloat(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, rewardValue: parseFloat(e.target.value) || 0 })}
                       />
                       {formData.rewardModel === 'PERCENTAGE' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>}
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reward Cap (optional, $)</label>
+                    <input 
+                      type="number" 
+                      min={0}
+                      step={0.01}
+                      placeholder="None"
+                      className="w-full max-w-[200px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={formData.rewardCap ?? ''}
+                      onChange={(e) => setFormData({ ...formData, rewardCap: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    />
+                  </div>
+                  {formData.rewardModel === 'TIERED' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tier config (JSON)</label>
+                      <textarea 
+                        rows={6}
+                        placeholder={'{\n  "tiers": [\n    { "minConversions": 0, "rewardValue": 10 },\n    { "minConversions": 5, "rewardValue": 15, "rewardCap": 100 }\n  ]\n}'}
+                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg font-mono text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        value={formData.tierConfig}
+                        onChange={(e) => setFormData({ ...formData, tierConfig: e.target.value })}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Tiers ordered by minConversions; first matching tier applies.</p>
+                    </div>
+                  )}
+                  {formData.referralType === 'MULTI_LEVEL' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-200 dark:border-gray-800">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level 1 reward ($)</label>
+                        <input 
+                          type="number" 
+                          min={0}
+                          step={0.01}
+                          placeholder="Uses main reward"
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
+                          value={formData.level1Reward ?? ''}
+                          onChange={(e) => setFormData({ ...formData, level1Reward: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level 1 cap ($, optional)</label>
+                        <input 
+                          type="number" 
+                          min={0}
+                          step={0.01}
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
+                          value={formData.level1Cap ?? ''}
+                          onChange={(e) => setFormData({ ...formData, level1Cap: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level 2 reward ($)</label>
+                        <input 
+                          type="number" 
+                          min={0}
+                          step={0.01}
+                          placeholder="e.g. 5"
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
+                          value={formData.level2Reward ?? ''}
+                          onChange={(e) => setFormData({ ...formData, level2Reward: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level 2 cap ($, optional)</label>
+                        <input 
+                          type="number" 
+                          min={0}
+                          step={0.01}
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
+                          value={formData.level2Cap ?? ''}
+                          onChange={(e) => setFormData({ ...formData, level2Cap: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -229,7 +339,7 @@ export default function NewCampaignPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
                     <div>
                       <div className="font-bold">First-time users only</div>
-                      <p className="text-xs text-gray-500">Only award points if the referee is new to the platform.</p>
+                      <p className="text-xs text-gray-500">Only award if the referee is new to the platform.</p>
                     </div>
                     <button 
                       onClick={() => setFormData({ ...formData, firstTimeUserOnly: !formData.firstTimeUserOnly })}
@@ -238,12 +348,47 @@ export default function NewCampaignPage() {
                       <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.firstTimeUserOnly ? 'right-1' : 'left-1'}`} />
                     </button>
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Start date (optional)</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        value={formData.startDate}
+                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">End date (optional)</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        value={formData.endDate}
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Conversion Window (Days)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Conversion window (days)</label>
                     <input 
                       type="number" 
-                      defaultValue={30}
+                      min={0}
+                      placeholder="30"
                       className="w-full max-w-[120px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={formData.conversionWindow === '' ? '' : formData.conversionWindow}
+                      onChange={(e) => setFormData({ ...formData, conversionWindow: e.target.value === '' ? '' : parseInt(e.target.value, 10) })}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Conversion allowed only within this many days of click (or creation). 0 = no limit.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Reward expiration (days, optional)</label>
+                    <input 
+                      type="number" 
+                      min={0}
+                      placeholder="None"
+                      className="w-full max-w-[120px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={formData.rewardExpiration ?? ''}
+                      onChange={(e) => setFormData({ ...formData, rewardExpiration: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
                     />
                   </div>
                 </div>
@@ -267,16 +412,37 @@ export default function NewCampaignPage() {
                     <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Type</div>
                     <div className="font-medium capitalize">{formData.referralType.toLowerCase().replace('_', ' ')}</div>
                   </div>
-                  <div className="mt-4">
+                  <div>
                     <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Reward</div>
                     <div className="font-medium">
-                      {formData.rewardModel === 'FIXED_CURRENCY' ? `$${formData.rewardValue}` : `${formData.rewardValue}%`}
+                      {formData.rewardModel === 'FIXED_CURRENCY' ? `$${formData.rewardValue}` : formData.rewardModel === 'PERCENTAGE' ? `${formData.rewardValue}%` : 'Tiered'}
+                      {formData.rewardCap != null && formData.rewardCap > 0 && ` (cap $${formData.rewardCap})`}
                     </div>
                   </div>
-                  <div className="mt-4">
+                  <div>
                     <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Status</div>
                     <div className="font-medium text-green-600">Active upon launch</div>
                   </div>
+                  {(formData.startDate || formData.endDate) && (
+                    <div className="col-span-2">
+                      <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Schedule</div>
+                      <div className="font-medium">
+                        {formData.startDate || 'No start'} – {formData.endDate || 'No end'}
+                      </div>
+                    </div>
+                  )}
+                  {(formData.conversionWindow !== '' && formData.conversionWindow != null && formData.conversionWindow > 0) && (
+                    <div>
+                      <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Conversion window</div>
+                      <div className="font-medium">{formData.conversionWindow} days</div>
+                    </div>
+                  )}
+                  {formData.referralType === 'MULTI_LEVEL' && (formData.level2Reward != null && formData.level2Reward > 0) && (
+                    <div>
+                      <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Level 2 reward</div>
+                      <div className="font-medium">${formData.level2Reward}{formData.level2Cap ? ` (cap $${formData.level2Cap})` : ''}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

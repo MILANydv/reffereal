@@ -98,11 +98,27 @@ export async function POST(request: NextRequest) {
       rewardValue,
       rewardCap,
       firstTimeUserOnly,
+      startDate,
+      endDate,
+      conversionWindow,
+      rewardExpiration,
+      level1Reward,
+      level2Reward,
+      level1Cap,
+      level2Cap,
+      tierConfig,
     } = body;
 
     if (!appId || !name || !referralType || !rewardModel || rewardValue === undefined) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      return NextResponse.json(
+        { error: 'endDate must be on or after startDate' },
         { status: 400 }
       );
     }
@@ -125,8 +141,17 @@ export async function POST(request: NextRequest) {
         referralType,
         rewardModel,
         rewardValue,
-        rewardCap,
+        rewardCap: rewardCap != null ? rewardCap : undefined,
         firstTimeUserOnly: firstTimeUserOnly ?? true,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        conversionWindow: conversionWindow != null ? Number(conversionWindow) : undefined,
+        rewardExpiration: rewardExpiration != null ? Number(rewardExpiration) : undefined,
+        level1Reward: level1Reward != null ? Number(level1Reward) : undefined,
+        level2Reward: level2Reward != null ? Number(level2Reward) : undefined,
+        level1Cap: level1Cap != null ? Number(level1Cap) : undefined,
+        level2Cap: level2Cap != null ? Number(level2Cap) : undefined,
+        tierConfig: typeof tierConfig === 'string' ? tierConfig : (tierConfig ? JSON.stringify(tierConfig) : undefined),
       },
     });
 

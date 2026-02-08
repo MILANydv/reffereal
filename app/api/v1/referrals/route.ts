@@ -46,6 +46,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Campaign is not active' }, { status: 400 });
     }
 
+    const now = new Date();
+    if (campaign.startDate && now < campaign.startDate) {
+      return NextResponse.json(
+        { error: 'Campaign has not started yet' },
+        { status: 400 }
+      );
+    }
+    if (campaign.endDate && now > campaign.endDate) {
+      return NextResponse.json(
+        { error: 'Campaign has ended' },
+        { status: 400 }
+      );
+    }
+
     const referralCode = generateReferralCode();
     const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
       request.headers.get('x-real-ip') || null;
