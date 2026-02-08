@@ -190,6 +190,22 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
+    // Create Reward ledger row for level-1 (only if CONVERTED; FLAGGED rewards stay out of payout flow until resolved)
+    if (status === 'CONVERTED') {
+      await prisma.reward.create({
+        data: {
+          referralId: updatedReferral.id,
+          conversionId: conversion.id,
+          appId: app.id,
+          userId: referral.referrerId,
+          amount: rewardAmount,
+          currency: 'USD',
+          status: 'PENDING',
+          level: 1,
+        },
+      });
+    }
+
     // Multi-level: if referrer was referred by someone in this campaign, credit level-2 reward
     if (
       status === 'CONVERTED' &&
@@ -225,11 +241,23 @@ export async function POST(request: NextRequest) {
               parentReferralId: referral.id,
             },
           });
-          await tx.conversion.create({
+          const l2Conversion = await tx.conversion.create({
             data: {
               Referral: { connect: { id: r.id } },
               amount: null,
               metadata: JSON.stringify({ type: 'level2', parentReferralId: referral.id }),
+            },
+          });
+          await tx.reward.create({
+            data: {
+              referralId: r.id,
+              conversionId: l2Conversion.id,
+              appId: app.id,
+              userId: parentReferral.referrerId,
+              amount: level2Amount,
+              currency: 'USD',
+              status: 'PENDING',
+              level: 2,
             },
           });
           return r;

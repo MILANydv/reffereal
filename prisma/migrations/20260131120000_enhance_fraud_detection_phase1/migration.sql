@@ -19,20 +19,25 @@ ALTER TABLE "FraudFlag" ADD COLUMN IF NOT EXISTS "flaggedBy" TEXT;
 CREATE INDEX IF NOT EXISTS "FraudFlag_isManual_idx" ON "FraudFlag"("isManual");
 CREATE INDEX IF NOT EXISTS "FraudFlag_createdAt_idx" ON "FraudFlag"("createdAt");
 
--- AlterEnum: Add new fraud types to FraudType enum
--- Note: PostgreSQL requires these to be added one at a time and cannot be rolled back easily
+-- AlterEnum: Add new fraud types to FraudType enum (only if the enum type exists)
+-- FraudFlag may still use TEXT in older migrations; enum is created when schema is applied
 DO $$ 
+DECLARE
+    enum_oid OID;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'VELOCITY_CHECK' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'FraudType')) THEN
-        ALTER TYPE "FraudType" ADD VALUE 'VELOCITY_CHECK';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'DEVICE_FINGERPRINT' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'FraudType')) THEN
-        ALTER TYPE "FraudType" ADD VALUE 'DEVICE_FINGERPRINT';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'MANUAL_FLAG' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'FraudType')) THEN
-        ALTER TYPE "FraudType" ADD VALUE 'MANUAL_FLAG';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'VPN_PROXY_DETECTED' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'FraudType')) THEN
-        ALTER TYPE "FraudType" ADD VALUE 'VPN_PROXY_DETECTED';
+    SELECT pg_type.oid INTO enum_oid FROM pg_type WHERE typname = 'FraudType';
+    IF enum_oid IS NOT NULL THEN
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'VELOCITY_CHECK' AND enumtypid = enum_oid) THEN
+            ALTER TYPE "FraudType" ADD VALUE 'VELOCITY_CHECK';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'DEVICE_FINGERPRINT' AND enumtypid = enum_oid) THEN
+            ALTER TYPE "FraudType" ADD VALUE 'DEVICE_FINGERPRINT';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'MANUAL_FLAG' AND enumtypid = enum_oid) THEN
+            ALTER TYPE "FraudType" ADD VALUE 'MANUAL_FLAG';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'VPN_PROXY_DETECTED' AND enumtypid = enum_oid) THEN
+            ALTER TYPE "FraudType" ADD VALUE 'VPN_PROXY_DETECTED';
+        END IF;
     END IF;
 END $$;

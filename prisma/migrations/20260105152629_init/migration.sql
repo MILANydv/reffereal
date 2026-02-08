@@ -6,8 +6,8 @@ CREATE TABLE "User" (
     "role" TEXT NOT NULL,
     "name" TEXT,
     "active" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -16,8 +16,8 @@ CREATE TABLE "Partner" (
     "userId" TEXT NOT NULL,
     "companyName" TEXT,
     "active" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Partner_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -30,8 +30,8 @@ CREATE TABLE "App" (
     "monthlyLimit" INTEGER NOT NULL DEFAULT 10000,
     "currentUsage" INTEGER NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "App_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -43,11 +43,11 @@ CREATE TABLE "Campaign" (
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
     "referralType" TEXT NOT NULL,
     "rewardModel" TEXT NOT NULL,
-    "rewardValue" REAL NOT NULL,
-    "rewardCap" REAL,
+    "rewardValue" DOUBLE PRECISION NOT NULL,
+    "rewardCap" DOUBLE PRECISION,
     "firstTimeUserOnly" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Campaign_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -59,11 +59,11 @@ CREATE TABLE "Referral" (
     "referrerId" TEXT NOT NULL,
     "refereeId" TEXT,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "clickedAt" DATETIME,
-    "convertedAt" DATETIME,
-    "rewardAmount" REAL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "clickedAt" TIMESTAMP(3),
+    "convertedAt" TIMESTAMP(3),
+    "rewardAmount" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Referral_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -71,9 +71,9 @@ CREATE TABLE "Referral" (
 CREATE TABLE "Conversion" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "referralId" TEXT NOT NULL,
-    "amount" REAL,
+    "amount" DOUBLE PRECISION,
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Conversion_referralId_fkey" FOREIGN KEY ("referralId") REFERENCES "Referral" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -82,7 +82,7 @@ CREATE TABLE "ApiUsageLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "appId" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
-    "timestamp" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "ipAddress" TEXT,
     "userAgent" TEXT,
     CONSTRAINT "ApiUsageLog_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App" ("id") ON DELETE CASCADE ON UPDATE CASCADE

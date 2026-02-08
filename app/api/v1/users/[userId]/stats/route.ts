@@ -35,7 +35,13 @@ export async function GET(
       referrerId: userId,
     };
 
-    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsAgg] = await Promise.all([
+    const rewardWhere = {
+      userId,
+      appId: app.id,
+      ...(campaignId ? { Referral: { campaignId } } : {}),
+    };
+
+    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsPendingAgg, rewardsPaidAgg] = await Promise.all([
       prisma.referral.count({ where: referralsMadeWhere }),
       prisma.referral.count({
         where: {
@@ -49,12 +55,19 @@ export async function GET(
           status: 'CONVERTED',
         },
       }),
-      prisma.referral.aggregate({
+      prisma.reward.aggregate({
         where: {
-          ...referralsMadeWhere,
-          status: 'CONVERTED',
+          ...rewardWhere,
+          status: { in: ['PENDING', 'APPROVED'] },
         },
-        _sum: { rewardAmount: true },
+        _sum: { amount: true },
+      }),
+      prisma.reward.aggregate({
+        where: {
+          ...rewardWhere,
+          status: 'PAID',
+        },
+        _sum: { amount: true },
       }),
     ]);
 
@@ -143,15 +156,9 @@ export async function GET(
       })
     );
 
-    // Calculate total rewards
-    const totalRewards = rewardsAgg._sum.rewardAmount || 0;
-    const pendingRewards = await prisma.referral.aggregate({
-      where: {
-        ...referralsMadeWhere,
-        status: { in: ['PENDING', 'CLICKED'] },
-      },
-      _sum: { rewardAmount: true },
-    });
+    const pendingAmount = rewardsPendingAgg._sum.amount || 0;
+    const paidAmount = rewardsPaidAgg._sum.amount || 0;
+    const totalRewards = pendingAmount + paidAmount;
 
     await logApiUsage(app.id, `/api/v1/users/${userId}/stats`, request);
 
@@ -175,8 +182,8 @@ export async function GET(
         : null,
       rewardsEarned: {
         total: totalRewards,
-        pending: pendingRewards._sum.rewardAmount || 0,
-        paid: totalRewards, // In current model, rewards are paid when converted
+        pending: pendingAmount,
+        paid: paidAmount,
       },
       referralCodesGenerated: codesGeneratedWithStats,
       referralCodesUsed: referralCodesUsed.map((ref) => ({

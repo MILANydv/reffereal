@@ -1,12 +1,12 @@
 -- AlterTable
 ALTER TABLE "Campaign" ADD COLUMN "conversionWindow" INTEGER;
-ALTER TABLE "Campaign" ADD COLUMN "endDate" DATETIME;
-ALTER TABLE "Campaign" ADD COLUMN "level1Cap" REAL;
-ALTER TABLE "Campaign" ADD COLUMN "level1Reward" REAL;
-ALTER TABLE "Campaign" ADD COLUMN "level2Cap" REAL;
-ALTER TABLE "Campaign" ADD COLUMN "level2Reward" REAL;
+ALTER TABLE "Campaign" ADD COLUMN "endDate" TIMESTAMP(3);
+ALTER TABLE "Campaign" ADD COLUMN "level1Cap" DOUBLE PRECISION;
+ALTER TABLE "Campaign" ADD COLUMN "level1Reward" DOUBLE PRECISION;
+ALTER TABLE "Campaign" ADD COLUMN "level2Cap" DOUBLE PRECISION;
+ALTER TABLE "Campaign" ADD COLUMN "level2Reward" DOUBLE PRECISION;
 ALTER TABLE "Campaign" ADD COLUMN "rewardExpiration" INTEGER;
-ALTER TABLE "Campaign" ADD COLUMN "startDate" DATETIME;
+ALTER TABLE "Campaign" ADD COLUMN "startDate" TIMESTAMP(3);
 ALTER TABLE "Campaign" ADD COLUMN "tierConfig" TEXT;
 
 -- CreateTable
@@ -14,15 +14,15 @@ CREATE TABLE "PricingPlan" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "monthlyPrice" REAL NOT NULL,
-    "yearlyPrice" REAL,
+    "monthlyPrice" DOUBLE PRECISION NOT NULL,
+    "yearlyPrice" DOUBLE PRECISION,
     "apiLimit" INTEGER NOT NULL,
     "maxApps" INTEGER NOT NULL,
-    "overagePrice" REAL NOT NULL,
+    "overagePrice" DOUBLE PRECISION NOT NULL,
     "features" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -31,14 +31,14 @@ CREATE TABLE "Subscription" (
     "partnerId" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "currentPeriodStart" DATETIME NOT NULL,
-    "currentPeriodEnd" DATETIME NOT NULL,
+    "currentPeriodStart" TIMESTAMP(3) NOT NULL,
+    "currentPeriodEnd" TIMESTAMP(3) NOT NULL,
     "stripeCustomerId" TEXT,
     "stripeSubscriptionId" TEXT,
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
-    "trialEndsAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "trialEndsAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Subscription_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Subscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "PricingPlan" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -47,16 +47,16 @@ CREATE TABLE "Subscription" (
 CREATE TABLE "Invoice" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "partnerId" TEXT NOT NULL,
-    "amount" REAL NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'USD',
     "status" TEXT NOT NULL,
-    "billingPeriodStart" DATETIME NOT NULL,
-    "billingPeriodEnd" DATETIME NOT NULL,
+    "billingPeriodStart" TIMESTAMP(3) NOT NULL,
+    "billingPeriodEnd" TIMESTAMP(3) NOT NULL,
     "apiUsage" INTEGER NOT NULL,
-    "overageAmount" REAL NOT NULL DEFAULT 0,
+    "overageAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "stripeInvoiceId" TEXT,
-    "paidAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "paidAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Invoice_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -68,8 +68,8 @@ CREATE TABLE "Webhook" (
     "secret" TEXT NOT NULL,
     "events" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Webhook_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -83,8 +83,8 @@ CREATE TABLE "WebhookDelivery" (
     "statusCode" INTEGER,
     "success" BOOLEAN NOT NULL DEFAULT false,
     "retryCount" INTEGER NOT NULL DEFAULT 0,
-    "nextRetryAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "nextRetryAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "WebhookDelivery_webhookId_fkey" FOREIGN KEY ("webhookId") REFERENCES "Webhook" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -96,11 +96,11 @@ CREATE TABLE "TeamMember" (
     "name" TEXT,
     "role" TEXT NOT NULL,
     "inviteToken" TEXT,
-    "inviteAcceptedAt" DATETIME,
-    "lastLoginAt" DATETIME,
+    "inviteAcceptedAt" TIMESTAMP(3),
+    "lastLoginAt" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "TeamMember_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -114,8 +114,8 @@ CREATE TABLE "FraudFlag" (
     "metadata" TEXT,
     "isResolved" BOOLEAN NOT NULL DEFAULT false,
     "resolvedBy" TEXT,
-    "resolvedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "resolvedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "FraudFlag_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -128,64 +128,21 @@ CREATE TABLE "FeatureFlag" (
     "isEnabled" BOOLEAN NOT NULL DEFAULT false,
     "rolloutPercent" INTEGER NOT NULL DEFAULT 0,
     "targetPartners" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
--- RedefineTables
-PRAGMA defer_foreign_keys=ON;
-PRAGMA foreign_keys=OFF;
-CREATE TABLE "new_App" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "apiKey" TEXT NOT NULL,
-    "partnerId" TEXT NOT NULL,
-    "monthlyLimit" INTEGER NOT NULL DEFAULT 10000,
-    "currentUsage" INTEGER NOT NULL DEFAULT 0,
-    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "isSandbox" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "App_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-INSERT INTO "new_App" ("apiKey", "createdAt", "currentUsage", "id", "monthlyLimit", "name", "partnerId", "status", "updatedAt") SELECT "apiKey", "createdAt", "currentUsage", "id", "monthlyLimit", "name", "partnerId", "status", "updatedAt" FROM "App";
-DROP TABLE "App";
-ALTER TABLE "new_App" RENAME TO "App";
-CREATE UNIQUE INDEX "App_apiKey_key" ON "App"("apiKey");
-CREATE INDEX "App_partnerId_idx" ON "App"("partnerId");
-CREATE INDEX "App_apiKey_idx" ON "App"("apiKey");
-CREATE INDEX "App_status_idx" ON "App"("status");
-CREATE TABLE "new_Referral" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "campaignId" TEXT NOT NULL,
-    "referralCode" TEXT NOT NULL,
-    "referrerId" TEXT NOT NULL,
-    "refereeId" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "clickedAt" DATETIME,
-    "convertedAt" DATETIME,
-    "rewardAmount" REAL,
-    "level" INTEGER NOT NULL DEFAULT 1,
-    "parentReferralId" TEXT,
-    "ipAddress" TEXT,
-    "isFlagged" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Referral_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Referral_parentReferralId_fkey" FOREIGN KEY ("parentReferralId") REFERENCES "Referral" ("id") ON DELETE SET NULL ON UPDATE CASCADE
-);
-INSERT INTO "new_Referral" ("campaignId", "clickedAt", "convertedAt", "createdAt", "id", "refereeId", "referralCode", "referrerId", "rewardAmount", "status", "updatedAt") SELECT "campaignId", "clickedAt", "convertedAt", "createdAt", "id", "refereeId", "referralCode", "referrerId", "rewardAmount", "status", "updatedAt" FROM "Referral";
-DROP TABLE "Referral";
-ALTER TABLE "new_Referral" RENAME TO "Referral";
-CREATE UNIQUE INDEX "Referral_referralCode_key" ON "Referral"("referralCode");
-CREATE INDEX "Referral_campaignId_idx" ON "Referral"("campaignId");
-CREATE INDEX "Referral_referralCode_idx" ON "Referral"("referralCode");
-CREATE INDEX "Referral_referrerId_idx" ON "Referral"("referrerId");
-CREATE INDEX "Referral_status_idx" ON "Referral"("status");
-CREATE INDEX "Referral_parentReferralId_idx" ON "Referral"("parentReferralId");
-CREATE INDEX "Referral_ipAddress_idx" ON "Referral"("ipAddress");
-PRAGMA foreign_keys=ON;
-PRAGMA defer_foreign_keys=OFF;
+-- AlterTable: App
+ALTER TABLE "App" ADD COLUMN IF NOT EXISTS "isSandbox" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable: Referral
+ALTER TABLE "Referral" ADD COLUMN IF NOT EXISTS "level" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "Referral" ADD COLUMN IF NOT EXISTS "parentReferralId" TEXT;
+ALTER TABLE "Referral" ADD COLUMN IF NOT EXISTS "ipAddress" TEXT;
+ALTER TABLE "Referral" ADD COLUMN IF NOT EXISTS "isFlagged" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Referral" ADD CONSTRAINT "Referral_parentReferralId_fkey" FOREIGN KEY ("parentReferralId") REFERENCES "Referral"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+CREATE INDEX IF NOT EXISTS "Referral_parentReferralId_idx" ON "Referral"("parentReferralId");
+CREATE INDEX IF NOT EXISTS "Referral_ipAddress_idx" ON "Referral"("ipAddress");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PricingPlan_type_key" ON "PricingPlan"("type");

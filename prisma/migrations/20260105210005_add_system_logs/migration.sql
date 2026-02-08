@@ -5,7 +5,7 @@ CREATE TABLE "SystemLog" (
     "message" TEXT NOT NULL,
     "source" TEXT,
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateIndex

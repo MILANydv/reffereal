@@ -36,6 +36,7 @@ model App {
   Campaign     Campaign[]
   FraudFlag    FraudFlag[]
   Webhook      Webhook[]
+  Reward       Reward[]
 
   @@index([apiKey])
   @@index([partnerId])
@@ -77,6 +78,7 @@ model Conversion {
   metadata   String?
   createdAt  DateTime @default(now())
   Referral   Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  Reward     Reward?
 
   @@index([createdAt])
   @@index([referralId])
@@ -237,6 +239,7 @@ model Referral {
   Campaign          Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   Referral          Referral?      @relation("ReferralToReferral", fields: [parentReferralId], references: [id])
   other_Referral    Referral[]     @relation("ReferralToReferral")
+  Reward            Reward[]
 
   @@index([campaignId])
   @@index([deviceFingerprint])
@@ -247,6 +250,33 @@ model Referral {
   @@index([referrerId])
   @@index([status, campaignId])
   @@index([status])
+}
+
+model Reward {
+  id                   String           @id @default(cuid())
+  referralId           String
+  conversionId         String?          @unique
+  appId                String
+  userId               String
+  amount               Float
+  currency             String           @default("USD")
+  status               RewardStatus     @default(PENDING)
+  level                Int              @default(1)
+  paidAt               DateTime?
+  payoutReference      String?
+  fulfillmentType      FulfillmentType?
+  fulfillmentReference String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  Referral             Referral         @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  Conversion           Conversion?      @relation(fields: [conversionId], references: [id], onDelete: SetNull)
+  App                  App              @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+  @@index([userId])
+  @@index([status])
+  @@index([referralId])
+  @@index([createdAt])
 }
 
 model Subscription {
@@ -409,6 +439,20 @@ enum ReferralStatus {
   CONVERTED
   EXPIRED
   FLAGGED
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+enum FulfillmentType {
+  CASH
+  STORE_CREDIT
+  THIRD_PARTY_OFFER
+  OTHER
 }
 
 enum ReferralType {

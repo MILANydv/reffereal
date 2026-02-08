@@ -38,7 +38,16 @@ export async function GET(
       referrerId: userId,
     };
 
-    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsAgg] = await Promise.all([
+    const rewardWhere = {
+      userId,
+      App: {
+        partnerId,
+        ...(appId ? { id: appId } : {}),
+      },
+      ...(campaignId ? { Referral: { campaignId } } : {}),
+    };
+
+    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsPendingAgg, rewardsPaidAgg] = await Promise.all([
       prisma.referral.count({ where: referralsMadeWhere }),
       prisma.referral.count({
         where: {
@@ -52,12 +61,13 @@ export async function GET(
           status: 'CONVERTED',
         },
       }),
-      prisma.referral.aggregate({
-        where: {
-          ...referralsMadeWhere,
-          status: 'CONVERTED',
-        },
-        _sum: { rewardAmount: true },
+      prisma.reward.aggregate({
+        where: { ...rewardWhere, status: { in: ['PENDING', 'APPROVED'] } },
+        _sum: { amount: true },
+      }),
+      prisma.reward.aggregate({
+        where: { ...rewardWhere, status: 'PAID' },
+        _sum: { amount: true },
       }),
     ]);
 
@@ -151,14 +161,9 @@ export async function GET(
       })
     );
 
-    const totalRewards = rewardsAgg._sum.rewardAmount || 0;
-    const pendingRewards = await prisma.referral.aggregate({
-      where: {
-        ...referralsMadeWhere,
-        status: { in: ['PENDING', 'CLICKED'] },
-      },
-      _sum: { rewardAmount: true },
-    });
+    const pendingAmount = rewardsPendingAgg._sum.amount || 0;
+    const paidAmount = rewardsPaidAgg._sum.amount || 0;
+    const totalRewards = pendingAmount + paidAmount;
 
     return NextResponse.json({
       userId,
@@ -182,8 +187,8 @@ export async function GET(
         : null,
       rewardsEarned: {
         total: totalRewards,
-        pending: pendingRewards._sum.rewardAmount || 0,
-        paid: totalRewards,
+        pending: pendingAmount,
+        paid: paidAmount,
       },
       referralCodesGenerated: codesGeneratedWithStats,
       referralCodesUsed: referralCodesUsed.map((ref) => ({
