@@ -294,7 +294,12 @@ export default function AppOverviewPage() {
                           <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} className="dark:text-slate-400" />
                           <Tooltip
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                            formatter={(value: number) => (value != null && value > 0 ? [`${value} calls`, selectedApp?.name || 'API calls']] : null)}
+                            formatter={(value: number) => {
+                              if (value != null && value > 0) {
+                                return [`${value} calls`, selectedApp?.name || 'API calls'];
+                              }
+                              return null;
+                            }}
                             labelFormatter={(label) => `Date: ${label}`}
                           />
                           {chartApps.length > 1 && (
