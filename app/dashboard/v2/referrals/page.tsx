@@ -12,18 +12,28 @@ import { useAppStore, Referral } from '@/lib/store';
 import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ReferralsPage() {
-  const { referrals, fetchReferrals, isLoading } = useAppStore();
+  const searchParams = useSearchParams();
+  const appIdFromUrl = searchParams.get('appId');
+  const { referrals, fetchReferrals, isLoading, selectedApp } = useAppStore();
   const router = useRouter();
-  const loading = isLoading['referrals-platform'];
+  const scopeAppId = appIdFromUrl || selectedApp?.id || null;
+  const loadingKey = scopeAppId ? `referrals-${scopeAppId}` : 'referrals-platform';
+  const loading = isLoading[loadingKey];
   const [markSuspiciousModal, setMarkSuspiciousModal] = useState<{ isOpen: boolean; referralId: string | null; referralCode: string }>({
     isOpen: false,
     referralId: null,
     referralCode: '',
   });
+  const [resolveModal, setResolveModal] = useState<{ isOpen: boolean; referralId: string | null; referralCode: string }>({
+    isOpen: false,
+    referralId: null,
+    referralCode: '',
+  });
   const [isMarking, setIsMarking] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -36,11 +46,10 @@ export default function ReferralsPage() {
 
   useEffect(() => {
     loadReferrals();
-  }, [currentPage, statusFilter, searchQuery, dateRange]);
+  }, [currentPage, statusFilter, searchQuery, dateRange, scopeAppId]);
 
   const loadReferrals = async () => {
-    // Fetch platform-level referrals (no appId = all apps)
-    const result = await fetchReferrals('platform', {
+    const result = await fetchReferrals(scopeAppId || 'platform', {
       page: currentPage,
       limit: itemsPerPage,
       status: statusFilter !== 'all' ? statusFilter : undefined,
@@ -58,8 +67,10 @@ export default function ReferralsPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Platform Referrals</h1>
-            <p className="text-gray-500 mt-1">Track and manage all referral instances across all your apps.</p>
+            <h1 className="text-3xl font-bold tracking-tight">{scopeAppId ? 'App Referrals' : 'Platform Referrals'}</h1>
+            <p className="text-gray-500 mt-1">
+              {scopeAppId ? `Referrals for this app.` : 'Track and manage all referral instances across all your apps.'}
+            </p>
           </div>
           <button className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors font-medium text-sm">
             <Download size={18} className="mr-2" />
@@ -145,7 +156,7 @@ export default function ReferralsPage() {
                 ) : referrals.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      No referrals found for this app.
+                      {scopeAppId ? 'No referrals found for this app.' : 'No referrals found.'}
                     </td>
                   </tr>
                 ) : (
@@ -203,13 +214,22 @@ export default function ReferralsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <ActionDropdown
-                          onMarkSuspicious={() => {
+                          onMarkSuspicious={referral.status !== 'FLAGGED' ? () => {
                             setMarkSuspiciousModal({
                               isOpen: true,
                               referralId: referral.id,
                               referralCode: referral.referralCode,
                             });
-                          }}
+                          } : undefined}
+                          onResolve={referral.status === 'FLAGGED' ? () => {
+                            setResolveModal({
+                              isOpen: true,
+                              referralId: referral.id,
+                              referralCode: referral.referralCode,
+                            });
+                          } : undefined}
+                          markSuspiciousLabel="Mark suspicious"
+                          resolveLabel="Resolve flag"
                         />
                       </td>
                     </tr>
@@ -258,7 +278,7 @@ export default function ReferralsPage() {
           onConfirm={async () => {
             if (!markSuspiciousModal.referralId) return;
             setIsMarking(true);
-              try {
+            try {
               const response = await fetch(`/api/partner/referrals/${markSuspiciousModal.referralId}/flag`, {
                 method: 'POST',
               });
@@ -278,6 +298,34 @@ export default function ReferralsPage() {
           cancelText="Cancel"
           variant="warning"
           isLoading={isMarking}
+        />
+
+        <ConfirmModal
+          isOpen={resolveModal.isOpen}
+          onClose={() => setResolveModal({ isOpen: false, referralId: null, referralCode: '' })}
+          onConfirm={async () => {
+            if (!resolveModal.referralId) return;
+            setIsResolving(true);
+            try {
+              const response = await fetch(`/api/partner/referrals/${resolveModal.referralId}/resolve`, {
+                method: 'POST',
+              });
+              if (response.ok) {
+                loadReferrals();
+                setResolveModal({ isOpen: false, referralId: null, referralCode: '' });
+              }
+            } catch (error) {
+              console.error('Error resolving referral flag:', error);
+            } finally {
+              setIsResolving(false);
+            }
+          }}
+          title="Resolve flag"
+          message={`Resolve the fraud flag for referral "${resolveModal.referralCode}"? The referral will be marked as no longer flagged.`}
+          confirmText="Resolve"
+          cancelText="Cancel"
+          variant="default"
+          isLoading={isResolving}
         />
       </div>
     </DashboardLayout>

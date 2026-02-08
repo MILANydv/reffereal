@@ -10,7 +10,7 @@ import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { Users, CheckCircle, DollarSign, AlertCircle, ArrowRight, Zap, Webhook } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import Link from 'next/link';
 import { Skeleton, StatCardSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
@@ -262,23 +262,95 @@ export default function AppOverviewPage() {
               <DateRangeFilter value={dateRange} onChange={setDateRange} presets={['7d', '30d', '90d', 'custom']} />
             </CardHeader>
             <CardBody>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={Array.isArray(stats?.apiUsageChart) ? stats.apiUsageChart : (stats?.apiUsageChart?.data || [])}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {(() => {
+                const chartData = stats?.apiUsageChart && 'data' in stats.apiUsageChart
+                  ? stats.apiUsageChart.data
+                  : Array.isArray(stats?.apiUsageChart)
+                    ? stats.apiUsageChart
+                    : [];
+                const chartApps = stats?.apiUsageChart && 'apps' in stats.apiUsageChart
+                  ? stats.apiUsageChart.apps
+                  : [];
+
+                if (chartData.length > 0 && chartApps.length > 0) {
+                  return (
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            {chartApps.map((app: { id: string; name: string }, index: number) => {
+                              const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+                              const color = colors[index % colors.length];
+                              return (
+                                <linearGradient key={app.id} id={`color-app-${app.id}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor={color} stopOpacity={0.2} />
+                                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                                </linearGradient>
+                              );
+                            })}
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-slate-700" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} className="dark:text-slate-400" />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} className="dark:text-slate-400" />
+                          <Tooltip
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            formatter={(value: number) => (value != null && value > 0 ? [`${value} calls`, selectedApp?.name || 'API calls']] : null)}
+                            labelFormatter={(label) => `Date: ${label}`}
+                          />
+                          {chartApps.length > 1 && (
+                            <Legend wrapperStyle={{ paddingTop: '12px' }} iconType="circle" iconSize={8} />
+                          )}
+                          {chartApps.map((app: { id: string; name: string }, index: number) => {
+                            const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+                            const color = colors[index % colors.length];
+                            return (
+                              <Area
+                                key={app.id}
+                                type="monotone"
+                                dataKey={app.name}
+                                stroke={color}
+                                strokeWidth={2}
+                                fillOpacity={0.6}
+                                fill={`url(#color-app-${app.id})`}
+                                name={app.name}
+                              />
+                            );
+                          })}
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                }
+                if (Array.isArray(stats?.apiUsageChart) && stats.apiUsageChart.length > 0 && stats.apiUsageChart.every((d: any) => 'value' in d)) {
+                  return (
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.apiUsageChart}>
+                          <defs>
+                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                          <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                          <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="h-[300px] w-full flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <p className="text-sm">No API usage data for this period</p>
+                      <p className="text-xs mt-1">API calls will appear here once you use the API with this app</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </CardBody>
           </Card>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -39,7 +40,10 @@ interface RewardRow {
 }
 
 export default function RewardsPage() {
+  const searchParams = useSearchParams();
+  const appIdFromUrl = searchParams.get('appId');
   const { apps, fetchApps, selectedApp } = useAppStore();
+  const effectiveAppId = appIdFromUrl || selectedApp?.id;
   const [rewards, setRewards] = useState<RewardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -67,7 +71,7 @@ export default function RewardsPage() {
       params.set('page', String(currentPage));
       params.set('limit', String(itemsPerPage));
       if (statusFilter !== 'all') params.set('status', statusFilter);
-      if (selectedApp?.id) params.set('appId', selectedApp.id);
+      if (effectiveAppId) params.set('appId', effectiveAppId);
       if (userIdSearch.trim()) params.set('userId', userIdSearch.trim());
       if (dateRange.startDate) params.set('startDate', dateRange.startDate);
       if (dateRange.endDate) params.set('endDate', dateRange.endDate);
@@ -88,7 +92,7 @@ export default function RewardsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, statusFilter, userIdSearch, dateRange.startDate, dateRange.endDate, selectedApp?.id]);
+  }, [currentPage, statusFilter, userIdSearch, dateRange.startDate, dateRange.endDate, effectiveAppId]);
 
   useEffect(() => {
     loadRewards();

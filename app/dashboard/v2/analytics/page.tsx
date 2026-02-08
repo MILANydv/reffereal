@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
@@ -36,16 +37,26 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-  const { selectedApp, analytics, fetchAnalytics, isLoading } = useAppStore();
-  const loading = isLoading[`analytics-${selectedApp?.id}`];
+  const searchParams = useSearchParams();
+  const appIdFromUrl = searchParams.get('appId');
+  const { selectedApp, apps, analytics, fetchAnalytics, setSelectedApp, isLoading } = useAppStore();
+  const effectiveAppId = appIdFromUrl || selectedApp?.id;
+  const loading = isLoading[`analytics-${effectiveAppId}`];
 
   useEffect(() => {
-    if (selectedApp) {
-      fetchAnalytics(selectedApp.id);
+    if (appIdFromUrl && apps.length > 0 && selectedApp?.id !== appIdFromUrl) {
+      const app = apps.find((a) => a.id === appIdFromUrl);
+      if (app) setSelectedApp(app);
     }
-  }, [selectedApp, fetchAnalytics]);
+  }, [appIdFromUrl, apps, selectedApp?.id, setSelectedApp]);
 
-  if (!selectedApp) {
+  useEffect(() => {
+    if (effectiveAppId) {
+      fetchAnalytics(effectiveAppId);
+    }
+  }, [effectiveAppId, fetchAnalytics]);
+
+  if (!effectiveAppId) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-64 text-center">
