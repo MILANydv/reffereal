@@ -47,6 +47,86 @@ function buildEmbedCode(
   return `<script src="${WIDGETS_SCRIPT_BASE}"></script>\n<${tag} ${attrs.join(' ')}></${tag}>`;
 }
 
+const fontFamilyMap: Record<string, string> = {
+  system: 'system-ui, sans-serif',
+  Inter: '"Inter", sans-serif',
+  Roboto: '"Roboto", sans-serif',
+  monospace: 'monospace',
+};
+
+function WidgetPreview({
+  widgetId,
+  title,
+  appId,
+  primaryColor,
+  borderRadius,
+  fontFamily,
+}: {
+  widgetId: string;
+  title: string;
+  appId: string;
+  primaryColor: string;
+  borderRadius: string;
+  fontFamily: string;
+}) {
+  const font = fontFamilyMap[fontFamily] || fontFamilyMap.system;
+  const baseStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
+    fontFamily: font,
+    borderRadius,
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    padding: '1rem 1.25rem',
+    color: '#334155',
+    fontSize: '14px',
+    lineHeight: 1.5,
+  };
+
+  if (widgetId === 'referral-status') {
+    return (
+      <div style={baseStyle} className="dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-200">
+        <div style={{ fontWeight: 700, color: primaryColor, marginBottom: '0.5rem' }}>{title}</div>
+        <p style={{ margin: '0 0 0.5rem' }}>
+          App: <code style={{ fontSize: '12px', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px' }} className="dark:bg-slate-700 dark:text-slate-300">{appId || '—'}</code>
+        </p>
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }} className="dark:text-slate-400">
+          To show live referrals and rewards, pass <code style={{ fontSize: '11px' }}>user-id</code> and use our API to load data into your own UI.
+        </p>
+      </div>
+    );
+  }
+
+  if (widgetId === 'referral-share') {
+    return (
+      <div style={baseStyle} className="dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-200">
+        <div style={{ fontWeight: 700, color: primaryColor, marginBottom: '0.5rem' }}>{title}</div>
+        <p style={{ margin: '0 0 0.5rem' }}>
+          App: <code style={{ fontSize: '12px', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px' }} className="dark:bg-slate-700 dark:text-slate-300">{appId || '—'}</code>
+        </p>
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }} className="dark:text-slate-400">
+          Generate a code via <code style={{ fontSize: '11px' }}>POST /api/v1/referrals</code>, then display and share it from your app.
+        </p>
+      </div>
+    );
+  }
+
+  if (widgetId === 'leaderboard') {
+    return (
+      <div style={baseStyle} className="dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-200">
+        <div style={{ fontWeight: 700, color: primaryColor, marginBottom: '0.5rem' }}>{title}</div>
+        <p style={{ margin: '0 0 0.5rem' }}>
+          App: <code style={{ fontSize: '12px', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px' }} className="dark:bg-slate-700 dark:text-slate-300">{appId || '—'}</code>
+        </p>
+        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }} className="dark:text-slate-400">
+          Build a leaderboard using partner analytics or your backend.
+        </p>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default function DemoUiBundlesPage() {
   const { selectedApp } = useAppStore();
   const [appId, setAppId] = useState(selectedApp?.id ?? '');
@@ -198,20 +278,18 @@ export default function DemoUiBundlesPage() {
                           ))}
                         </ul>
                       </div>
-                      <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="mt-4">
                         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                          Preview
+                          Live preview
                         </p>
-                        <div
-                          className="h-24 rounded-lg flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600"
-                          style={{
-                            borderRadius: config.borderRadius,
-                            backgroundColor: `${config.primaryColor}12`,
-                            color: config.primaryColor,
-                          }}
-                        >
-                          &lt;{widget.tag} /&gt;
-                        </div>
+                        <WidgetPreview
+                          widgetId={widget.id}
+                          title={widget.name.replace(' Widget', '')}
+                          appId={appId || 'YOUR_APP_ID'}
+                          primaryColor={config.primaryColor}
+                          borderRadius={config.borderRadius}
+                          fontFamily={config.fontFamily}
+                        />
                       </div>
                     </div>
                     <div className="flex-1 p-6">
