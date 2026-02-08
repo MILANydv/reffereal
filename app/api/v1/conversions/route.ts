@@ -205,8 +205,9 @@ export async function POST(request: NextRequest) {
             level: 1,
           },
         });
-      } catch (_err) {
-        // Reward table may not exist yet (migration not applied)
+      } catch (err) {
+        // Reward table may not exist (migration not applied), or DB constraint error
+        console.error('[Conversion] Reward create failed:', err);
       }
     }
 
@@ -267,8 +268,8 @@ export async function POST(request: NextRequest) {
               level: 2,
             },
           });
-        } catch (_err) {
-          // Reward table may not exist yet (migration not applied)
+        } catch (err) {
+          console.error('[Conversion] Level-2 reward create failed:', err);
         }
         const l2ReferralForWebhook = l2Referral.r;
         await triggerWebhook(app.id, 'REWARD_CREATED', {

@@ -3,80 +3,81 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Rocket, Key, Code, Webhook, LayoutGrid, Copy, Lock, ShoppingCart, Cloud } from 'lucide-react';
 
 const BASE_URL = 'https://reffereal.vercel.app';
 
-export default function DocsPage() {
-  const [activeTab, setActiveTab] = useState<'quickstart' | 'auth' | 'endpoints' | 'webhooks' | 'scenarios'>('quickstart');
+const TABS = [
+  { id: 'quickstart' as const, label: 'Quick Start', icon: Rocket },
+  { id: 'auth' as const, label: 'Authentication', icon: Key },
+  { id: 'endpoints' as const, label: 'API Reference', icon: Code },
+  { id: 'webhooks' as const, label: 'Webhooks', icon: Webhook },
+  { id: 'scenarios' as const, label: 'Examples', icon: LayoutGrid },
+];
 
-  const tabs = [
-    { id: 'quickstart', label: 'Quick Start', icon: 'rocket_launch' },
-    { id: 'auth', label: 'Authentication', icon: 'key' },
-    { id: 'endpoints', label: 'API Endpoints', icon: 'api' },
-    { id: 'webhooks', label: 'Webhooks', icon: 'webhook' },
-    { id: 'scenarios', label: 'Integration Scenarios', icon: 'hub' },
-  ];
+export default function DocsPage() {
+  const [activeTab, setActiveTab] = useState<typeof TABS[number]['id']>('quickstart');
 
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-primary/10">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-[110] bg-white/80 backdrop-blur-md border-b border-slate-100 h-20 flex items-center">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-8 w-full flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/">
-              <img src="/logos/logo.png" alt="Incenta" className="h-10 md:h-12" />
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      {/* Top nav */}
+      <nav className="fixed top-0 w-full z-[110] bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 h-14 flex items-center">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/logos/logo.png" alt="Logo" className="h-8" />
+              <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 hidden sm:inline">/docs</span>
             </Link>
-            <div className="h-6 w-px bg-slate-100 hidden md:block"></div>
-            <span className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest hidden md:block">v2.0 Infrastructure Docs</span>
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider hidden md:inline">API v1</span>
           </div>
-          <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-navy hover:text-primary transition-colors">
-            Back to Ingress
+          <Link href="/login" className="text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+            Dashboard →
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-[1400px] mx-auto px-6 md:px-8 pt-32 pb-20">
-        <div className="flex flex-col lg:flex-row gap-16">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-20 pb-16">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
 
-          {/* Sidebar */}
-          <aside className="lg:w-64 shrink-0 space-y-8">
-            <div className="space-y-1">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400 mb-6">Integration</p>
-              <div className="flex flex-col gap-2">
-                {tabs.map((tab) => (
+          {/* Sidebar - sticky on desktop */}
+          <aside className="lg:w-56 shrink-0 lg:sticky lg:top-24 lg:self-start">
+            <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-1" aria-label="Documentation sections">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 ${activeTab === tab.id
-                      ? 'bg-navy text-white shadow-xl shadow-navy/10 translate-x-1'
-                      : 'text-slate-500 hover:text-navy hover:bg-slate-50'
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2.5 border lg:border-0 ${activeTab === tab.id
+                      ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-300 dark:border-zinc-600'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 border-zinc-200 dark:border-zinc-800'
                       }`}
                   >
-                    <span className="material-symbols-outlined text-lg">{tab.icon}</span>
+                    <Icon size={18} className="shrink-0" />
                     {tab.label}
                   </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 leading-tight">Current Engine Status</p>
-              <div className="flex items-center gap-3">
-                <span className="size-2 rounded-full bg-emerald-500"></span>
-                <span className="text-[10px] font-bold font-mono text-navy">API PROD: 100%</span>
+                );
+              })}
+            </nav>
+            <div className="mt-6 p-3 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
+                <span className="text-xs font-mono">All systems operational</span>
               </div>
             </div>
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1 max-w-4xl">
+          {/* Main content */}
+          <main className="flex-1 min-w-0 max-w-3xl">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8"
               >
                 {activeTab === 'quickstart' && <QuickStartSection />}
                 {activeTab === 'auth' && <AuthSection />}
@@ -96,6 +97,7 @@ type Language = 'curl' | 'nodejs' | 'python' | 'php';
 
 function CodeBlock({ snippets, title }: { snippets: Record<Language, string>; title?: string }) {
   const [lang, setLang] = useState<Language>('curl');
+  const [copied, setCopied] = useState(false);
 
   const languages: { id: Language; label: string }[] = [
     { id: 'curl', label: 'cURL' },
@@ -104,33 +106,45 @@ function CodeBlock({ snippets, title }: { snippets: Record<Language, string>; ti
     { id: 'php', label: 'PHP' },
   ];
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(snippets[lang]);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="relative group rounded-2xl overflow-hidden bg-navy text-white shadow-2xl my-8">
-      <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
-        <div className="flex gap-4">
+    <div className="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-900 text-zinc-100 my-6">
+      <div className="px-4 py-2.5 bg-zinc-800/80 border-b border-zinc-700 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex gap-1">
           {languages.map((l) => (
             <button
               key={l.id}
+              type="button"
               onClick={() => setLang(l.id)}
-              className={`text-[10px] font-bold font-mono uppercase tracking-widest transition-colors ${lang === l.id ? 'text-primary' : 'text-slate-500 hover:text-slate-300'
+              className={`px-3 py-1.5 rounded text-xs font-mono transition-colors ${lang === l.id
+                ? 'bg-zinc-600 text-white'
+                : 'text-zinc-400 hover:text-zinc-200'
                 }`}
             >
               {l.label}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-4">
-          {title && <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-widest">{title}</span>}
+        <div className="flex items-center gap-2">
+          {title && <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline">{title}</span>}
           <button
-            onClick={() => navigator.clipboard.writeText(snippets[lang])}
-            className="text-slate-500 hover:text-white transition-colors"
+            type="button"
+            onClick={handleCopy}
+            aria-label="Copy code"
+            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
           >
-            <span className="material-symbols-outlined text-sm">content_copy</span>
+            <Copy size={16} />
           </button>
+          {copied && <span className="text-xs text-emerald-400 font-mono">Copied</span>}
         </div>
       </div>
-      <div className="p-6 overflow-x-auto">
-        <pre className="font-mono text-xs md:text-sm leading-relaxed text-slate-300">
+      <div className="p-4 overflow-x-auto">
+        <pre className="font-mono text-xs sm:text-sm leading-relaxed text-zinc-300 whitespace-pre">
           {snippets[lang]}
         </pre>
       </div>
@@ -140,48 +154,46 @@ function CodeBlock({ snippets, title }: { snippets: Record<Language, string>; ti
 
 function SectionHeader({ title, badge }: { title: string; badge: string }) {
   return (
-    <div className="mb-12 space-y-4">
-      <span className="text-[10px] font-extrabold uppercase tracking-[0.4em] text-primary">{badge}</span>
-      <h2 className="text-4xl md:text-5xl font-extrabold text-navy tracking-tight leading-tight">{title}</h2>
-    </div>
+    <header className="mb-8 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2">{badge}</p>
+      <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-sans">{title}</h1>
+    </header>
   );
 }
 
 function QuickStartSection() {
   return (
     <div>
-      <SectionHeader title="Infrastructure Boot." badge="Quick Start" />
-      <div className="space-y-12 text-slate-600 font-medium leading-relaxed font-sans">
-        <p className="text-lg text-slate-500">
-          This protocol will guide you through the process of initializing your Incenta referral ecosystem. Most integrations take less than 15 minutes.
-        </p>
+      <SectionHeader title="Quick Start" badge="Getting started" />
+      <p className="text-zinc-600 dark:text-zinc-400 mb-8">
+        Get your referral API running in under 15 minutes.
+      </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 border-t border-slate-100">
-          <div className="space-y-4">
-            <div className="size-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center font-bold text-navy">01</div>
-            <h3 className="text-xl font-bold text-navy">Obtain Master Key</h3>
-            <p className="text-sm">Sign in to the <Link href="/login" className="text-primary hover:underline">ingress portal</Link>, select an app, then copy your API key from <strong>API &amp; Keys</strong> or from <Link href="/dashboard/v2/apps" className="text-primary hover:underline">App Settings</Link>. Keep the key secret and use it in the <code className="font-mono text-navy">Authorization: Bearer YOUR_API_KEY</code> header.</p>
-          </div>
-          <div className="space-y-4">
-            <div className="size-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center font-bold text-navy">02</div>
-            <h3 className="text-xl font-bold text-navy">Deploy Campaign</h3>
-            <p className="text-sm">Define your multi-currency rewards and referral logic in the partner dashboard to get a <code className="text-navy font-bold font-mono">campaign_id</code>.</p>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
+          <span className="inline-block w-8 h-8 rounded bg-zinc-200 dark:bg-zinc-700 font-mono text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-center mb-3">1</span>
+          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Get your API key</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Sign in to the <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">dashboard</Link>, select an app, then copy your key from <strong>API &amp; Keys</strong> or <Link href="/dashboard/v2/apps" className="text-blue-600 dark:text-blue-400 hover:underline">App Settings</Link>. Use it in the <code className="font-mono text-xs bg-zinc-200 dark:bg-zinc-700 px-1 rounded">Authorization: Bearer &lt;key&gt;</code> header.</p>
         </div>
-
-        <div className="pt-10 space-y-6">
-          <h3 className="text-sm font-extrabold uppercase tracking-widest text-navy">Base Protocol URL</h3>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 font-mono text-xs font-bold text-navy">
-            {BASE_URL}/api/v1
-          </div>
+        <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
+          <span className="inline-block w-8 h-8 rounded bg-zinc-200 dark:bg-zinc-700 font-mono text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-center mb-3">2</span>
+          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Create a campaign</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">In the partner dashboard, create a campaign and note the <code className="font-mono text-xs bg-zinc-200 dark:bg-zinc-700 px-1 rounded">campaign_id</code> for API calls.</p>
         </div>
+      </div>
 
-        <div className="pt-10 space-y-6">
-          <h3 className="text-sm font-extrabold uppercase tracking-widest text-navy">Initial Link Generation</h3>
-          <p className="text-sm">Generate referral links by appending the referral code to your base URL. We recommend using our <code className="text-navy font-bold font-mono">/referrals</code> endpoint to map users to codes.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 font-mono text-xs font-bold text-navy">
-            https://yourbrand.com/signup?ref=ABC123XYZ
-          </div>
+      <div className="space-y-4 mb-6">
+        <h3 className="text-sm font-mono font-semibold text-zinc-700 dark:text-zinc-300">Base URL</h3>
+        <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-sm text-zinc-800 dark:text-zinc-200 break-all">
+          {BASE_URL}/api/v1
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-mono font-semibold text-zinc-700 dark:text-zinc-300">Referral link format</h3>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Append the referral code (from <code className="font-mono text-xs">POST /referrals</code>) to your signup URL.</p>
+        <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-sm text-zinc-800 dark:text-zinc-200">
+          https://yourbrand.com/signup?ref=ABC123XYZ
         </div>
       </div>
     </div>
@@ -215,18 +227,18 @@ $response = curl_exec($ch);
 
   return (
     <div>
-      <SectionHeader title="Bearer Tokens." badge="Authentication" />
-      <div className="space-y-8 text-slate-600 font-medium leading-relaxed">
-        <p>All API requests require your app&apos;s API key sent as a <strong>Bearer token</strong> in the <code className="font-mono text-navy">Authorization</code> header. Example: <code className="font-mono text-navy">Authorization: Bearer sk_live_xxxx</code>. Invalid or missing keys return <code className="font-mono">401</code>; suspended apps or exceeded monthly limits return <code className="font-mono">403</code> or <code className="font-mono">429</code>.</p>
+      <SectionHeader title="Authentication" badge="Auth" />
+      <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        Send your API key in the <code className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">Authorization: Bearer &lt;key&gt;</code> header. Invalid key → <code className="font-mono">401</code>, suspended app or over limit → <code className="font-mono">403</code> / <code className="font-mono">429</code>.
+      </p>
 
-        <CodeBlock title="Authorization Protocol" snippets={snippets} />
+      <CodeBlock title="Example" snippets={snippets} />
 
-        <div className="p-6 rounded-2xl border-2 border-primary/10 bg-primary/5 flex gap-6 mt-12">
-          <span className="material-symbols-outlined text-primary font-bold">lock</span>
-          <p className="text-sm text-navy">
-            <span className="font-extrabold">Warning:</span> Keep your master keys isolated. Never expose production identities in client-side artifacts. Use Environment Variables to manage secrets.
-          </p>
-        </div>
+      <div className="mt-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-900/10 flex gap-4">
+        <Lock size={20} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <strong>Security:</strong> Never expose API keys in client-side code. Use environment variables and server-side only.
+        </p>
       </div>
     </div>
   );
@@ -324,93 +336,58 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
   };
 
   return (
-    <div className="space-y-20">
-      <SectionHeader title="API Matrix." badge="Reference Guide" />
+    <div className="space-y-12">
+      <SectionHeader title="API Reference" badge="Endpoints" />
 
-      <section className="space-y-8">
-        <div className="flex items-center gap-4">
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg font-extrabold text-[10px] tracking-widest">POST</span>
-          <h3 className="text-2xl font-extrabold text-navy">/referrals</h3>
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-xs font-bold">POST</span>
+          <h3 className="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">/referrals</h3>
         </div>
-        <p className="text-slate-500 font-medium">Generate a unique referral identity for an existing user (Advocate). This links the user to a campaign and returns a shareable code.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Create a referral for a user. Returns <code className="font-mono text-xs">referralCode</code>, <code className="font-mono text-xs">referralId</code>, <code className="font-mono text-xs">status</code>.</p>
 
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Request body</h4>
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">campaignId</span>
-              <span className="text-slate-400">string (required)</span>
-              <span className="text-slate-500 italic">Campaign ID from your dashboard.</span>
-            </div>
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">referrerId</span>
-              <span className="text-slate-400">string (required)</span>
-              <span className="text-slate-500 italic">Your internal user ID (the advocate).</span>
-            </div>
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">refereeId</span>
-              <span className="text-slate-400">string (optional)</span>
-              <span className="text-slate-500 italic">Referee ID if known at creation.</span>
-            </div>
-          </div>
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (201)</h4>
-          <div className="space-y-1 font-mono text-xs text-slate-600">
-            <div>referralCode, referralId, status; optionally warning, reasons, riskScore if flagged.</div>
-          </div>
+        <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <h4 className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">Request body</h4>
+          <dl className="space-y-2 font-mono text-xs">
+            <div className="flex gap-3 flex-wrap"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">campaignId</dt><dd className="text-zinc-500">string, required</dd></div>
+            <div className="flex gap-3 flex-wrap"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">referrerId</dt><dd className="text-zinc-500">string, required</dd></div>
+            <div className="flex gap-3 flex-wrap"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">refereeId</dt><dd className="text-zinc-500">string, optional</dd></div>
+          </dl>
+          <p className="mt-3 text-[10px] font-mono text-zinc-500">Response 201: referralCode, referralId, status</p>
         </div>
 
         <CodeBlock title="Create Referral Identity" snippets={referralSnippets} />
       </section>
 
-      <section className="space-y-8 pt-20 border-t border-slate-100">
-        <div className="flex items-center gap-4">
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg font-extrabold text-[10px] tracking-widest">POST</span>
-          <h3 className="text-2xl font-extrabold text-navy">/conversions</h3>
+      <section className="space-y-4 pt-10 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-xs font-bold">POST</span>
+          <h3 className="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">/conversions</h3>
         </div>
-        <p className="text-slate-500 font-medium">Record a conversion when a referred user completes the desired action (e.g. signup, purchase). Reward amounts are computed from the campaign; fraud checks apply.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Record a conversion. Creates a reward (PENDING) for the referrer. Body: referralCode, refereeId (required), amount, metadata (optional). Response: success, referralId, conversionId, rewardAmount, status.</p>
 
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Request body</h4>
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">referralCode</span>
-              <span className="text-slate-400">string (required)</span>
-            </div>
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">refereeId</span>
-              <span className="text-slate-400">string (required)</span>
-              <span className="text-slate-500 italic">Your internal ID for the user who converted.</span>
-            </div>
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">amount</span>
-              <span className="text-slate-400">number (optional)</span>
-              <span className="text-slate-500 italic">Order/transaction amount; campaign default used if omitted.</span>
-            </div>
-            <div className="flex gap-4 flex-wrap">
-              <span className="text-navy font-bold w-32">metadata</span>
-              <span className="text-slate-400">string (optional)</span>
-              <span className="text-slate-500 italic">Arbitrary JSON string for your records.</span>
-            </div>
-          </div>
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (201)</h4>
-          <div className="font-mono text-xs text-slate-600">success, referralId, conversionId, rewardAmount, status</div>
+        <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <h4 className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-3">Body</h4>
+          <dl className="space-y-1 font-mono text-xs">
+            <div className="flex gap-3"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">referralCode</dt><dd className="text-zinc-500">string</dd></div>
+            <div className="flex gap-3"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">refereeId</dt><dd className="text-zinc-500">string</dd></div>
+            <div className="flex gap-3"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">amount</dt><dd className="text-zinc-500">number, optional</dd></div>
+            <div className="flex gap-3"><dt className="text-zinc-900 dark:text-zinc-200 font-medium w-28">metadata</dt><dd className="text-zinc-500">string, optional</dd></div>
+          </dl>
         </div>
 
         <CodeBlock title="Initialize Conversion Event" snippets={conversionSnippets} />
       </section>
 
-      <section className="space-y-8 pt-20 border-t border-slate-100">
-        <div className="flex items-center gap-4">
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg font-extrabold text-[10px] tracking-widest">POST</span>
-          <h3 className="text-2xl font-extrabold text-navy">/clicks</h3>
+      <section className="space-y-4 pt-10 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-xs font-bold">POST</span>
+          <h3 className="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">/clicks</h3>
         </div>
-        <p className="text-slate-500 font-medium">Log a click event to track the journey from link click to conversion. Required for advanced device fingerprinting and fraud detection.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Track a click. Body: referralCode. Response: success, referralId, status.</p>
 
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Request body</h4>
-          <div className="font-mono text-xs">referralCode (string, required)</div>
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (200)</h4>
-          <div className="font-mono text-xs text-slate-600">success, referralId, status</div>
+        <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400">Body: referralCode (string)</p>
         </div>
         <CodeBlock title="Track Click" snippets={{
           curl: `curl -X POST "${BASE_URL}/api/v1/clicks" \\
@@ -430,19 +407,12 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY', 'Con
         }} />
       </section>
 
-      <section className="space-y-8 pt-20 border-t border-slate-100">
-        <div className="flex items-center gap-4">
-          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
-          <h3 className="text-2xl font-extrabold text-navy">/stats</h3>
+      <section className="space-y-4 pt-10 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-mono text-xs font-bold">GET</span>
+          <h3 className="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">/stats</h3>
         </div>
-        <p className="text-slate-500 font-medium">Retrieve real-time performance metrics for a specific campaign or user tier.</p>
-
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Query</h4>
-          <div className="font-mono text-xs">campaignId (optional) — filter by campaign.</div>
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response</h4>
-          <div className="font-mono text-xs text-slate-600">totalReferrals, totalClicks, totalConversions, conversionRate, totalRewardValue</div>
-        </div>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Query: campaignId (optional). Response: totalReferrals, totalClicks, totalConversions, conversionRate, totalRewardValue.</p>
         <CodeBlock title="Get stats" snippets={{
           curl: `curl -X GET "${BASE_URL}/api/v1/stats?campaignId=growth_q1" \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
@@ -456,30 +426,12 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY']);`
         }} />
       </section>
 
-      <section className="space-y-8 pt-20 border-t border-slate-100">
-        <div className="flex items-center gap-4">
-          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
-          <h3 className="text-2xl font-extrabold text-navy">/users/{'{userId}'}/stats</h3>
+      <section className="space-y-4 pt-10 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-mono text-xs font-bold">GET</span>
+          <h3 className="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">/users/{'{userId}'}/stats</h3>
         </div>
-        <p className="text-slate-500 font-medium">Get detailed referral statistics for a specific user, including referrals made, referrals received, rewards earned, and referral codes generated/used.</p>
-
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Query Parameters</h4>
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex gap-4">
-              <span className="text-navy font-bold w-32">campaignId</span>
-              <span className="text-slate-400">string (Optional)</span>
-              <span className="text-slate-500 italic">// Filter stats by campaign ID</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Path &amp; query</h4>
-          <div className="font-mono text-xs">GET /api/v1/users/<span className="text-primary">:userId</span>/stats — campaignId (optional)</div>
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response</h4>
-          <div className="font-mono text-xs text-slate-600">userId, referralsMade (total, clicked, converted), referralsReceived, rewardsEarned (total, pending, paid), referralCodesGenerated, referralCodesUsed</div>
-        </div>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Query: campaignId (optional). Returns user stats: referralsMade, referralsReceived, rewardsEarned, referralCodesGenerated, referralCodesUsed.</p>
         <CodeBlock title="User statistics" snippets={{
           curl: `curl -X GET "${BASE_URL}/api/v1/users/user_123/stats?campaignId=growth_q1" \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
@@ -493,22 +445,12 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY']);`
         }} />
       </section>
 
-      <section className="space-y-8 pt-20 border-t border-slate-100">
-        <div className="flex items-center gap-4">
-          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
-          <h3 className="text-2xl font-extrabold text-navy">/users/{'{userId}'}/rewards</h3>
+      <section className="space-y-4 pt-10 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-mono text-xs font-bold">GET</span>
+          <h3 className="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">/users/{'{userId}'}/rewards</h3>
         </div>
-        <p className="text-slate-500 font-medium">List rewards for a user (pending, approved, paid). Supports pagination and optional filters.</p>
-
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Query</h4>
-          <div className="space-y-1 font-mono text-xs">
-            <div>status (optional) — PENDING | APPROVED | PAID | CANCELLED</div>
-            <div>campaignId (optional), page (default 1), limit (default 25, max 100)</div>
-          </div>
-          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response</h4>
-          <div className="font-mono text-xs text-slate-600">rewards (array), pagination (page, limit, totalItems, totalPages)</div>
-        </div>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Query: status, campaignId, page, limit. Response: rewards[], pagination.</p>
         <CodeBlock title="List user rewards" snippets={{
           curl: `curl -X GET "${BASE_URL}/api/v1/users/user_123/rewards?status=PENDING&page=1&limit=25" \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
@@ -569,47 +511,32 @@ is_valid = verify_webhook(
   };
 
   return (
-    <div className="space-y-16">
-      <SectionHeader title="Webhook Events." badge="Webhooks" />
+    <div>
+      <SectionHeader title="Webhooks" badge="Events" />
 
-      <p className="text-slate-600 font-medium leading-relaxed">
-        Configure webhook URLs in the partner dashboard (Webhooks). We send HTTP POST requests to your URL with a JSON body and an <code className="font-mono text-navy">X-Webhook-Signature</code> header (HMAC-SHA256 of the raw body, hex-encoded). Always verify the signature using your webhook secret.
+      <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        Configure URLs in Dashboard → Webhooks. We POST a JSON body and <code className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-1 rounded">X-Webhook-Signature</code> (HMAC-SHA256 of raw body, hex). Always verify with your secret.
       </p>
 
-      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-        <h3 className="text-lg font-bold text-navy mb-4">Payload shape (all events)</h3>
-        <pre className="font-mono text-xs text-slate-600 overflow-x-auto">
-{`{
-  "event": "REFERRAL_CREATED" | "REFERRAL_CLICKED" | "REFERRAL_CONVERTED" | "REWARD_CREATED",
-  "data": { ... },
-  "timestamp": "2025-01-31T12:00:00.000Z"
-}`}
+      <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 mb-6">
+        <h3 className="text-sm font-mono font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Payload</h3>
+        <pre className="font-mono text-xs text-zinc-600 dark:text-zinc-400 overflow-x-auto whitespace-pre">
+{`{ "event": "REFERRAL_CREATED" | "REFERRAL_CLICKED" | "REFERRAL_CONVERTED" | "REWARD_CREATED",
+  "data": { ... }, "timestamp": "ISO8601" }`}
         </pre>
       </div>
 
-      <div className="space-y-6">
-        <h3 className="text-lg font-bold text-navy">Event types</h3>
-        <ul className="space-y-4 text-sm text-slate-600">
-          <li>
-            <strong className="text-navy font-mono">REFERRAL_CREATED</strong> — When a referral code is generated. data: referralId, referralCode, referrerId, refereeId (optional), campaignId.
-          </li>
-          <li>
-            <strong className="text-navy font-mono">REFERRAL_CLICKED</strong> — When the referral link is clicked. data: referralId, referralCode, clickedAt, campaignId.
-          </li>
-          <li>
-            <strong className="text-navy font-mono">REFERRAL_CONVERTED</strong> — When a conversion is recorded. data: referralId, referralCode, conversionId, rewardAmount, convertedAt, campaignId.
-          </li>
-          <li>
-            <strong className="text-navy font-mono">REWARD_CREATED</strong> — When a reward is created for the referrer (and optionally L2). data: referralId, referrerId, rewardAmount, campaignId, level (1 or 2).
-          </li>
-        </ul>
-      </div>
+      <h3 className="text-sm font-mono font-semibold text-zinc-800 dark:text-zinc-200 mb-3">Event types</h3>
+      <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400 mb-8">
+        <li><code className="font-mono text-xs">REFERRAL_CREATED</code> — code generated. data: referralId, referralCode, referrerId, campaignId.</li>
+        <li><code className="font-mono text-xs">REFERRAL_CLICKED</code> — link clicked. data: referralId, referralCode, clickedAt, campaignId.</li>
+        <li><code className="font-mono text-xs">REFERRAL_CONVERTED</code> — conversion recorded. data: referralId, conversionId, rewardAmount, campaignId.</li>
+        <li><code className="font-mono text-xs">REWARD_CREATED</code> — reward created. data: referralId, referrerId, rewardAmount, campaignId, level.</li>
+      </ul>
 
-      <div className="pt-8">
-        <h3 className="text-lg font-bold text-navy mb-4">Verifying the signature</h3>
-        <p className="text-slate-600 text-sm mb-4">Use the raw request body (string) and your webhook secret. Compute HMAC-SHA256 and compare to <code className="font-mono">X-Webhook-Signature</code> using a constant-time comparison.</p>
-        <CodeBlock title="Signature verification" snippets={verifySnippets} />
-      </div>
+      <h3 className="text-sm font-mono font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Verifying the signature</h3>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">HMAC-SHA256(raw body, secret) → hex; compare to header with constant-time equality.</p>
+      <CodeBlock title="Verification" snippets={verifySnippets} />
     </div>
   );
 }
@@ -645,36 +572,41 @@ await fetch('${BASE_URL}/api/v1/conversions', {
 });`;
 
   return (
-    <div className="space-y-16">
-      <SectionHeader title="Protocol Blueprints." badge="Integration Scenarios" />
+    <div>
+      <SectionHeader title="Examples" badge="Use cases" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="p-8 rounded-[2.5rem] border border-slate-100 bg-white space-y-6">
-          <span className="material-symbols-outlined text-primary text-3xl">shopping_cart</span>
-          <h3 className="text-2xl font-extrabold text-navy">E-Commerce Reward</h3>
-          <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Implement complex basket-size rewards. Only trigger payouts if order status becomes "Delivered" via webhooks.
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 space-y-4">
+          <div className="flex items-center gap-2">
+            <ShoppingCart size={22} className="text-zinc-600 dark:text-zinc-400" />
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">E-Commerce</h3>
+          </div>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Create referral on signup; track conversion when order is delivered. Use webhooks to sync order status.
           </p>
-          <div className="bg-slate-50 p-4 rounded-xl font-mono text-[10px] text-navy">
-            {codeEcom}
+          <div className="rounded-lg bg-zinc-900 text-zinc-300 p-3 font-mono text-[11px] overflow-x-auto">
+            <pre className="whitespace-pre">{codeEcom}</pre>
           </div>
         </div>
 
-        <div className="p-8 rounded-[2.5rem] border border-slate-100 bg-white space-y-6">
-          <span className="material-symbols-outlined text-primary text-3xl">cloud_queue</span>
-          <h3 className="text-2xl font-extrabold text-navy">SaaS Performance</h3>
-          <p className="text-sm text-slate-500 font-medium leading-relaxed">
-            Perfect for multi-app isolation. Use independent API keys for Sandbox vs Production environments.
+        <div className="p-5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 space-y-4">
+          <div className="flex items-center gap-2">
+            <Cloud size={22} className="text-zinc-600 dark:text-zinc-400" />
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">SaaS</h3>
+          </div>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Track conversion on upgrade. Use separate API keys for sandbox vs production.
           </p>
-          <div className="bg-slate-50 p-4 rounded-xl font-mono text-[10px] text-navy">
-            {codeSaaS}
+          <div className="rounded-lg bg-zinc-900 text-zinc-300 p-3 font-mono text-[11px] overflow-x-auto">
+            <pre className="whitespace-pre">{codeSaaS}</pre>
           </div>
         </div>
       </div>
 
-      <div className="pt-20 text-center space-y-8">
-        <h4 className="text-navy font-extrabold text-xl font-sans tracking-tight">Need a custom technical blueprint?</h4>
-        <Link href="/contact" className="tactile-btn !px-12 !py-5">Request Architecture Call</Link>
+      <div className="mt-10 pt-6 border-t border-zinc-200 dark:border-zinc-700 text-center">
+        <Link href="/contact" className="inline-flex items-center px-5 py-2.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium hover:opacity-90 transition-opacity">
+          Contact for custom integration
+        </Link>
       </div>
     </div>
   );
