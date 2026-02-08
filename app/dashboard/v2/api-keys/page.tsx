@@ -3,7 +3,7 @@
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { useAppStore } from '@/lib/store';
-import { Copy, RefreshCw, Key, ShieldCheck, Terminal, Check } from 'lucide-react';
+import { Copy, RefreshCw, Key, ShieldCheck, Terminal, Check, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -87,8 +87,9 @@ export default function ApiKeysPage() {
                       <button 
                         onClick={() => setShowKey(!showKey)}
                         className="p-2.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-800 transition-colors"
+                        aria-label={showKey ? 'Hide API key' : 'Show API key'}
                       >
-                        {showKey ? 'Hide' : 'Show'}
+                        {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                       <button 
                         onClick={() => copyToClipboard(selectedApp.apiKey)}

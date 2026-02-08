@@ -5,7 +5,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
-import { Search, MoreHorizontal, Building2, Zap, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, MoreHorizontal, Building2, Zap, Calendar, Eye, EyeOff, Edit, Trash2, Copy } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeaderSkeleton, StatCardSkeleton, TableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
@@ -23,6 +23,9 @@ export default function AdminAppsPage() {
     appName: '',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [visibleKeyIds, setVisibleKeyIds] = useState<Record<string, boolean>>({});
+  const [showApiKeyInModal, setShowApiKeyInModal] = useState(false);
+  const [copiedInModal, setCopiedInModal] = useState(false);
 
   useEffect(() => {
     fetchApps();
@@ -212,7 +215,19 @@ export default function AdminAppsPage() {
                     <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4">
                         <div className="font-medium text-gray-900 dark:text-gray-100">{app.name}</div>
-                        <div className="text-xs text-gray-500 font-mono mt-0.5">{app.apiKey}</div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs text-gray-500 font-mono">
+                            {visibleKeyIds[app.id] ? app.apiKey : '•'.repeat(24)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setVisibleKeyIds((prev) => ({ ...prev, [app.id]: !prev[app.id] }))}
+                            className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                            aria-label={visibleKeyIds[app.id] ? 'Hide API key' : 'Show API key'}
+                          >
+                            {visibleKeyIds[app.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-gray-900 dark:text-gray-100">
@@ -252,7 +267,10 @@ export default function AdminAppsPage() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => setViewModal(app)}
+                            onClick={() => {
+                              setViewModal(app);
+                              setShowApiKeyInModal(false);
+                            }}
                             className="p-2 text-blue-600 hover:text-blue-700 transition-colors"
                             title="View Details"
                           >
@@ -301,9 +319,34 @@ export default function AdminAppsPage() {
                   <label className="text-sm text-gray-500">Status</label>
                   <div><Badge variant={getStatusColor(viewModal.status)}>{viewModal.status}</Badge></div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="text-sm text-gray-500">API Key</label>
-                  <div className="text-sm font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded break-all">{viewModal.apiKey}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 text-sm font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded break-all min-w-0">
+                      {showApiKeyInModal ? viewModal.apiKey : '•'.repeat(24)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKeyInModal((v) => !v)}
+                      className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+                      aria-label={showApiKeyInModal ? 'Hide API key' : 'Show API key'}
+                    >
+                      {showApiKeyInModal ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(viewModal.apiKey);
+                        setCopiedInModal(true);
+                        setTimeout(() => setCopiedInModal(false), 2000);
+                      }}
+                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800"
+                      aria-label="Copy API key"
+                    >
+                      <Copy size={18} />
+                    </button>
+                  </div>
+                  {copiedInModal && <p className="text-xs text-green-600 mt-1">Copied</p>}
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Created</label>

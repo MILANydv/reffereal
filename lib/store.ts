@@ -6,6 +6,7 @@ export interface App {
   id: string;
   name: string;
   description?: string;
+  allowedDomains?: string | null;
   apiKey: string;
   monthlyLimit: number;
   currentUsage: number;

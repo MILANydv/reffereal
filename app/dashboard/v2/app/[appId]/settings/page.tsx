@@ -2,8 +2,9 @@
 
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAppStore } from '@/lib/store';
-import { Settings, Globe, Shield, Trash2, Save, RefreshCw } from 'lucide-react';
+import { Settings, Globe, Shield, Trash2, Save, RefreshCw, Eye, EyeOff, Copy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -11,7 +12,7 @@ export default function AppSettingsPage() {
   const params = useParams();
   const router = useRouter();
   const appId = params?.appId as string;
-  const { apps, invalidate, fetchApps } = useAppStore();
+  const { apps, invalidate, fetchApps, setSelectedApp } = useAppStore();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,6 +21,10 @@ export default function AppSettingsPage() {
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Find the app from the apps list
   const app = apps.find(a => a.id === appId);
@@ -36,7 +41,7 @@ export default function AppSettingsPage() {
       setFormData({
         name: app.name || '',
         description: app.description || '',
-        allowedDomains: 'localhost, *.referral.com', // TODO: Fetch from API
+        allowedDomains: app.allowedDomains ?? '',
       });
       setLoading(false);
     } else if (apps.length > 0 && !loading) {
@@ -63,6 +68,35 @@ export default function AppSettingsPage() {
       console.error('Error saving settings:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!app) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/partner/apps/${app.id}`, { method: 'DELETE' });
+      if (response.ok) {
+        invalidate('apps');
+        await fetchApps(true);
+        if (useAppStore.getState().selectedApp?.id === app.id) {
+          setSelectedApp(null);
+        }
+        setDeleteModal(false);
+        router.push('/dashboard/v2/apps');
+      }
+    } catch (error) {
+      console.error('Error deleting app:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const copyApiKey = () => {
+    if (app?.apiKey) {
+      navigator.clipboard.writeText(app.apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -177,7 +211,10 @@ export default function AppSettingsPage() {
                     <h4 className="font-bold text-gray-900 dark:text-gray-100">Delete this application</h4>
                     <p className="text-sm text-gray-500 mt-1">Once you delete an application, there is no going back. Please be certain.</p>
                   </div>
-                  <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold text-sm">
+                  <button
+                    onClick={() => setDeleteModal(true)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold text-sm"
+                  >
                     Delete App
                   </button>
                 </div>
@@ -197,7 +234,28 @@ export default function AppSettingsPage() {
                 </div>
                 <div className="text-sm">
                   <div className="text-gray-500 mb-1">API Key</div>
-                  <div className="font-mono bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded border border-gray-100 dark:border-gray-800 break-all text-xs">{app.apiKey}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 font-mono bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded border border-gray-100 dark:border-gray-800 break-all text-xs min-w-0">
+                      {showApiKey ? app.apiKey : '•'.repeat(24)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 transition-colors shrink-0"
+                      aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+                    >
+                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyApiKey}
+                      className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-900/30 transition-colors shrink-0"
+                      aria-label="Copy API key"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  {copied && <p className="text-xs text-green-600 mt-1">Copied</p>}
                 </div>
                 <div className="text-sm">
                   <div className="text-gray-500 mb-1">Status</div>
@@ -211,6 +269,18 @@ export default function AppSettingsPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal}
+        onClose={() => setDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Application"
+        message={`Are you sure you want to delete "${app.name}"? This action cannot be undone and will delete all associated campaigns and data.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </DashboardLayout>
   );
 }

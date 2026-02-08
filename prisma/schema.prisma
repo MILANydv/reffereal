@@ -20,17 +20,19 @@ model ApiUsageLog {
 }
 
 model App {
-  id           String        @id @default(cuid())
-  name         String
-  apiKey       String        @unique
-  partnerId    String
-  monthlyLimit Int           @default(10000)
-  currentUsage Int           @default(0)
-  status       AppStatus     @default(ACTIVE)
-  isSandbox    Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  fraudConfig  String?
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  allowedDomains  String?
+  apiKey          String        @unique
+  partnerId       String
+  monthlyLimit    Int           @default(10000)
+  currentUsage    Int           @default(0)
+  status          AppStatus     @default(ACTIVE)
+  isSandbox       Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  fraudConfig     String?
   ApiUsageLog  ApiUsageLog[]
   Partner      Partner       @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   Campaign     Campaign[]
