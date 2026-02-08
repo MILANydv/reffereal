@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
@@ -36,7 +37,8 @@ interface AnalyticsData {
   }>;
 }
 
-export default function AnalyticsPage() {
+/** Analytics content that reads URL and store; must be wrapped in Suspense due to useSearchParams. */
+function AnalyticsContent() {
   const searchParams = useSearchParams();
   const appIdFromUrl = searchParams.get('appId');
   const { selectedApp, apps, analytics, fetchAnalytics, setSelectedApp, isLoading } = useAppStore();
@@ -109,7 +111,7 @@ export default function AnalyticsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-            <p className="text-gray-500 mt-1">Detailed performance metrics for {selectedApp.name}.</p>
+            <p className="text-gray-500 mt-1">Detailed performance metrics for {selectedApp?.name || analytics?.appName || 'this app'}.</p>
           </div>
           <div className="flex items-center space-x-2">
             <button className="flex items-center px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
@@ -254,5 +256,34 @@ export default function AnalyticsPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+/** Analytics page: wraps content in Suspense so useSearchParams does not break static generation. */
+export default function AnalyticsPage() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardLayout>
+          <div className="space-y-8">
+            <PageHeaderSkeleton />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <CardSkeleton />
+              </div>
+              <CardSkeleton />
+            </div>
+          </div>
+        </DashboardLayout>
+      }
+    >
+      <AnalyticsContent />
+    </Suspense>
   );
 }

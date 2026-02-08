@@ -3,6 +3,11 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { resolveFraudFlag } from '@/lib/fraud-detection';
 
+/**
+ * POST /api/partner/referrals/[id]/resolve
+ * Resolve fraud flag(s) for a referral and clear its flagged state. Partner must own the app.
+ * Restores referral status to CONVERTED / CLICKED / PENDING based on conversion/click state.
+ */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

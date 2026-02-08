@@ -10,15 +10,17 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { DateRangeFilter, DateRange } from '@/components/ui/DateRangeFilter';
 import { useAppStore, Referral } from '@/lib/store';
 import { Search, Filter, Download, UserPlus, ShieldAlert, MousePointerClick, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { Skeleton, CardSkeleton, StatCardSkeleton } from '@/components/ui/Skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function ReferralsPage() {
+/** Referrals list and actions; uses useSearchParams so must be inside Suspense. */
+function ReferralsContent() {
   const searchParams = useSearchParams();
   const appIdFromUrl = searchParams.get('appId');
   const { referrals, fetchReferrals, isLoading, selectedApp } = useAppStore();
   const router = useRouter();
+  /** App scope: from URL ?appId= or selected app; null = platform-wide. */
   const scopeAppId = appIdFromUrl || selectedApp?.id || null;
   const loadingKey = scopeAppId ? `referrals-${scopeAppId}` : 'referrals-platform';
   const loading = isLoading[loadingKey];
@@ -44,11 +46,7 @@ export default function ReferralsPage() {
   const [pagination, setPagination] = useState<{ page: number; totalPages: number; totalItems: number } | null>(null);
   const itemsPerPage = 25;
 
-  useEffect(() => {
-    loadReferrals();
-  }, [currentPage, statusFilter, searchQuery, dateRange, scopeAppId]);
-
-  const loadReferrals = async () => {
+  const loadReferrals = useCallback(async () => {
     const result = await fetchReferrals(scopeAppId || 'platform', {
       page: currentPage,
       limit: itemsPerPage,
@@ -60,7 +58,11 @@ export default function ReferralsPage() {
     if (result.pagination) {
       setPagination(result.pagination);
     }
-  };
+  }, [scopeAppId, currentPage, statusFilter, searchQuery, dateRange.startDate, dateRange.endDate, fetchReferrals]);
+
+  useEffect(() => {
+    loadReferrals();
+  }, [loadReferrals]);
 
   return (
     <DashboardLayout>
@@ -84,13 +86,14 @@ export default function ReferralsPage() {
               <div className="relative flex-1 max-w-sm">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  type="text"
+                  type="search"
                   placeholder="Search by code or ID..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
+                  aria-label="Search referrals by code or ID"
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -105,6 +108,7 @@ export default function ReferralsPage() {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
+                aria-label="Filter by status"
                 className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="all">All Statuses</option>
@@ -324,10 +328,29 @@ export default function ReferralsPage() {
           message={`Resolve the fraud flag for referral "${resolveModal.referralCode}"? The referral will be marked as no longer flagged.`}
           confirmText="Resolve"
           cancelText="Cancel"
-          variant="default"
+          variant="info"
           isLoading={isResolving}
         />
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function ReferralsPage() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardLayout>
+          <div className="space-y-6">
+            <div className="h-10 w-56 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+            <Card className="p-8">
+              <div className="flex items-center justify-center py-12 text-gray-500">Loading referrals…</div>
+            </Card>
+          </div>
+        </DashboardLayout>
+      }
+    >
+      <ReferralsContent />
+    </Suspense>
   );
 }

@@ -54,7 +54,13 @@ export function ConfirmModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-md animate-in fade-in slide-in-from-top-2">
+      <div
+        className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 w-full max-w-md animate-in fade-in slide-in-from-top-2"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
+        aria-describedby="confirm-modal-desc"
+      >
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-start space-x-4 flex-1">
@@ -62,18 +68,20 @@ export function ConfirmModal({
               <AlertTriangle size={20} />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+              <h3 id="confirm-modal-title" className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                 {title}
               </h3>
-              <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">
+              <p id="confirm-modal-desc" className="mt-1 text-sm text-gray-600 dark:text-slate-400">
                 {message}
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="ml-4 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
             disabled={isLoading}
+            aria-label="Close"
           >
             <X size={20} />
           </button>

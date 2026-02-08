@@ -7,6 +7,7 @@ import { useAppStore } from '@/lib/store';
 import { Settings, Globe, Shield, Trash2, Save, RefreshCw, Eye, EyeOff, Copy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export default function AppSettingsPage() {
   const params = useParams();
@@ -59,13 +60,17 @@ export default function AppSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         invalidate('apps');
         await fetchApps(true);
+        toast.success('Settings saved');
+      } else {
+        toast.error(data.error || 'Failed to save settings');
       }
     } catch (error) {
       console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -76,6 +81,7 @@ export default function AppSettingsPage() {
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/partner/apps/${app.id}`, { method: 'DELETE' });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         invalidate('apps');
         await fetchApps(true);
@@ -83,10 +89,14 @@ export default function AppSettingsPage() {
           setSelectedApp(null);
         }
         setDeleteModal(false);
+        toast.success('App deleted');
         router.push('/dashboard/v2/apps');
+      } else {
+        toast.error(data.error || 'Failed to delete app');
       }
     } catch (error) {
       console.error('Error deleting app:', error);
+      toast.error('Failed to delete app');
     } finally {
       setIsDeleting(false);
     }
@@ -150,8 +160,11 @@ export default function AppSettingsPage() {
                 </div>
                 <div className="flex justify-end pt-4">
                   <button
+                    type="button"
                     onClick={handleSave}
                     disabled={saving}
+                    aria-busy={saving}
+                    aria-label={saving ? 'Saving settings' : 'Save changes'}
                     className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm disabled:opacity-50"
                   >
                     {saving ? <RefreshCw size={18} className="mr-2 animate-spin" /> : <Save size={18} className="mr-2" />}
@@ -212,7 +225,9 @@ export default function AppSettingsPage() {
                     <p className="text-sm text-gray-500 mt-1">Once you delete an application, there is no going back. Please be certain.</p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setDeleteModal(true)}
+                    aria-label="Delete this application"
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold text-sm"
                   >
                     Delete App
@@ -255,7 +270,7 @@ export default function AppSettingsPage() {
                       <Copy size={16} />
                     </button>
                   </div>
-                  {copied && <p className="text-xs text-green-600 mt-1">Copied</p>}
+                  {copied && <p className="text-xs text-green-600 mt-1" role="status" aria-live="polite">Copied</p>}
                 </div>
                 <div className="text-sm">
                   <div className="text-gray-500 mb-1">Status</div>

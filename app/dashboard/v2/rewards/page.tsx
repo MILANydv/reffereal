@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -39,7 +40,8 @@ interface RewardRow {
   App: { id: string; name: string };
 }
 
-export default function RewardsPage() {
+/** Rewards list and filters; uses useSearchParams so must be inside Suspense. */
+function RewardsContent() {
   const searchParams = useSearchParams();
   const appIdFromUrl = searchParams.get('appId');
   const { apps, fetchApps, selectedApp } = useAppStore();
@@ -401,5 +403,27 @@ export default function RewardsPage() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function RewardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardLayout>
+          <div className="space-y-6">
+            <div className="h-10 w-48 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+            <Card className="p-8">
+              <div className="flex items-center justify-center gap-2 text-gray-500">
+                <RefreshCw size={20} className="animate-spin" />
+                Loading rewards…
+              </div>
+            </Card>
+          </div>
+        </DashboardLayout>
+      }
+    >
+      <RewardsContent />
+    </Suspense>
   );
 }

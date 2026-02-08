@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink, ShieldAlert, ShieldCheck } from 'lucide-react';
 
+/** Dropdown actions for table rows: view, edit, delete, mark suspicious, resolve (e.g. fraud flag). */
 interface ActionDropdownProps {
   onView?: () => void;
   onEdit?: () => void;

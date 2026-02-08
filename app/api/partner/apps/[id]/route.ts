@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+/**
+ * PATCH /api/partner/apps/[id]
+ * Update app name, description, and/or allowedDomains. Partner must own the app.
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,10 +31,21 @@ export async function PATCH(
 
   try {
     const body = await request.json().catch(() => ({}));
-    const data: { name?: string; description?: string; allowedDomains?: string } = {};
-    if (typeof body.name === 'string') data.name = body.name;
-    if (typeof body.description === 'string' || body.description === null) data.description = body.description ?? null;
-    if (typeof body.allowedDomains === 'string' || body.allowedDomains === null) data.allowedDomains = body.allowedDomains ?? null;
+    const data: { name?: string; description?: string | null; allowedDomains?: string | null } = {};
+
+    if (typeof body.name === 'string') {
+      const trimmed = body.name.trim();
+      if (trimmed.length === 0) {
+        return NextResponse.json({ error: 'App name cannot be empty' }, { status: 400 });
+      }
+      data.name = trimmed;
+    }
+    if (typeof body.description === 'string' || body.description === null) {
+      data.description = typeof body.description === 'string' ? body.description.trim() || null : null;
+    }
+    if (typeof body.allowedDomains === 'string' || body.allowedDomains === null) {
+      data.allowedDomains = typeof body.allowedDomains === 'string' ? body.allowedDomains.trim() || null : null;
+    }
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json(app);
@@ -51,6 +66,10 @@ export async function PATCH(
   }
 }
 
+/**
+ * DELETE /api/partner/apps/[id]
+ * Permanently delete an app. Partner must own the app. Cascades to campaigns, webhooks, etc.
+ */
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
