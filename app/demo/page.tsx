@@ -30,6 +30,7 @@ export default function DemoPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [responses, setResponses] = useState<Record<string, ApiResponse>>({});
   const [copied, setCopied] = useState<string | null>(null);
+  const [rewardsResponse, setRewardsResponse] = useState<ApiResponse | null>(null);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -168,7 +169,7 @@ export default function DemoPage() {
           </div>
         ), { duration: 6000, icon: '🛑' });
       } else {
-        toast.success('Conversion tracked successfully');
+        toast.success('Conversion tracked. A reward was created (PENDING). See step 6 to list rewards.');
       }
     } else {
       toast.error(response.error || 'Failed to track conversion');
@@ -206,6 +207,23 @@ export default function DemoPage() {
       toast.success('User stats retrieved successfully');
     } else {
       toast.error(response.error || 'Failed to get user stats');
+    }
+  };
+
+  const handleGetUserRewards = async () => {
+    if (!apiKey || !userId) {
+      toast.error('Please enter API Key and User ID');
+      return;
+    }
+    setLoading('rewards');
+    const url = campaignId ? `/users/${userId}/rewards?campaignId=${campaignId}&limit=10` : `/users/${userId}/rewards?limit=10`;
+    const response = await makeRequest(url, 'GET');
+    setRewardsResponse(response);
+    setLoading(null);
+    if (response.success) {
+      toast.success(`Found ${response.data?.rewards?.length ?? 0} reward(s) for this user`);
+    } else {
+      toast.error(response.error || 'Failed to get rewards');
     }
   };
 
@@ -564,25 +582,32 @@ export default function DemoPage() {
                 </pre>
               </div>
               {responses.convert && (
-                <div className={`p-4 rounded-lg border ${responses.convert.success
-                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
-                  }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {responses.convert.success ? (
-                      <CheckCircle className="text-green-600" size={16} />
-                    ) : (
-                      <XCircle className="text-red-600" size={16} />
-                    )}
-                    <span className="font-semibold text-sm">
-                      {responses.convert.success ? 'Success' : 'Error'}
-                      {responses.convert.status && ` (${responses.convert.status})`}
-                    </span>
+                <>
+                  <div className={`p-4 rounded-lg border ${responses.convert.success
+                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                    }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {responses.convert.success ? (
+                        <CheckCircle className="text-green-600" size={16} />
+                      ) : (
+                        <XCircle className="text-red-600" size={16} />
+                      )}
+                      <span className="font-semibold text-sm">
+                        {responses.convert.success ? 'Success' : 'Error'}
+                        {responses.convert.status && ` (${responses.convert.status})`}
+                      </span>
+                    </div>
+                    <pre className="text-xs overflow-x-auto mt-2">
+                      {JSON.stringify(responses.convert.data || { error: responses.convert.error }, null, 2)}
+                    </pre>
                   </div>
-                  <pre className="text-xs overflow-x-auto mt-2">
-                    {JSON.stringify(responses.convert.data || { error: responses.convert.error }, null, 2)}
-                  </pre>
-                </div>
+                  {responses.convert.success && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      A reward was created (PENDING) for the referrer. List rewards in step 6 or manage in Dashboard → Rewards.
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </CardBody>
@@ -741,6 +766,85 @@ export default function DemoPage() {
                   </pre>
                 </div>
               )}
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Rewards (after conversion) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>6. Rewards (user)</span>
+              <Button
+                onClick={handleGetUserRewards}
+                disabled={loading === 'rewards' || !apiKey || !userId}
+                className="flex items-center gap-2"
+              >
+                {loading === 'rewards' ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Play size={16} />
+                    Get user rewards
+                  </>
+                )}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardBody>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              After a conversion (step 3), a reward is created with status PENDING. Use this endpoint to list rewards for a user (same User ID as referrer). Partners mark rewards paid in Dashboard → Rewards.
+            </p>
+            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                  GET /users/{'{userId}'}/rewards{campaignId ? `?campaignId=${campaignId}&limit=10` : '?limit=10'}
+                </span>
+                <button
+                  onClick={() => copyToClipboard(`curl -X GET "${API_BASE_URL}/users/${userId}/rewards${campaignId ? `?campaignId=${campaignId}` : ''}" \\
+  -H "Authorization: Bearer ${apiKey}"`, 'curl-rewards')}
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  {copied === 'curl-rewards' ? <CheckCircle size={12} /> : <Copy size={12} />}
+                  Copy cURL
+                </button>
+              </div>
+              <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
+                {`GET /users/${userId}/rewards${campaignId ? `?campaignId=${campaignId}` : ''}`}
+              </pre>
+            </div>
+            {rewardsResponse && (
+              <div className={`p-4 rounded-lg border ${rewardsResponse.success
+                ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  {rewardsResponse.success ? (
+                    <CheckCircle className="text-green-600" size={16} />
+                  ) : (
+                    <XCircle className="text-red-600" size={16} />
+                  )}
+                  <span className="font-semibold text-sm">
+                    {rewardsResponse.success ? 'Success' : 'Error'}
+                    {rewardsResponse.status && ` (${rewardsResponse.status})`}
+                  </span>
+                </div>
+                <pre className="text-xs overflow-x-auto mt-2">
+                  {JSON.stringify(rewardsResponse.data || { error: rewardsResponse.error }, null, 2)}
+                </pre>
+              </div>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/dashboard/v2/rewards"
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              >
+                <ExternalLink size={14} />
+                Open Rewards in Dashboard
+              </Link>
             </div>
           </CardBody>
         </Card>

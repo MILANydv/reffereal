@@ -6,9 +6,10 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DateRangeFilter, DateRange } from '@/components/ui/DateRangeFilter';
-import { CreditCard, ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CreditCard, ChevronLeft, ChevronRight, Search, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { toast } from 'react-hot-toast';
 
 type RewardStatus = 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
 type FulfillmentType = 'CASH' | 'STORE_CREDIT' | 'THIRD_PARTY_OFFER' | 'OTHER';
@@ -52,14 +53,12 @@ export default function AdminRewardsPage() {
   const [fulfillmentType, setFulfillmentType] = useState('');
   const [fulfillmentRef, setFulfillmentRef] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const itemsPerPage = 25;
 
-  useEffect(() => {
-    loadRewards();
-  }, [currentPage, statusFilter, userIdSearch, partnerIdFilter, appIdFilter, dateRange]);
-
-  const loadRewards = async () => {
+  const loadRewards = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const params = new URLSearchParams();
       params.set('page', String(currentPage));
@@ -71,18 +70,27 @@ export default function AdminRewardsPage() {
       if (dateRange.startDate) params.set('startDate', dateRange.startDate);
       if (dateRange.endDate) params.set('endDate', dateRange.endDate);
       const res = await fetch(`/api/admin/rewards?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Request failed (${res.status})`);
+      }
       const data = await res.json();
       setRewards(data.rewards ?? []);
       setPagination(data.pagination ?? null);
     } catch (e) {
-      console.error(e);
+      const message = e instanceof Error ? e.message : 'Failed to load rewards';
+      setLoadError(message);
       setRewards([]);
       setPagination(null);
+      console.error(e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, statusFilter, userIdSearch, partnerIdFilter, appIdFilter, dateRange.startDate, dateRange.endDate]);
+
+  useEffect(() => {
+    loadRewards();
+  }, [loadRewards]);
 
   const updateStatus = async (rewardId: string, status: RewardStatus, extra?: { payoutReference?: string; fulfillmentType?: string; fulfillmentReference?: string }) => {
     setUpdating(true);
@@ -92,14 +100,17 @@ export default function AdminRewardsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, ...extra }),
       });
-      if (!res.ok) throw new Error('Update failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Update failed');
       setMarkPaidModal({ isOpen: false, reward: null });
       setPayoutRef('');
       setFulfillmentType('');
       setFulfillmentRef('');
-      loadRewards();
+      toast.success(status === 'PAID' ? 'Reward marked as paid' : 'Reward approved');
+      await loadRewards();
     } catch (e) {
-      console.error(e);
+      const message = e instanceof Error ? e.message : 'Failed to update reward';
+      toast.error(message);
     } finally {
       setUpdating(false);
     }
@@ -115,6 +126,19 @@ export default function AdminRewardsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Rewards (Admin)</h1>
           <p className="text-gray-500 mt-1">View and manage all rewards across partners and apps.</p>
         </div>
+
+        {loadError && (
+          <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 px-4 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+              <AlertCircle size={20} aria-hidden />
+              <span className="text-sm font-medium">{loadError}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => loadRewards()} className="flex items-center gap-2 shrink-0" aria-label="Retry loading rewards">
+              <RefreshCw size={16} />
+              Retry
+            </Button>
+          </div>
+        )}
 
         <Card className="overflow-hidden">
           <div className="p-4 border-b border-gray-100 dark:border-gray-800 space-y-4">
@@ -198,8 +222,12 @@ export default function AdminRewardsPage() {
                   ))
                 ) : rewards.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
-                      No rewards found.
+                    <td colSpan={10} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3 text-gray-500">
+                        <CreditCard size={40} className="text-gray-300 dark:text-gray-600" aria-hidden />
+                        <p className="font-medium">No rewards found</p>
+                        <p className="text-sm max-w-sm">No rewards match your filters. Try adjusting filters or check partner apps for converted referrals.</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -235,12 +263,12 @@ export default function AdminRewardsPage() {
                       <td className="px-6 py-4 text-right">
                         {r.status === 'PENDING' && (
                           <>
-                            <Button variant="ghost" size="sm" className="mr-1" onClick={() => updateStatus(r.id, 'APPROVED')} disabled={updating}>Approve</Button>
-                            <Button variant="ghost" size="sm" onClick={() => setMarkPaidModal({ isOpen: true, reward: r })} disabled={updating}>Mark paid</Button>
+                            <Button variant="ghost" size="sm" className="mr-1" onClick={() => updateStatus(r.id, 'APPROVED')} disabled={updating} aria-label={`Approve reward ${r.Referral?.referralCode ?? r.id}`}>Approve</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setMarkPaidModal({ isOpen: true, reward: r })} disabled={updating} aria-label={`Mark reward ${r.Referral?.referralCode ?? r.id} as paid`}>Mark paid</Button>
                           </>
                         )}
                         {r.status === 'APPROVED' && (
-                          <Button variant="ghost" size="sm" onClick={() => setMarkPaidModal({ isOpen: true, reward: r })} disabled={updating}>Mark paid</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setMarkPaidModal({ isOpen: true, reward: r })} disabled={updating} aria-label={`Mark reward ${r.Referral?.referralCode ?? r.id} as paid`}>Mark paid</Button>
                         )}
                         {r.status !== 'PENDING' && r.status !== 'APPROVED' && '—'}
                       </td>
@@ -265,9 +293,9 @@ export default function AdminRewardsPage() {
         </Card>
 
         {markPaidModal.isOpen && markPaidModal.reward && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !updating && setMarkPaidModal({ isOpen: false, reward: null })}>
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold mb-4">Mark reward as paid</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !updating && setMarkPaidModal({ isOpen: false, reward: null })} role="presentation">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="admin-mark-paid-title">
+              <h3 id="admin-mark-paid-title" className="text-lg font-semibold mb-4">Mark reward as paid</h3>
               <p className="text-sm text-gray-500 mb-4">Amount: {markPaidModal.reward.currency} {markPaidModal.reward.amount}</p>
               <div className="space-y-3">
                 <div>
