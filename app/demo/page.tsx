@@ -82,6 +82,7 @@ export default function DemoPage() {
 
     if (response.success && response.data?.referralCode) {
       setReferralCode(response.data.referralCode);
+      setUserId(referrerId);
       if (response.data.warning) {
         toast((t) => (
           <div className="flex flex-col gap-1">
@@ -279,7 +280,7 @@ export default function DemoPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                User ID (for User Stats endpoint)
+                User ID (for User Stats in step 5)
               </label>
               <input
                 type="text"
@@ -288,7 +289,7 @@ export default function DemoPage() {
                 placeholder="user_123"
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               />
-              <p className="text-xs text-gray-500 mt-1">Used for testing the /users/{'{userId}'}/stats endpoint</p>
+              <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">Must match Referrer ID to see data. Auto-syncs when you create a referral in step 1.</p>
             </div>
             <div className="text-xs text-gray-500 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg">
               <strong>Base URL:</strong> {API_BASE_URL}
@@ -669,6 +670,16 @@ export default function DemoPage() {
                   placeholder="user_123"
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                 />
+                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                  Use the same ID as <strong>Referrer ID</strong> from step 1. It is auto-filled when you create a referral.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setUserId(referrerId)}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                >
+                  Use Referrer ID from step 1
+                </button>
               </div>
               <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
