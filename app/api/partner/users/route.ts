@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { getPartnerIdFromRequest } from '@/lib/shopify-session';
 
 export async function GET(request: NextRequest) {
-  const partnerId = await getPartnerIdFromRequest(request);
-  if (!partnerId) {
+  const session = await auth();
+  if (!session?.user?.partnerId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const partnerId = session.user.partnerId;
 
   const { searchParams } = new URL(request.url);
   const appId = searchParams.get('appId');
