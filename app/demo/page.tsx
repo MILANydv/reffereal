@@ -26,6 +26,7 @@ export default function DemoPage() {
   const [refereeId, setRefereeId] = useState('referee_' + Math.random().toString(36).substr(2, 9));
   const [referralCode, setReferralCode] = useState('');
   const [amount, setAmount] = useState('99.99');
+  const [userId, setUserId] = useState('user_' + Math.random().toString(36).substr(2, 9));
   const [loading, setLoading] = useState<string | null>(null);
   const [responses, setResponses] = useState<Record<string, ApiResponse>>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -187,6 +188,26 @@ export default function DemoPage() {
     setLoading(null);
   };
 
+  const handleGetUserStats = async () => {
+    if (!apiKey || !userId) {
+      toast.error('Please enter your API Key and User ID');
+      return;
+    }
+
+    setLoading('userStats');
+    const url = campaignId ? `/users/${userId}/stats?campaignId=${campaignId}` : `/users/${userId}/stats`;
+    const response = await makeRequest(url, 'GET');
+
+    setResponses({ ...responses, userStats: response });
+    setLoading(null);
+
+    if (response.success) {
+      toast.success('User stats retrieved successfully');
+    } else {
+      toast.error(response.error || 'Failed to get user stats');
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -255,6 +276,19 @@ export default function DemoPage() {
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                User ID (for User Stats endpoint)
+              </label>
+              <input
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                placeholder="user_123"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              />
+              <p className="text-xs text-gray-500 mt-1">Used for testing the /users/{'{userId}'}/stats endpoint</p>
             </div>
             <div className="text-xs text-gray-500 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg">
               <strong>Base URL:</strong> {API_BASE_URL}
@@ -591,6 +625,87 @@ export default function DemoPage() {
                   </div>
                   <pre className="text-xs overflow-x-auto mt-2">
                     {JSON.stringify(responses.stats.data || { error: responses.stats.error }, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Get User Stats */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>5. Get User Stats</span>
+              <Button
+                onClick={handleGetUserStats}
+                disabled={loading === 'userStats' || !apiKey || !userId}
+                className="flex items-center gap-2"
+              >
+                {loading === 'userStats' ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <Play size={16} />
+                    Test Endpoint
+                  </>
+                )}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  User ID <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="user_123"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                    GET /users/{userId}/stats{campaignId ? `?campaignId=${campaignId}` : ''}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(`curl -X GET "${API_BASE_URL}/users/${userId}/stats${campaignId ? `?campaignId=${campaignId}` : ''}" \\
+  -H "Authorization: Bearer ${apiKey}"`, 'curl-userStats')}
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    {copied === 'curl-userStats' ? <CheckCircle size={12} /> : <Copy size={12} />}
+                    Copy cURL
+                  </button>
+                </div>
+                <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto mt-2">
+                  {`GET /users/${userId}/stats${campaignId ? `?campaignId=${campaignId}` : ''}`}
+                </pre>
+              </div>
+              {responses.userStats && (
+                <div className={`p-4 rounded-lg border ${responses.userStats.success
+                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                  : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                  }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {responses.userStats.success ? (
+                      <CheckCircle className="text-green-600" size={16} />
+                    ) : (
+                      <XCircle className="text-red-600" size={16} />
+                    )}
+                    <span className="font-semibold text-sm">
+                      {responses.userStats.success ? 'Success' : 'Error'}
+                      {responses.userStats.status && ` (${responses.userStats.status})`}
+                    </span>
+                  </div>
+                  <pre className="text-xs overflow-x-auto mt-2">
+                    {JSON.stringify(responses.userStats.data || { error: responses.userStats.error }, null, 2)}
                   </pre>
                 </div>
               )}

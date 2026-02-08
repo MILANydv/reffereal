@@ -168,7 +168,7 @@ function QuickStartSection() {
         <div className="pt-10 space-y-6">
           <h3 className="text-sm font-extrabold uppercase tracking-widest text-navy">Base Protocol URL</h3>
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 font-mono text-xs font-bold text-navy">
-            https://api.incenta.io/v2
+            https://reffereal.vercel.app/api/v1
           </div>
         </div>
 
@@ -186,26 +186,26 @@ function QuickStartSection() {
 
 function AuthSection() {
   const snippets: Record<Language, string> = {
-    curl: `curl -X GET "https://api.incenta.io/v2/status" \\
-  -H "Authorization: Bearer sk_live_master_identity"`,
+    curl: `curl -X GET "https://reffereal.vercel.app/api/v1/stats" \\
+  -H "Authorization: Bearer YOUR_API_KEY"`,
     nodejs: `const fetch = require('node-fetch');
 
-const response = await fetch('https://api.incenta.io/v2/status', {
+const response = await fetch('https://reffereal.vercel.app/api/v1/stats', {
   headers: {
-    'Authorization': 'Bearer sk_live_master_identity'
+    'Authorization': 'Bearer YOUR_API_KEY'
   }
 });`,
     python: `import requests
 
 headers = {
-    'Authorization': 'Bearer sk_live_master_identity'
+    'Authorization': 'Bearer YOUR_API_KEY'
 }
 
-response = requests.get('https://api.incenta.io/v2/status', headers=headers)`,
+response = requests.get('https://reffereal.vercel.app/api/v1/stats', headers=headers)`,
     php: `<?php
-$ch = curl_init('https://api.incenta.io/v2/status');
+$ch = curl_init('https://reffereal.vercel.app/api/v1/stats');
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    'Authorization: Bearer sk_live_master_identity'
+    'Authorization: Bearer YOUR_API_KEY'
 ));
 $response = curl_exec($ch);
 ?>`
@@ -232,84 +232,73 @@ $response = curl_exec($ch);
 
 function EndpointsSection() {
   const referralSnippets: Record<Language, string> = {
-    curl: `curl -X POST "https://api.incenta.io/v2/referrals" \\
+    curl: `curl -X POST "https://reffereal.vercel.app/api/v1/referrals" \\
   -H "Authorization: Bearer <sk_key>" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "campaign_id": "growth_tier_1",
-    "referrer_id": "user_89231",
-    "metadata": {
-      "user_tier": "gold",
-      "region": "NP"
-    }
+    "campaignId": "campaign_123",
+    "referrerId": "user_89231"
   }'`,
     nodejs: `const axios = require('axios');
 
 const createReferral = async () => {
-  const { data } = await axios.post('https://api.incenta.io/v2/referrals', {
-    campaign_id: 'growth_tier_1',
-    referrer_id: 'user_89231',
-    metadata: {
-      user_tier: 'gold',
-      region: 'NP'
-    }
+  const { data } = await axios.post('https://reffereal.vercel.app/api/v1/referrals', {
+    campaignId: 'campaign_123',
+    referrerId: 'user_89231'
   }, {
     headers: { 'Authorization': 'Bearer <sk_key>' }
   });
   
-  return data.referral_code; // Returns "ABC123XYZ"
+  return data.referralCode; // Returns "ABC123XYZ"
 };`,
     python: `import requests
 
 payload = {
-    "campaign_id": "growth_tier_1",
-    "referrer_id": "user_89231",
-    "metadata": {"user_tier": "gold"}
+    "campaignId": "campaign_123",
+    "referrerId": "user_89231"
 }
 
 response = requests.post(
-    'https://api.incenta.io/v2/referrals',
+    'https://reffereal.vercel.app/api/v1/referrals',
     json=payload,
     headers={'Authorization': 'Bearer <sk_key>'}
 )`,
     php: `<?php
 $payload = [
-    "campaign_id" => "growth_tier_1",
-    "referrer_id" => "user_89231"
+    "campaignId" => "campaign_123",
+    "referrerId" => "user_89231"
 ];
 
-$ch = curl_init('https://api.incenta.io/v2/referrals');
+$ch = curl_init('https://reffereal.vercel.app/api/v1/referrals');
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 // ... common headers setup`
   };
 
   const conversionSnippets: Record<Language, string> = {
-    curl: `curl -X POST "https://api.incenta.io/v2/conversions" \\
+    curl: `curl -X POST "https://reffereal.vercel.app/api/v1/conversions" \\
   -H "Authorization: Bearer <sk_key>" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "referral_code": "ABC123XYZ",
-    "referee_id": "new_user_442",
-    "conversion_type": "subscription_start",
-    "payout_value": 500.00
+    "referralCode": "ABC123XYZ",
+    "refereeId": "new_user_442",
+    "amount": 100.00
   }'`,
     nodejs: `// Track final conversion
-const trackConversion = async (code, userId) => {
-  await axios.post('https://api.incenta.io/v2/conversions', {
-    referral_code: code,
-    referee_id: userId,
-    conversion_type: 'subscription_start',
-    payout_value: 500.00
+const trackConversion = async (code, userId, amount) => {
+  await axios.post('https://reffereal.vercel.app/api/v1/conversions', {
+    referralCode: code,
+    refereeId: userId,
+    amount: amount
   }, {
     headers: { 'Authorization': 'Bearer <sk_key>' }
   });
 };`,
     python: `response = requests.post(
-    'https://api.incenta.io/v2/conversions',
+    'https://reffereal.vercel.app/api/v1/conversions',
     json={
-        "referral_code": "ABC123XYZ",
-        "referee_id": "new_user_442",
-        "payout_value": 500.0
+        "referralCode": "ABC123XYZ",
+        "refereeId": "new_user_442",
+        "amount": 100.0
     },
     headers={'Authorization': 'Bearer <sk_key>'}
 )`,
@@ -331,12 +320,12 @@ const trackConversion = async (code, userId) => {
           <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Payload Schema</h4>
           <div className="space-y-3 font-mono text-xs">
             <div className="flex gap-4">
-              <span className="text-navy font-bold w-32">campaign_id</span>
+              <span className="text-navy font-bold w-32">campaignId</span>
               <span className="text-slate-400">string (Required)</span>
-              <span className="text-slate-500 italic">// The UUID of your deployment.</span>
+              <span className="text-slate-500 italic">// The campaign ID from your dashboard.</span>
             </div>
             <div className="flex gap-4">
-              <span className="text-navy font-bold w-32">referrer_id</span>
+              <span className="text-navy font-bold w-32">referrerId</span>
               <span className="text-slate-400">string (Required)</span>
               <span className="text-slate-500 italic">// Your internal user identification.</span>
             </div>
@@ -368,11 +357,14 @@ const trackConversion = async (code, userId) => {
         <p className="text-slate-500 font-medium">Log a click event to track the journey from link click to conversion. Required for advanced device fingerprinting and fraud detection.</p>
 
         <CodeBlock title="Track Click Ingress" snippets={{
-          curl: `curl -X POST "https://api.incenta.io/v2/clicks" \\
+          curl: `curl -X POST "https://reffereal.vercel.app/api/v1/clicks" \\
   -H "Authorization: Bearer <sk_key>" \\
-  -d '{"referral_code": "ABC123XYZ"}'`,
-          nodejs: `await axios.post('https://api.incenta.io/v2/clicks', { referral_code: 'ABC123XYZ' });`,
-          python: `requests.post('https://api.incenta.io/v2/clicks', json={'referral_code': 'ABC123XYZ'})`,
+  -H "Content-Type: application/json" \\
+  -d '{"referralCode": "ABC123XYZ"}'`,
+          nodejs: `await axios.post('https://reffereal.vercel.app/api/v1/clicks', { referralCode: 'ABC123XYZ' }, {
+  headers: { 'Authorization': 'Bearer <sk_key>' }
+});`,
+          python: `requests.post('https://reffereal.vercel.app/api/v1/clicks', json={'referralCode': 'ABC123XYZ'}, headers={'Authorization': 'Bearer <sk_key>'})`,
           php: `// PHP click tracking...`
         }} />
       </section>
@@ -385,15 +377,53 @@ const trackConversion = async (code, userId) => {
         <p className="text-slate-500 font-medium">Retrieve real-time performance metrics for a specific campaign or user tier.</p>
 
         <CodeBlock title="Protocol Telemetry" snippets={{
-          curl: `curl -X GET "https://api.incenta.io/v2/stats?campaign_id=growth_q1" \\
+          curl: `curl -X GET "https://reffereal.vercel.app/api/v1/stats?campaignId=growth_q1" \\
   -H "Authorization: Bearer <sk_key>"`,
-          nodejs: `const { data } = await axios.get('https://api.incenta.io/v2/stats', {
-  params: { campaign_id: 'growth_q1' },
+          nodejs: `const { data } = await axios.get('https://reffereal.vercel.app/api/v1/stats', {
+  params: { campaignId: 'growth_q1' },
   headers: { 'Authorization': 'Bearer <sk_key>' }
 });`,
-          python: `response = requests.get('https://api.incenta.io/v2/stats', params={'campaign_id': 'growth_q1'})`,
+          python: `response = requests.get('https://reffereal.vercel.app/api/v1/stats', params={'campaignId': 'growth_q1'})`,
           php: `// PHP telemetry fetch...`
         }} />
+      </section>
+
+      <section className="space-y-8 pt-20 border-t border-slate-100">
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
+          <h3 className="text-2xl font-extrabold text-navy">/users/{'{userId}'}/stats</h3>
+        </div>
+        <p className="text-slate-500 font-medium">Get detailed referral statistics for a specific user, including referrals made, referrals received, rewards earned, and referral codes generated/used.</p>
+
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Query Parameters</h4>
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex gap-4">
+              <span className="text-navy font-bold w-32">campaignId</span>
+              <span className="text-slate-400">string (Optional)</span>
+              <span className="text-slate-500 italic">// Filter stats by campaign ID</span>
+            </div>
+          </div>
+        </div>
+
+        <CodeBlock title="User Statistics" snippets={{
+          curl: `curl -X GET "https://reffereal.vercel.app/api/v1/users/user_123/stats?campaignId=growth_q1" \\
+  -H "Authorization: Bearer <sk_key>"`,
+          nodejs: `const { data } = await axios.get('https://reffereal.vercel.app/api/v1/users/user_123/stats', {
+  params: { campaignId: 'growth_q1' },
+  headers: { 'Authorization': 'Bearer <sk_key>' }
+});`,
+          python: `response = requests.get(
+    'https://reffereal.vercel.app/api/v1/users/user_123/stats',
+    params={'campaignId': 'growth_q1'},
+    headers={'Authorization': 'Bearer <sk_key>'}
+)`,
+          php: `// PHP user stats retrieval...`
+        }} />
+
+        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 italic text-sm text-slate-500">
+          Response includes: referralsMade (total, clicked, converted), referralsReceived, rewardsEarned (total, pending, paid), referralCodesGenerated, and referralCodesUsed arrays.
+        </div>
       </section>
     </div>
   );
@@ -401,27 +431,35 @@ const trackConversion = async (code, userId) => {
 
 function ScenariosSection() {
   const codeEcom = `// Scenario: E-Commerce Post-Purchase
-// Notify Incenta to generate a code when a user reaches a specific spend tier.
+// Generate a referral code when a user reaches a specific spend tier.
 
-await incenta.referrals.create({
-  campaign_id: "VIP_REWARDS",
-  referrer_id: "customer_9921",
-  metadata: {
-     avg_basket: 4500,
-     purchase_count: 5
-  }
-});`;
+const response = await fetch('https://reffereal.vercel.app/api/v1/referrals', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    campaignId: 'VIP_REWARDS',
+    referrerId: 'customer_9921'
+  })
+});
+const { referralCode } = await response.json();`;
 
   const codeSaaS = `// Scenario: SaaS Free Trial Expansion
 // Track conversion when a user upgrades from Trial to Pro.
 
-await incenta.conversions.create({
-  referral_code: "TRIAL_USER_123",
-  referee_id: "user_uuid_988",
-  conversion_type: "upgrade_tier",
-  metadata: {
-     plan: "enterprise"
-  }
+await fetch('https://reffereal.vercel.app/api/v1/conversions', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    referralCode: 'TRIAL_USER_123',
+    refereeId: 'user_uuid_988',
+    amount: 99.99
+  })
 });`;
 
   return (

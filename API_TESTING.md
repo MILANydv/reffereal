@@ -128,6 +128,80 @@ Response:
 }
 ```
 
+### 6. Get User Statistics
+
+Get detailed referral statistics for a specific user:
+```bash
+curl "http://localhost:3000/api/v1/users/user_123/stats?campaignId=YOUR_CAMPAIGN_ID" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Or get stats for all campaigns for a user:
+```bash
+curl "http://localhost:3000/api/v1/users/user_123/stats" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Response:
+```json
+{
+  "referralsMade": {
+    "total": 5,
+    "clicked": 4,
+    "converted": 2
+  },
+  "referralsReceived": {
+    "total": 1,
+    "referrerId": "user_456",
+    "referralCode": "ABC123XYZ",
+    "campaignId": "campaign_123",
+    "campaignName": "Test Campaign",
+    "appId": "app_123",
+    "appName": "My App",
+    "partnerId": "partner_123",
+    "partnerName": "Partner Name",
+    "converted": true,
+    "receivedAt": "2024-01-15T10:30:00Z"
+  },
+  "rewardsEarned": {
+    "total": 30.0,
+    "pending": 10.0,
+    "paid": 20.0
+  },
+  "referralCodesGenerated": [
+    {
+      "referralCode": "XYZ789ABC",
+      "campaignId": "campaign_123",
+      "campaignName": "Test Campaign",
+      "appId": "app_123",
+      "appName": "My App",
+      "partnerId": "partner_123",
+      "partnerName": "Partner Name",
+      "status": "CONVERTED",
+      "createdAt": "2024-01-10T08:00:00Z",
+      "clicks": 3,
+      "conversions": 2,
+      "rewardAmount": 20.0
+    }
+  ],
+  "referralCodesUsed": [
+    {
+      "referralCode": "ABC123XYZ",
+      "referrerId": "user_456",
+      "campaignId": "campaign_123",
+      "campaignName": "Test Campaign",
+      "appId": "app_123",
+      "appName": "My App",
+      "partnerId": "partner_123",
+      "partnerName": "Partner Name",
+      "status": "CONVERTED",
+      "usedAt": "2024-01-15T10:30:00Z",
+      "rewardEarned": 10.0
+    }
+  ]
+}
+```
+
 ## Complete Test Script
 
 Save this as `test-api.sh`:
@@ -297,6 +371,12 @@ Import these as a collection:
 4. **Get Stats**
    - GET: `{{baseUrl}}/stats?campaignId={{campaignId}}`
    - Headers: `Authorization: Bearer {{apiKey}}`
+
+5. **Get User Stats**
+   - GET: `{{baseUrl}}/users/{{userId}}/stats?campaignId={{campaignId}}`
+   - Headers: `Authorization: Bearer {{apiKey}}`
+   - Query params: `campaignId` (optional) - Filter stats by campaign
+   - Example: `{{baseUrl}}/users/user_123/stats?campaignId={{campaignId}}`
 
 ## Database Inspection
 
