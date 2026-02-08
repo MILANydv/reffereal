@@ -192,18 +192,22 @@ export async function POST(request: NextRequest) {
 
     // Create Reward ledger row for level-1 (only if CONVERTED; FLAGGED rewards stay out of payout flow until resolved)
     if (status === 'CONVERTED') {
-      await prisma.reward.create({
-        data: {
-          referralId: updatedReferral.id,
-          conversionId: conversion.id,
-          appId: app.id,
-          userId: referral.referrerId,
-          amount: rewardAmount,
-          currency: 'USD',
-          status: 'PENDING',
-          level: 1,
-        },
-      });
+      try {
+        await prisma.reward.create({
+          data: {
+            referralId: updatedReferral.id,
+            conversionId: conversion.id,
+            appId: app.id,
+            userId: referral.referrerId,
+            amount: rewardAmount,
+            currency: 'USD',
+            status: 'PENDING',
+            level: 1,
+          },
+        });
+      } catch (_err) {
+        // Reward table may not exist yet (migration not applied)
+      }
     }
 
     // Multi-level: if referrer was referred by someone in this campaign, credit level-2 reward
@@ -248,10 +252,13 @@ export async function POST(request: NextRequest) {
               metadata: JSON.stringify({ type: 'level2', parentReferralId: referral.id }),
             },
           });
-          await tx.reward.create({
+          return { r, l2Conversion };
+        });
+        try {
+          await prisma.reward.create({
             data: {
-              referralId: r.id,
-              conversionId: l2Conversion.id,
+              referralId: l2Referral.r.id,
+              conversionId: l2Referral.l2Conversion.id,
               appId: app.id,
               userId: parentReferral.referrerId,
               amount: level2Amount,
@@ -260,11 +267,13 @@ export async function POST(request: NextRequest) {
               level: 2,
             },
           });
-          return r;
-        });
+        } catch (_err) {
+          // Reward table may not exist yet (migration not applied)
+        }
+        const l2ReferralForWebhook = l2Referral.r;
         await triggerWebhook(app.id, 'REWARD_CREATED', {
-          referralId: l2Referral.id,
-          referrerId: l2Referral.referrerId,
+          referralId: l2ReferralForWebhook.id,
+          referrerId: l2ReferralForWebhook.referrerId,
           rewardAmount: level2Amount,
           campaignId: campaign.id,
           level: 2,

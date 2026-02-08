@@ -49,39 +49,45 @@ export async function GET(request: NextRequest) {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
-    const [totalItems, rewards] = await Promise.all([
-      prisma.reward.count({ where }),
-      prisma.reward.findMany({
-        where,
-        include: {
-          Referral: {
-            select: {
-              referralCode: true,
-              campaignId: true,
-              createdAt: true,
-              Campaign: { select: { name: true } },
+    let totalItems = 0;
+    let rewards: any[] = [];
+    try {
+      [totalItems, rewards] = await Promise.all([
+        prisma.reward.count({ where }),
+        prisma.reward.findMany({
+          where,
+          include: {
+            Referral: {
+              select: {
+                referralCode: true,
+                campaignId: true,
+                createdAt: true,
+                Campaign: { select: { name: true } },
+              },
             },
-          },
-          App: {
-            select: {
-              id: true,
-              name: true,
-              Partner: {
-                select: {
-                  id: true,
-                  companyName: true,
+            App: {
+              select: {
+                id: true,
+                name: true,
+                Partner: {
+                  select: {
+                    id: true,
+                    companyName: true,
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]);
+    } catch (_err) {
+      // Reward table may not exist yet (migration not applied)
+    }
 
-    const totalPages = Math.ceil(totalItems / limit);
+    const totalPages = Math.ceil(totalItems / limit) || 1;
 
     return NextResponse.json({
       rewards,

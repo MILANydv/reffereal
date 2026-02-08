@@ -43,28 +43,34 @@ export async function GET(
       where.Referral = { campaignId };
     }
 
-    const [total, rewards] = await Promise.all([
-      prisma.reward.count({ where }),
-      prisma.reward.findMany({
-        where,
-        select: {
-          id: true,
-          amount: true,
-          currency: true,
-          status: true,
-          level: true,
-          paidAt: true,
-          payoutReference: true,
-          fulfillmentType: true,
-          fulfillmentReference: true,
-          createdAt: true,
-          Referral: { select: { referralCode: true, campaignId: true, Campaign: { select: { name: true } } } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
+    let total = 0;
+    let rewards: any[] = [];
+    try {
+      [total, rewards] = await Promise.all([
+        prisma.reward.count({ where }),
+        prisma.reward.findMany({
+          where,
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            status: true,
+            level: true,
+            paidAt: true,
+            payoutReference: true,
+            fulfillmentType: true,
+            fulfillmentReference: true,
+            createdAt: true,
+            Referral: { select: { referralCode: true, campaignId: true, Campaign: { select: { name: true } } } },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]);
+    } catch (_err) {
+      // Reward table may not exist yet (migration not applied); return empty list
+    }
 
     await logApiUsage(app.id, `/api/v1/users/${userId}/rewards`, request);
 
@@ -74,7 +80,7 @@ export async function GET(
         page,
         limit,
         totalItems: total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 1,
       },
     });
   } catch (error) {

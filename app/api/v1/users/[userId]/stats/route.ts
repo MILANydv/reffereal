@@ -35,13 +35,7 @@ export async function GET(
       referrerId: userId,
     };
 
-    const rewardWhere = {
-      userId,
-      appId: app.id,
-      ...(campaignId ? { Referral: { campaignId } } : {}),
-    };
-
-    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsPendingAgg, rewardsPaidAgg] = await Promise.all([
+    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsLegacyAgg] = await Promise.all([
       prisma.referral.count({ where: referralsMadeWhere }),
       prisma.referral.count({
         where: {
@@ -55,21 +49,47 @@ export async function GET(
           status: 'CONVERTED',
         },
       }),
-      prisma.reward.aggregate({
+      prisma.referral.aggregate({
         where: {
-          ...rewardWhere,
-          status: { in: ['PENDING', 'APPROVED'] },
+          ...referralsMadeWhere,
+          status: 'CONVERTED',
         },
-        _sum: { amount: true },
-      }),
-      prisma.reward.aggregate({
-        where: {
-          ...rewardWhere,
-          status: 'PAID',
-        },
-        _sum: { amount: true },
+        _sum: { rewardAmount: true },
       }),
     ]);
+
+    // Use Reward table for pending/paid when available; fallback to legacy (paid = converted sum, pending = 0) if Reward table missing or query fails
+    let pendingAmount = 0;
+    let paidAmount = 0;
+    try {
+      const rewardWhere = {
+        userId,
+        appId: app.id,
+        ...(campaignId ? { Referral: { campaignId } } : {}),
+      };
+      const [rewardsPendingAgg, rewardsPaidAgg] = await Promise.all([
+        prisma.reward.aggregate({
+          where: {
+            ...rewardWhere,
+            status: { in: ['PENDING', 'APPROVED'] },
+          },
+          _sum: { amount: true },
+        }),
+        prisma.reward.aggregate({
+          where: {
+            ...rewardWhere,
+            status: 'PAID',
+          },
+          _sum: { amount: true },
+        }),
+      ]);
+      pendingAmount = rewardsPendingAgg._sum.amount ?? 0;
+      paidAmount = rewardsPaidAgg._sum.amount ?? 0;
+    } catch (_err) {
+      // Reward table may not exist yet (migration not applied); use legacy: paid = sum of converted referral amounts, pending = 0
+      paidAmount = rewardsLegacyAgg._sum.rewardAmount ?? 0;
+      pendingAmount = 0;
+    }
 
     // Referrals received by this user (as referee)
     const referralsReceivedWhere = {
@@ -156,8 +176,6 @@ export async function GET(
       })
     );
 
-    const pendingAmount = rewardsPendingAgg._sum.amount || 0;
-    const paidAmount = rewardsPaidAgg._sum.amount || 0;
     const totalRewards = pendingAmount + paidAmount;
 
     await logApiUsage(app.id, `/api/v1/users/${userId}/stats`, request);

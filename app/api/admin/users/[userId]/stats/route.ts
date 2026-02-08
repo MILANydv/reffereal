@@ -39,16 +39,7 @@ export async function GET(
       referrerId: userId,
     };
 
-    const rewardWhere = {
-      userId,
-      App: {
-        ...(appId ? { id: appId } : {}),
-        ...(partnerId ? { partnerId } : {}),
-      },
-      ...(campaignId ? { Referral: { campaignId } } : {}),
-    };
-
-    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsPendingAgg, rewardsPaidAgg] = await Promise.all([
+    const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsLegacyAgg] = await Promise.all([
       prisma.referral.count({ where: referralsMadeWhere }),
       prisma.referral.count({
         where: {
@@ -62,15 +53,39 @@ export async function GET(
           status: 'CONVERTED',
         },
       }),
-      prisma.reward.aggregate({
-        where: { ...rewardWhere, status: { in: ['PENDING', 'APPROVED'] } },
-        _sum: { amount: true },
-      }),
-      prisma.reward.aggregate({
-        where: { ...rewardWhere, status: 'PAID' },
-        _sum: { amount: true },
+      prisma.referral.aggregate({
+        where: { ...referralsMadeWhere, status: 'CONVERTED' },
+        _sum: { rewardAmount: true },
       }),
     ]);
+
+    let pendingAmount = 0;
+    let paidAmount = 0;
+    try {
+      const rewardWhere = {
+        userId,
+        App: {
+          ...(appId ? { id: appId } : {}),
+          ...(partnerId ? { partnerId } : {}),
+        },
+        ...(campaignId ? { Referral: { campaignId } } : {}),
+      };
+      const [rewardsPendingAgg, rewardsPaidAgg] = await Promise.all([
+        prisma.reward.aggregate({
+          where: { ...rewardWhere, status: { in: ['PENDING', 'APPROVED'] } },
+          _sum: { amount: true },
+        }),
+        prisma.reward.aggregate({
+          where: { ...rewardWhere, status: 'PAID' },
+          _sum: { amount: true },
+        }),
+      ]);
+      pendingAmount = rewardsPendingAgg._sum.amount ?? 0;
+      paidAmount = rewardsPaidAgg._sum.amount ?? 0;
+    } catch (_err) {
+      paidAmount = rewardsLegacyAgg._sum.rewardAmount ?? 0;
+      pendingAmount = 0;
+    }
 
     // Referrals received by this user (as referee)
     const referralsReceivedWhere = {
@@ -180,8 +195,6 @@ export async function GET(
       })
     );
 
-    const pendingAmount = rewardsPendingAgg._sum.amount || 0;
-    const paidAmount = rewardsPaidAgg._sum.amount || 0;
     const totalRewards = pendingAmount + paidAmount;
 
     return NextResponse.json({
