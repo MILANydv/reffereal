@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -211,7 +212,11 @@ export default function AdminRewardsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 font-mono text-blue-600">{r.Referral?.referralCode ?? '—'}</td>
-                      <td className="px-6 py-4 font-mono text-xs">{r.userId}</td>
+                      <td className="px-6 py-4">
+                        <Link href={`/admin/v2/users/${r.userId}`} className="font-mono text-xs text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                          {r.userId}
+                        </Link>
+                      </td>
                       <td className="px-6 py-4">{r.Referral?.Campaign?.name ?? '—'}</td>
                       <td className="px-6 py-4 font-medium">{r.currency} {r.amount}</td>
                       <td className="px-6 py-4">L{r.level}</td>

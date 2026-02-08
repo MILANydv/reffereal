@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -199,7 +200,8 @@ export default function UserDetailPage() {
             <CardBody>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">Referred by:</span> {stats.referralsReceived.referrerId}
+                  <span className="font-medium">Referred by:</span>{' '}
+                  <Link href={`/dashboard/v2/users/${stats.referralsReceived.referrerId}`} className="text-blue-600 hover:underline">{stats.referralsReceived.referrerId}</Link>
                 </p>
                 <p>
                   <span className="font-medium">Referral Code:</span>{' '}
@@ -296,7 +298,9 @@ export default function UserDetailPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-sm">
                       <div>
                         <p className="text-gray-500">Referred by</p>
-                        <p className="font-medium">{code.referrerId}</p>
+                        <p className="font-medium">
+                          <Link href={`/dashboard/v2/users/${code.referrerId}`} className="text-blue-600 hover:underline">{code.referrerId}</Link>
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500">Campaign</p>

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -224,13 +225,14 @@ export default function CampaignDetailPage() {
                         campaign.recentReferrals.map((referral) => (
                           <div key={referral.id} className="px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs">
+                              <Link href={`/dashboard/v2/users/${referral.referrerId}`} className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs hover:ring-2 hover:ring-blue-400">
                                 {referral.referrerId?.charAt(0).toUpperCase() || 'U'}
-                              </div>
+                              </Link>
                               <div>
                                 <p className="text-sm font-medium font-mono">{referral.referralCode}</p>
                                 <p className="text-xs text-gray-500">
-                                  {referral.referrerId || 'Anonymous'} • {new Date(referral.createdAt).toLocaleDateString()}
+                                  <Link href={`/dashboard/v2/users/${referral.referrerId}`} className="text-blue-600 hover:underline">{referral.referrerId || 'Anonymous'}</Link>
+                                  {' • '}{new Date(referral.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
@@ -424,7 +426,9 @@ export default function CampaignDetailPage() {
                         campaign.recentReferrals.map((referral) => (
                           <tr key={referral.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                             <td className="px-6 py-4 font-mono text-xs">{referral.referralCode}</td>
-                            <td className="px-6 py-4">{referral.referrerId || 'Anonymous'}</td>
+                            <td className="px-6 py-4">
+                              <Link href={`/dashboard/v2/users/${referral.referrerId}`} className="text-blue-600 hover:underline">{referral.referrerId || 'Anonymous'}</Link>
+                            </td>
                             <td className="px-6 py-4">
                               <Badge variant={
                                 referral.status === 'CONVERTED' ? 'success' :

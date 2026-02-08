@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -158,7 +159,11 @@ export default function ReferralsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs">{referral.referrerId}</td>
+                      <td className="px-6 py-4">
+                        <Link href={`/dashboard/v2/users/${referral.referrerId}`} className="font-mono text-xs text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                          {referral.referrerId}
+                        </Link>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="font-medium">{(referral.Campaign || referral.campaign)?.name || 'Unknown Campaign'}</div>

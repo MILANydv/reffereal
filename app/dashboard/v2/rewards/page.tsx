@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -197,7 +198,11 @@ export default function RewardsPage() {
                   rewards.map((r) => (
                     <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                       <td className="px-6 py-4 font-mono text-blue-600">{r.Referral?.referralCode ?? '—'}</td>
-                      <td className="px-6 py-4 font-mono text-xs">{r.userId}</td>
+                      <td className="px-6 py-4">
+                        <Link href={`/dashboard/v2/users/${r.userId}`} className="font-mono text-xs text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                          {r.userId}
+                        </Link>
+                      </td>
                       <td className="px-6 py-4">
                         <div>
                           <div className="font-medium">{r.Referral?.Campaign?.name ?? '—'}</div>
