@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Webhook, Copy, CheckCircle, XCircle, Shield, ExternalLink } from 'lucide-react';
+import { Webhook, Copy, CheckCircle, XCircle, Shield, ExternalLink, Send } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
@@ -106,6 +106,12 @@ export default function DemoWebhooksPage() {
   const [verifyResult, setVerifyResult] = useState<boolean | null>(null);
   const [verifying, setVerifying] = useState(false);
 
+  const [testUrl, setTestUrl] = useState('');
+  const [testSecret, setTestSecret] = useState('');
+  const [testEvent, setTestEvent] = useState('REFERRAL_CREATED');
+  const [sendTestLoading, setSendTestLoading] = useState(false);
+  const [sendTestResult, setSendTestResult] = useState<{ success: boolean; statusCode?: number; response?: string } | null>(null);
+
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopied(id);
@@ -131,6 +137,39 @@ export default function DemoWebhooksPage() {
       toast.error('Verification failed');
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleSendTest = async () => {
+    if (!testUrl.trim() || !testSecret.trim()) {
+      toast.error('Enter webhook URL and secret');
+      return;
+    }
+    setSendTestLoading(true);
+    setSendTestResult(null);
+    try {
+      const res = await fetch('/api/partner/webhooks/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: testUrl.trim(), secret: testSecret.trim(), eventType: testEvent }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSendTestResult({ success: false, response: data.error || 'Request failed' });
+        toast.error(data.error || 'Send failed');
+        return;
+      }
+      setSendTestResult({
+        success: data.success,
+        statusCode: data.statusCode,
+        response: data.response,
+      });
+      toast.success(data.success ? 'Test delivery sent' : `Endpoint returned ${data.statusCode}`);
+    } catch (e) {
+      setSendTestResult({ success: false, response: (e as Error).message });
+      toast.error('Failed to send test');
+    } finally {
+      setSendTestLoading(false);
     }
   };
 
@@ -214,6 +253,94 @@ X-Webhook-Signature: <hmac-sha256-hex>
             </Card>
           ))}
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send size={20} />
+              Send test delivery
+            </CardTitle>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Send a signed sample payload to your endpoint (e.g. webhook.site or your server). You must be logged in as a partner.
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Webhook URL
+              </label>
+              <input
+                type="url"
+                value={testUrl}
+                onChange={(e) => setTestUrl(e.target.value)}
+                placeholder="https://webhook.site/your-id or https://your-server.com/webhook"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Webhook secret
+                </label>
+                <input
+                  type="password"
+                  value={testSecret}
+                  onChange={(e) => setTestSecret(e.target.value)}
+                  placeholder="Same secret you use to verify signatures"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Event type
+                </label>
+                <select
+                  value={testEvent}
+                  onChange={(e) => setTestEvent(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm"
+                >
+                  {EVENTS.map((ev) => (
+                    <option key={ev.type} value={ev.type}>
+                      {ev.type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button onClick={handleSendTest} disabled={sendTestLoading}>
+                {sendTestLoading ? 'Sending...' : 'Send test webhook'}
+              </Button>
+            </div>
+            {sendTestResult && (
+              <div
+                className={`p-4 rounded-lg border text-sm ${
+                  sendTestResult.success
+                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-medium">
+                  {sendTestResult.success ? (
+                    <CheckCircle size={18} className="text-green-600 dark:text-green-400" />
+                  ) : (
+                    <XCircle size={18} className="text-red-600 dark:text-red-400" />
+                  )}
+                  {sendTestResult.success
+                    ? `Sent successfully (${sendTestResult.statusCode ?? '—'})`
+                    : sendTestResult.statusCode
+                      ? `Endpoint returned ${sendTestResult.statusCode}`
+                      : 'Request failed'}
+                </div>
+                {sendTestResult.response != null && sendTestResult.response !== '' && (
+                  <pre className="mt-2 text-xs overflow-x-auto whitespace-pre-wrap break-all opacity-90">
+                    {sendTestResult.response}
+                  </pre>
+                )}
+              </div>
+            )}
+          </CardBody>
+        </Card>
 
         <Card>
           <CardHeader>
