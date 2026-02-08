@@ -212,14 +212,35 @@ export default function DemoPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2">Demos:</span>
+          <Link
+            href="/demo"
+            className="px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm"
+          >
+            API Simulator
+          </Link>
+          <Link
+            href="/demo/webhooks"
+            className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm"
+          >
+            Webhooks
+          </Link>
+          <Link
+            href="/demo/ui-bundles"
+            className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm"
+          >
+            UI Bundles
+          </Link>
+        </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">API Simulator</h1>
-            <p className="text-gray-500 mt-1">Test your referral API endpoints in real-time</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">API Simulator</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Test your referral API endpoints in real-time</p>
           </div>
           <Link
             href="/dashboard/v2/api-keys"
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1"
           >
             <ExternalLink size={16} />
             Back to API Keys
@@ -723,6 +744,21 @@ export default function DemoPage() {
             </div>
           </CardBody>
         </Card>
+
+        <div className="flex flex-wrap gap-2 text-sm pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Link
+            href="/demo/webhooks"
+            className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Webhooks Simulator
+          </Link>
+          <Link
+            href="/demo/ui-bundles"
+            className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            UI Bundles Simulator
+          </Link>
+        </div>
       </div>
     </DashboardLayout>
   );
