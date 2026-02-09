@@ -262,6 +262,9 @@ export async function POST(request: NextRequest) {
       timeout: 10000,
     });
 
+    // Alias for code paths that expect a variable named "referral" (e.g. notifications)
+    const referral = conversionReferral;
+
     // Fraud flags are now created inside the transaction
     // Send notifications if fraud was detected
     if (fraudCheck.isFraud && fraudFlags.length > 0) {
