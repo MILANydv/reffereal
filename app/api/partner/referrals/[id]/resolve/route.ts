@@ -60,9 +60,9 @@ export async function POST(
         ? 'CLICKED'
         : 'PENDING';
 
-    // Wrap entire resolve operation in a single atomic transaction
+    // Transaction: resolve fraud flags and update referral only (no Reward table access).
+    // Reward creation runs after, so resolve still succeeds when Reward table is missing (e.g. migrations not run).
     const updatedReferral = await prisma.$transaction(async (tx) => {
-      // 1. Resolve all unresolved fraud flags atomically
       await tx.fraudFlag.updateMany({
         where: {
           appId,
@@ -76,7 +76,6 @@ export async function POST(
         },
       });
 
-      // 2. Update referral status and clear flags
       const updated = await tx.referral.update({
         where: { id },
         data: {
@@ -92,19 +91,24 @@ export async function POST(
         },
       });
 
-      // 3. Create rewards if resolving to CONVERTED (inside same transaction)
-      if (newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
-        const conversions = updated.Conversion;
+      return updated;
+    }, {
+      isolationLevel: 'ReadCommitted',
+      maxWait: 5000,
+      timeout: 10000,
+    });
 
+    // Create rewards if resolving to CONVERTED (outside transaction so P2021 does not fail resolve)
+    let rewardTableMissing = false;
+    if (newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
+      try {
+        const conversions = updatedReferral.Conversion;
         for (const conversion of conversions) {
-          // Check if Reward already exists for this conversion
-          const existingReward = await tx.reward.findUnique({
+          const existingReward = await prisma.reward.findUnique({
             where: { conversionId: conversion.id },
           });
-
           if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
-            // Create level-1 reward
-            await tx.reward.create({
+            await prisma.reward.create({
               data: {
                 referralId: referral.id,
                 conversionId: conversion.id,
@@ -118,25 +122,19 @@ export async function POST(
             });
           }
         }
-
-        // Multi-level: if this referral is level-2, ensure level-2 reward exists
         if (referral.level === 2 && referral.rewardAmount != null && referral.rewardAmount > 0) {
           const l2Conversion = conversions[0];
           if (l2Conversion) {
-            const existingL2Reward = await tx.reward.findFirst({
-              where: {
-                referralId: referral.id,
-                level: 2,
-              },
+            const existingL2Reward = await prisma.reward.findFirst({
+              where: { referralId: referral.id, level: 2 },
             });
-
             if (!existingL2Reward) {
-              await tx.reward.create({
+              await prisma.reward.create({
                 data: {
                   referralId: referral.id,
                   conversionId: l2Conversion.id,
                   appId,
-                  userId: referral.referrerId, // Parent advocate gets level-2 reward
+                  userId: referral.referrerId,
                   amount: referral.rewardAmount!,
                   currency: 'USD',
                   status: 'PENDING',
@@ -146,34 +144,33 @@ export async function POST(
             }
           }
         }
+      } catch (rewardErr: unknown) {
+        const code = (rewardErr as { code?: string })?.code;
+        if (code === 'P2021') {
+          rewardTableMissing = true;
+          console.warn('Reward table does not exist; resolve succeeded but rewards were not created. Run: npx prisma migrate deploy');
+        } else {
+          throw rewardErr;
+        }
       }
+    }
 
-      return updated;
-    }, {
-      isolationLevel: 'ReadCommitted', // Sufficient for resolve operation
-      maxWait: 5000,
-      timeout: 10000,
-    });
-
-    // Trigger webhooks after transaction succeeds (outside transaction for reliability)
-    if (newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
+    // Trigger webhooks when rewards exist (skip if Reward table was missing)
+    if (!rewardTableMissing && newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
       const conversions = referral.Conversion;
-      
       for (const conversion of conversions) {
-        const existingReward = await prisma.reward.findUnique({
-          where: { conversionId: conversion.id },
-        });
-
-        if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
-          await logger.info('Reward created', 'api.reward.created', {
-            appId,
-            referralId: referral.id,
-            conversionId: conversion.id,
-            level: 1,
-            amount: referral.rewardAmount,
+        try {
+          const existingReward = await prisma.reward.findUnique({
+            where: { conversionId: conversion.id },
           });
-          // Trigger webhook for level-1 reward
-          try {
+          if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
+            await logger.info('Reward created', 'api.reward.created', {
+              appId,
+              referralId: referral.id,
+              conversionId: conversion.id,
+              level: 1,
+              amount: referral.rewardAmount,
+            });
             await triggerWebhook(appId, 'REWARD_CREATED', {
               referralId: referral.id,
               referrerId: referral.referrerId,
@@ -181,33 +178,26 @@ export async function POST(
               campaignId: campaign.id,
               level: 1,
             });
-          } catch (err) {
-            console.error('Error triggering reward webhook:', err);
-            // Don't fail the request if webhook fails
           }
+        } catch (err) {
+          console.error('Error triggering reward webhook:', err);
         }
       }
-
-      // Multi-level webhook
       if (referral.level === 2 && referral.rewardAmount != null && referral.rewardAmount > 0) {
         const l2Conversion = conversions[0];
         if (l2Conversion) {
-          const existingL2Reward = await prisma.reward.findFirst({
-            where: {
-              referralId: referral.id,
-              level: 2,
-            },
-          });
-
-          if (!existingL2Reward) {
-            await logger.info('Reward created', 'api.reward.created', {
-              appId,
-              referralId: referral.id,
-              conversionId: l2Conversion.id,
-              level: 2,
-              amount: referral.rewardAmount ?? 0,
+          try {
+            const existingL2Reward = await prisma.reward.findFirst({
+              where: { referralId: referral.id, level: 2 },
             });
-            try {
+            if (!existingL2Reward) {
+              await logger.info('Reward created', 'api.reward.created', {
+                appId,
+                referralId: referral.id,
+                conversionId: l2Conversion.id,
+                level: 2,
+                amount: referral.rewardAmount ?? 0,
+              });
               await triggerWebhook(appId, 'REWARD_CREATED', {
                 referralId: referral.id,
                 referrerId: referral.referrerId,
@@ -215,16 +205,20 @@ export async function POST(
                 campaignId: campaign.id,
                 level: 2,
               });
-            } catch (err) {
-              console.error('Error triggering level-2 reward webhook:', err);
-              // Don't fail the request if webhook fails
             }
+          } catch (err) {
+            console.error('Error triggering level-2 reward webhook:', err);
           }
         }
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      ...(rewardTableMissing && {
+        warning: 'Reward table not found. Referral resolved; run `npx prisma migrate deploy` to enable reward creation.',
+      }),
+    });
   } catch (error) {
     console.error('Error resolving referral flag:', error);
     return NextResponse.json(
