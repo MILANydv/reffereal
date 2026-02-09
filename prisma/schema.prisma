@@ -350,6 +350,10 @@ model User {
   emailVerifyToken    String?
   passwordResetExpiry DateTime?
   passwordResetToken  String?
+  emailNotifications  Boolean        @default(true)
+  marketingEmails     Boolean        @default(false)
+  language            String         @default("en")
+  timezone            String         @default("UTC")
   Notification        Notification[]
   Partner             Partner[]
 

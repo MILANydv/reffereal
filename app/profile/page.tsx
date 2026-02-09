@@ -47,11 +47,25 @@ export default function ProfilePage() {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const response = await fetch('/api/user/profile');
-      if (response.ok) {
-        const data = await response.json();
+      const [profileResponse, settingsResponse] = await Promise.all([
+        fetch('/api/user/profile'),
+        fetch('/api/user/settings'),
+      ]);
+
+      if (profileResponse.ok) {
+        const data = await profileResponse.json();
         setProfile(data);
         setProfileForm({ name: data.name || '', email: data.email });
+      }
+
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        setSettingsForm({
+          emailNotifications: settingsData.emailNotifications ?? true,
+          marketingEmails: settingsData.marketingEmails ?? false,
+          language: settingsData.language || 'en',
+          timezone: settingsData.timezone || 'UTC',
+        });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -144,10 +158,20 @@ export default function ProfilePage() {
     setSuccess('');
 
     try {
-      // TODO: Implement settings API endpoint
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSuccess('Settings saved successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      const response = await fetch('/api/user/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsForm),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('Settings saved successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(data.error || 'Failed to save settings');
+      }
     } catch (error) {
       setError('Failed to save settings');
     } finally {
@@ -706,7 +730,6 @@ export default function ProfilePage() {
                   setIsDeleting(true);
                   setError('');
                   try {
-                    // TODO: Implement account deletion API endpoint
                     const response = await fetch('/api/user/delete-account', {
                       method: 'DELETE',
                       headers: { 'Content-Type': 'application/json' },

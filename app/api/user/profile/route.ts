@@ -19,6 +19,7 @@ export async function GET() {
         name: true,
         role: true,
         active: true,
+        emailVerified: true,
         createdAt: true,
       },
     });
@@ -65,6 +66,7 @@ export async function PATCH(request: NextRequest) {
         name: true,
         role: true,
         active: true,
+        emailVerified: true,
         createdAt: true,
       },
     });
