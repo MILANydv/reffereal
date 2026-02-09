@@ -35,6 +35,8 @@ export default function NewCampaignPage() {
     level1Cap: null as number | null,
     level2Cap: null as number | null,
     tierConfig: '' as string,
+    referralCodePrefix: '' as string,
+    referralCodeFormat: 'RANDOM' as 'RANDOM' | 'USERNAME' | 'EMAIL_PREFIX',
   });
 
   const handleNext = () => {
@@ -72,6 +74,8 @@ export default function NewCampaignPage() {
         payload.tierConfig = formData.tierConfig;
       }
     }
+    if (formData.referralCodePrefix.trim()) payload.referralCodePrefix = formData.referralCodePrefix.trim();
+    if (formData.referralCodeFormat !== 'RANDOM') payload.referralCodeFormat = formData.referralCodeFormat;
 
     try {
       const response = await fetch('/api/partner/campaigns', {
@@ -391,6 +395,42 @@ export default function NewCampaignPage() {
                       onChange={(e) => setFormData({ ...formData, rewardExpiration: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
                     />
                   </div>
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Referral code generation</h4>
+                    <p className="text-xs text-gray-500">Optional: set a prefix and/or format so generated codes are consistent (e.g. firir_ref123 or firir_john_abc).</p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Code prefix (optional)</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. firir_ or myapp_ref"
+                        maxLength={24}
+                        className="w-full max-w-[280px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-sm"
+                        value={formData.referralCodePrefix}
+                        onChange={(e) => setFormData({ ...formData, referralCodePrefix: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Letters, numbers, underscore only. Example codes: prefix + random → firir_abc12xyz</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Code format</label>
+                      <div className="flex flex-wrap gap-2">
+                        {(['RANDOM', 'USERNAME', 'EMAIL_PREFIX'] as const).map((fmt) => (
+                          <button 
+                            key={fmt}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, referralCodeFormat: fmt })}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${formData.referralCodeFormat === fmt ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600'}`}
+                          >
+                            {fmt === 'RANDOM' ? 'Random' : fmt === 'USERNAME' ? 'Username' : 'Email prefix'}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {formData.referralCodeFormat === 'RANDOM' && 'Fully random code (default).'}
+                        {formData.referralCodeFormat === 'USERNAME' && 'Include referrer username in code; send referrerUsername in POST /referrals.'}
+                        {formData.referralCodeFormat === 'EMAIL_PREFIX' && 'Include part before @ of referrer email; send referrerEmail in POST /referrals.'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -441,6 +481,18 @@ export default function NewCampaignPage() {
                     <div>
                       <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Level 2 reward</div>
                       <div className="font-medium">${formData.level2Reward}{formData.level2Cap ? ` (cap $${formData.level2Cap})` : ''}</div>
+                    </div>
+                  )}
+                  {(formData.referralCodePrefix || formData.referralCodeFormat !== 'RANDOM') && (
+                    <div className="col-span-2">
+                      <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Referral code</div>
+                      <div className="font-medium">
+                        {formData.referralCodePrefix && <span className="font-mono">{formData.referralCodePrefix}</span>}
+                        {formData.referralCodeFormat !== 'RANDOM' && (
+                          <span className="ml-1">+ {formData.referralCodeFormat === 'USERNAME' ? 'username' : 'email prefix'}</span>
+                        )}
+                        {(!formData.referralCodePrefix && formData.referralCodeFormat === 'RANDOM') ? 'Random' : ' + random suffix'}
+                      </div>
                     </div>
                   )}
                 </div>

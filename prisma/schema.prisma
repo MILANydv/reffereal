@@ -46,28 +46,30 @@ model App {
 }
 
 model Campaign {
-  id                String         @id @default(cuid())
-  appId             String
-  name              String
-  status            CampaignStatus @default(ACTIVE)
-  referralType      ReferralType
-  rewardModel       RewardModel
-  rewardValue       Float
-  rewardCap         Float?
-  firstTimeUserOnly Boolean        @default(true)
-  startDate         DateTime?
-  endDate           DateTime?
-  conversionWindow  Int?
-  rewardExpiration  Int?
-  level1Reward      Float?
-  level2Reward      Float?
-  level1Cap         Float?
-  level2Cap         Float?
-  tierConfig        String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  App               App            @relation(fields: [appId], references: [id], onDelete: Cascade)
-  Referral          Referral[]
+  id                   String              @id @default(cuid())
+  appId                String
+  name                 String
+  status               CampaignStatus      @default(ACTIVE)
+  referralType         ReferralType
+  rewardModel          RewardModel
+  rewardValue          Float
+  rewardCap            Float?
+  firstTimeUserOnly    Boolean             @default(true)
+  startDate            DateTime?
+  endDate              DateTime?
+  conversionWindow    Int?
+  rewardExpiration     Int?
+  level1Reward         Float?
+  level2Reward         Float?
+  level1Cap            Float?
+  level2Cap            Float?
+  tierConfig           String?
+  referralCodePrefix  String?
+  referralCodeFormat  ReferralCodeFormat?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  App                  App                 @relation(fields: [appId], references: [id], onDelete: Cascade)
+  Referral             Referral[]
 
   @@index([appId])
   @@index([status])
@@ -455,6 +457,12 @@ enum FulfillmentType {
   STORE_CREDIT
   THIRD_PARTY_OFFER
   OTHER
+}
+
+enum ReferralCodeFormat {
+  RANDOM
+  USERNAME
+  EMAIL_PREFIX
 }
 
 enum ReferralType {

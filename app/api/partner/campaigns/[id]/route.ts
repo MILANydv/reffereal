@@ -192,6 +192,8 @@ export async function PATCH(
       level2Cap,
       tierConfig,
       firstTimeUserOnly,
+      referralCodePrefix,
+      referralCodeFormat,
     } = body;
 
     if (startDate !== undefined && endDate !== undefined && new Date(endDate) < new Date(startDate)) {
@@ -216,6 +218,8 @@ export async function PATCH(
     if (level2Cap !== undefined) data.level2Cap = level2Cap == null ? null : Number(level2Cap);
     if (tierConfig !== undefined) data.tierConfig = tierConfig == null ? null : (typeof tierConfig === 'string' ? tierConfig : JSON.stringify(tierConfig));
     if (firstTimeUserOnly !== undefined) data.firstTimeUserOnly = firstTimeUserOnly;
+    if (referralCodePrefix !== undefined) data.referralCodePrefix = referralCodePrefix == null || referralCodePrefix === '' ? null : String(referralCodePrefix).trim();
+    if (referralCodeFormat !== undefined) data.referralCodeFormat = referralCodeFormat == null || !['RANDOM', 'USERNAME', 'EMAIL_PREFIX'].includes(referralCodeFormat) ? null : referralCodeFormat;
 
     const updated = await prisma.campaign.update({
       where: { id },

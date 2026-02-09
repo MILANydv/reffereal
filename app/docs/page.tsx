@@ -81,7 +81,7 @@ export default function DocsPage() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {activeTab === 'quickstart' && <QuickStartSection />}
+                  {activeTab === 'quickstart' && <QuickStartSection onNavigateToEndpoints={() => setActiveTab('endpoints')} />}
                   {activeTab === 'auth' && <AuthSection />}
                   {activeTab === 'endpoints' && <EndpointsSection />}
                   {activeTab === 'webhooks' && <WebhooksSection />}
@@ -154,7 +154,7 @@ function SectionHeader({ title, badge }: { title: string; badge: string }) {
   );
 }
 
-function QuickStartSection() {
+function QuickStartSection({ onNavigateToEndpoints }: { onNavigateToEndpoints?: () => void }) {
   return (
     <div>
       <SectionHeader title="Infrastructure Boot." badge="Quick Start" />
@@ -185,7 +185,7 @@ function QuickStartSection() {
 
         <div className="pt-10 space-y-6">
           <h3 className="text-sm font-extrabold uppercase tracking-widest text-navy">Initial Link Generation</h3>
-          <p className="text-sm">Generate referral links by appending the referral code to your base URL. We recommend using our <code className="text-navy font-bold font-mono">/referrals</code> endpoint to map users to codes.</p>
+          <p className="text-sm">Generate referral links by appending the referral code to your base URL. We recommend using our <code className="text-navy font-bold font-mono">/referrals</code> endpoint to map users to codes. See <button type="button" onClick={onNavigateToEndpoints} className="text-primary font-bold hover:underline focus:underline focus:outline-none">API Reference → POST /referrals</button> for the request/response and code samples.</p>
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 font-mono text-xs font-bold text-navy">
             https://yourbrand.com/signup?ref=ABC123XYZ
           </div>
@@ -359,7 +359,18 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
               <span className="text-slate-400">string (optional)</span>
               <span className="text-slate-500 italic">Referee ID if known at creation.</span>
             </div>
+            <div className="flex gap-4 flex-wrap">
+              <span className="text-navy font-bold w-32">referrerUsername</span>
+              <span className="text-slate-400">string (optional)</span>
+              <span className="text-slate-500 italic">When campaign code format is USERNAME, used in generated code (e.g. firir_john_abc).</span>
+            </div>
+            <div className="flex gap-4 flex-wrap">
+              <span className="text-navy font-bold w-32">referrerEmail</span>
+              <span className="text-slate-400">string (optional)</span>
+              <span className="text-slate-500 italic">When campaign code format is EMAIL_PREFIX, part before @ is used (e.g. firir_john_abc).</span>
+            </div>
           </div>
+          <p className="text-xs text-slate-500 mt-2">Campaigns can set a code prefix and format (Random / Username / Email prefix) in the dashboard; the returned referralCode follows those rules.</p>
           <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (201)</h4>
           <div className="space-y-1 font-mono text-xs text-slate-600">
             <div>referralCode, referralId, status; optionally warning, reasons, riskScore if flagged.</div>

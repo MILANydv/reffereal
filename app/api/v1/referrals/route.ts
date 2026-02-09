@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
-import { generateReferralCode } from '@/lib/api-key';
+import { generateReferralCode, generateReferralCodeWithRules } from '@/lib/api-key';
 import { detectFraudEnhanced } from '@/lib/fraud-detection-enhanced';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralCodeGenerated } from '@/lib/notifications';
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { campaignId, referrerId, refereeId } = body;
+    const { campaignId, referrerId, refereeId, referrerUsername, referrerEmail } = body;
 
     if (!campaignId || !referrerId) {
       return NextResponse.json(
@@ -60,7 +60,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const referralCode = generateReferralCode();
+    const prefix = campaign.referralCodePrefix ?? undefined;
+    const format = (campaign.referralCodeFormat ?? 'RANDOM') as 'RANDOM' | 'USERNAME' | 'EMAIL_PREFIX';
+
+    let referralCode: string;
+    const maxAttempts = 5;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (format === 'RANDOM' && !prefix) {
+        referralCode = generateReferralCode();
+      } else {
+        referralCode = generateReferralCodeWithRules({
+          prefix: prefix || undefined,
+          format,
+          referrerUsername: referrerUsername ?? undefined,
+          referrerEmail: referrerEmail ?? undefined,
+        });
+      }
+      const existing = await prisma.referral.findUnique({ where: { referralCode } });
+      if (!existing) break;
+      if (attempt === maxAttempts - 1) {
+        do {
+          referralCode = generateReferralCode();
+        } while (await prisma.referral.findUnique({ where: { referralCode } }));
+      }
+    }
     const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
       request.headers.get('x-real-ip') || null;
     const userAgent = request.headers.get('user-agent') || null;

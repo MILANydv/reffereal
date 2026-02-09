@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
       level1Cap,
       level2Cap,
       tierConfig,
+      referralCodePrefix,
+      referralCodeFormat,
     } = body;
 
     if (!appId || !name || !referralType || !rewardModel || rewardValue === undefined) {
@@ -152,6 +154,8 @@ export async function POST(request: NextRequest) {
         level1Cap: level1Cap != null ? Number(level1Cap) : undefined,
         level2Cap: level2Cap != null ? Number(level2Cap) : undefined,
         tierConfig: typeof tierConfig === 'string' ? tierConfig : (tierConfig ? JSON.stringify(tierConfig) : undefined),
+        referralCodePrefix: referralCodePrefix != null && referralCodePrefix !== '' ? String(referralCodePrefix).trim() : undefined,
+        referralCodeFormat: referralCodeFormat != null && ['RANDOM', 'USERNAME', 'EMAIL_PREFIX'].includes(referralCodeFormat) ? referralCodeFormat : undefined,
       },
     });
 
