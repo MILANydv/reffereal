@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
 import { triggerWebhook } from '@/lib/webhooks';
+import { getClientIp } from '@/lib/client-ip';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -43,11 +44,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Capture client IP and device fingerprint for fraud detection
+    const ipAddress = getClientIp(request);
+    const userAgent = request.headers.get('user-agent') || null;
+    const acceptLanguage = request.headers.get('accept-language') || null;
+
+    // Generate device fingerprint
+    const { generateDeviceFingerprint } = await import('@/lib/fraud-detection-enhanced');
+    const deviceFingerprint = userAgent ? generateDeviceFingerprint(userAgent, ipAddress, acceptLanguage) : null;
+
     const updatedReferral = await prisma.referral.update({
       where: { id: referral.id },
       data: {
         status: 'CLICKED',
         clickedAt: new Date(),
+        // Update IP and device fingerprint if not already set (or update if click provides better data)
+        ipAddress: ipAddress || undefined,
+        deviceFingerprint: deviceFingerprint || undefined,
+        userAgent: userAgent || undefined,
       },
     });
 

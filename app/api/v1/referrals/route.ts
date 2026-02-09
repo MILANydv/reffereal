@@ -5,6 +5,7 @@ import { generateReferralCode, generateReferralCodeWithRules } from '@/lib/api-k
 import { detectFraudEnhanced } from '@/lib/fraud-detection-enhanced';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralCodeGenerated } from '@/lib/notifications';
+import { getClientIp } from '@/lib/client-ip';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -84,8 +85,7 @@ export async function POST(request: NextRequest) {
         } while (await prisma.referral.findUnique({ where: { referralCode } }));
       }
     }
-    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-      request.headers.get('x-real-ip') || null;
+    const ipAddress = getClientIp(request);
     const userAgent = request.headers.get('user-agent') || null;
     const acceptLanguage = request.headers.get('accept-language') || null;
 

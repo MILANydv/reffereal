@@ -36,6 +36,76 @@ Content-Type: application/json
 
 ---
 
+## IP Tracking & Fraud Detection
+
+The platform automatically tracks **client IP addresses** and **device fingerprints** for fraud detection. This helps identify suspicious patterns like duplicate referrals from the same IP or device.
+
+### Forwarding Client IP Headers
+
+**Important**: When making API requests from your backend server, you must forward the **end-user's client IP** (not your server's IP) in HTTP headers. This ensures accurate fraud detection.
+
+**Recommended headers** (in priority order):
+
+1. **`x-forwarded-for`** — Most common. Set this to the client's IP address.
+   - If your app is behind a proxy/CDN, append the client IP: `x-forwarded-for: CLIENT_IP, PROXY_IP`
+   - The platform extracts the first IP (the original client)
+
+2. **`x-real-ip`** — Alternative header (used by nginx). Set to the client's IP.
+
+3. **`cf-connecting-ip`** — Cloudflare-specific (automatically set by Cloudflare).
+
+**Example (Node.js/Express)**
+
+```javascript
+// When calling the Referral API from your backend
+const clientIp = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
+
+fetch('https://reffereal.vercel.app/api/v1/referrals', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+    'x-forwarded-for': clientIp,  // Forward the end-user's IP
+  },
+  body: JSON.stringify({ ... }),
+});
+```
+
+**Example (Python/Flask)**
+
+```python
+from flask import request
+
+client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+
+response = requests.post(
+    'https://reffereal.vercel.app/api/v1/referrals',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json',
+        'x-forwarded-for': client_ip,  # Forward the end-user's IP
+    },
+    json={...}
+)
+```
+
+**Why this matters**
+
+- **Fraud detection**: The platform checks for duplicate IPs, suspicious patterns, and device fingerprint matches.
+- **Accurate tracking**: Without forwarding client IPs, the platform sees your server's IP, which reduces fraud detection effectiveness.
+- **Automatic handling**: The platform checks multiple headers (`cf-connecting-ip`, `x-forwarded-for`, `x-real-ip`, `true-client-ip`, `x-client-ip`) and filters out private/internal IPs to get the real client IP.
+
+**Device fingerprinting**
+
+The platform also generates a **device fingerprint** from:
+- User-Agent header
+- Accept-Language header  
+- Client IP address
+
+This helps detect when the same device is used for multiple suspicious referrals.
+
+---
+
 ## Referral link format
 
 After you get a `referralCode` from the API, build the shareable link by appending it to your base URL:

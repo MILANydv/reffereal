@@ -4,6 +4,7 @@ import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
 import { generateReferralCode } from '@/lib/api-key';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralConversion } from '@/lib/notifications';
+import { getClientIp } from '@/lib/client-ip';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -118,8 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fraud Detection Check
-    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-      request.headers.get('x-real-ip') || null;
+    const ipAddress = getClientIp(request);
 
     const { detectConversionFraud } = await import('@/lib/fraud-detection-enhanced');
     const { notifyPartnerFraud, notifyAdminFraud } = await import('@/lib/notifications');

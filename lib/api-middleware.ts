@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from './db';
 import { sendApiUsageWarningEmail } from './email';
+import { getClientIp } from './client-ip';
 
 export async function authenticateApiKey(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -41,7 +42,7 @@ export async function logApiUsage(
       data: {
         App: { connect: { id: appId } },
         endpoint,
-        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+        ipAddress: getClientIp(request) || undefined,
         userAgent: request.headers.get('user-agent') || undefined,
       },
     }),
