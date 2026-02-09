@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { logger } from '@/lib/logger';
 import { randomBytes } from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -33,7 +34,27 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      await sendPasswordResetEmail(user.email, resetToken, user.name || undefined);
+      await logger.info(
+        'Password reset requested',
+        'auth-api',
+        { userId: user.id, email: user.email }
+      );
+
+      const emailSent = await sendPasswordResetEmail(user.email, resetToken, user.name || undefined);
+      
+      if (!emailSent) {
+        await logger.error(
+          'Failed to send password reset email',
+          'auth-api',
+          { userId: user.id, email: user.email }
+        );
+      }
+    } else {
+      await logger.warn(
+        'Password reset requested for non-existent email',
+        'auth-api',
+        { email }
+      );
     }
 
     // Always return success to prevent email enumeration

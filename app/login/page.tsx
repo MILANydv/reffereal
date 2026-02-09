@@ -24,6 +24,12 @@ function LoginForm() {
       setTimeout(() => setShowSuccess(false), 5000);
     }
 
+    if (searchParams?.get('reset') === 'success') {
+      setShowSuccess(true);
+      setError('Password reset successfully! You can now login with your new password.');
+      setTimeout(() => setShowSuccess(false), 5000);
+    }
+
     const verified = searchParams?.get('verified');
     const verificationError = searchParams?.get('error');
 
@@ -207,6 +213,14 @@ function LoginForm() {
                       {showPassword ? 'visibility_off' : 'visibility'}
                     </span>
                   </button>
+                </div>
+                <div className="flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-slate-400 hover:text-primary transition-colors font-medium"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
               </div>
             </div>

@@ -1,0 +1,173 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+
+export default function ForgotPasswordPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(true);
+      } else {
+        setError(data.error || 'Failed to send reset email');
+      }
+    } catch (error) {
+      setError('Failed to send reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white font-sans flex flex-col md:flex-row overflow-hidden">
+      {/* Left Column - Minimal Branding info */}
+      <div className="hidden lg:flex flex-col justify-between p-16 w-[40%] bg-navy text-white relative">
+        <div className="absolute inset-0 bg-dot-pattern opacity-10"></div>
+        <div className="relative z-10">
+          <Link href="/" className="group inline-block">
+            <img src="/logos/logo.png" alt="Incenta" className="h-14 brightness-0 invert group-hover:brightness-100 group-hover:invert-0 transition-all duration-300 mb-20" />
+          </Link>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <h1 className="text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
+              Reset Your <br />
+              <span className="text-primary italic font-light">Access Key.</span>
+            </h1>
+            <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-slate-500 mb-4">Security status</p>
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-xs font-bold font-mono text-emerald-500/80">SECURE CHANNEL: ACTIVE</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column - Form */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 lg:px-12 relative bg-slate-50 md:bg-white">
+        <div className="w-full max-w-[440px] space-y-12">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-10">
+            <Link href="/">
+              <img src="/logos/logo.png" alt="Incenta" className="h-16" />
+            </Link>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-3xl font-extrabold text-navy tracking-tight">Reset Password</h2>
+            <p className="text-slate-500 font-medium">
+              Enter your email address and we'll send you instructions to reset your password.
+            </p>
+          </div>
+
+          {success ? (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="p-4 rounded-xl bg-green-50 border border-green-100">
+                <p className="text-sm font-bold text-green-800 tracking-tight">
+                  If an account with that email exists, a password reset link has been sent.
+                </p>
+                <p className="text-xs text-green-600 mt-2">
+                  Please check your email and click the link to reset your password. The link will expire in 1 hour.
+                </p>
+              </div>
+              <Link
+                href="/login"
+                className="tactile-btn w-full !rounded-2xl !py-5 flex items-center justify-center gap-3"
+              >
+                Back to Login
+              </Link>
+            </motion.div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, x: -5 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 rounded-xl bg-red-50 border border-red-100"
+                >
+                  <p className="text-sm font-bold text-red-800 tracking-tight">{error}</p>
+                </motion.div>
+              )}
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+                    Email Identity
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-primary/20 focus:bg-white transition-all outline-none font-medium placeholder:text-slate-300"
+                    placeholder="admin@platform.io"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-6 pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="tactile-btn w-full !rounded-2xl !py-5 flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {loading ? 'Sending...' : (
+                    <>
+                      Send Reset Link
+                      <span className="material-symbols-outlined text-sm">mail</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="text-center">
+                  <Link
+                    href="/login"
+                    className="text-sm text-slate-400 font-medium hover:text-navy transition-colors"
+                  >
+                    ← Back to Login
+                  </Link>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

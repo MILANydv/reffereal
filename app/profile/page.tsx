@@ -118,8 +118,8 @@ export default function ProfilePage() {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (passwordForm.newPassword.length < 8) {
+      setError('Password must be at least 8 characters long');
       return;
     }
 
@@ -574,7 +574,7 @@ export default function ProfilePage() {
                           value={passwordForm.newPassword}
                           onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                          placeholder="Enter new password (min 6 characters)"
+                          placeholder="Enter new password (min 8 characters)"
                         />
                       </div>
                       <div>

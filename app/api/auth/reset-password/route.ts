@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
@@ -31,6 +32,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
+      await logger.warn(
+        'Password reset attempted with invalid or expired token',
+        'auth-api',
+        { token: token.substring(0, 8) + '...' }
+      );
       return NextResponse.json(
         { error: 'Invalid or expired reset token' },
         { status: 400 }
@@ -47,6 +53,12 @@ export async function POST(request: NextRequest) {
         passwordResetExpiry: null,
       },
     });
+
+    await logger.info(
+      'Password reset successfully',
+      'auth-api',
+      { userId: user.id, email: user.email }
+    );
 
     return NextResponse.json({
       message: 'Password reset successfully',
