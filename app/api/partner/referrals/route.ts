@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const partnerId = session.user.partnerId;
 
-    // Build where clause - if appId is provided, filter to that app; otherwise show all apps (platform-level)
+    // Build where clause for code generation records (original referrals)
     const whereClause: any = {
       Campaign: {
         App: {
@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
           ...(appId ? { id: appId } : {}),
         },
       },
+      isConversionReferral: false, // Only show code generation records
     };
 
     if (campaignId) {
@@ -37,7 +38,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (statusFilter && statusFilter !== 'all') {
-      whereClause.status = statusFilter;
+      // For status filter, we need to check if there are any conversions with that status
+      // But we still show the original code generation record
+      // The status filter will be applied to conversion referrals
     }
 
     if (startDate || endDate) {
@@ -57,11 +60,11 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Get total count
+    // Get total count of code generation records
     const totalItems = await prisma.referral.count({ where: whereClause });
     const totalPages = Math.ceil(totalItems / limit);
 
-    const referrals = await prisma.referral.findMany({
+    const codeGenerationRecords = await prisma.referral.findMany({
       where: whereClause,
       include: {
         Campaign: {
@@ -78,6 +81,77 @@ export async function GET(request: NextRequest) {
       skip: (page - 1) * limit,
       take: limit,
     });
+
+    // Enrich each record with clicks, conversions, and converted users
+    const referrals = await Promise.all(
+      codeGenerationRecords.map(async (ref) => {
+        // Count clicks for this code
+        const clicksCount = await prisma.click.count({
+          where: { referralCode: ref.referralCode },
+        });
+
+        // Get conversion referrals for this code
+        const conversionWhere: any = {
+          originalReferralCode: ref.referralCode,
+          isConversionReferral: true,
+        };
+        
+        if (statusFilter && statusFilter !== 'all') {
+          conversionWhere.status = statusFilter;
+        }
+
+        const conversionsCount = await prisma.referral.count({
+          where: conversionWhere,
+        });
+
+        // Get list of who converted
+        const conversionRecords = await prisma.referral.findMany({
+          where: {
+            originalReferralCode: ref.referralCode,
+            isConversionReferral: true,
+            status: 'CONVERTED',
+          },
+          select: {
+            id: true,
+            refereeId: true,
+            convertedAt: true,
+            rewardAmount: true,
+            isFlagged: true,
+            status: true,
+          },
+          orderBy: { convertedAt: 'desc' },
+        });
+
+        // Sum total rewards from all conversions
+        const totalRewardAmount = conversionRecords.reduce((sum, conv) => sum + (conv.rewardAmount || 0), 0);
+
+        // Determine overall status: if any conversion is flagged, show FLAGGED; if any converted, show CONVERTED; else PENDING
+        let overallStatus = 'PENDING';
+        if (conversionRecords.some(c => c.isFlagged)) {
+          overallStatus = 'FLAGGED';
+        } else if (conversionsCount > 0) {
+          overallStatus = 'CONVERTED';
+        } else if (clicksCount > 0) {
+          overallStatus = 'CLICKED';
+        }
+
+        return {
+          ...ref,
+          clicks: clicksCount,
+          conversions: conversionsCount,
+          convertedUsers: conversionRecords.map(conv => ({
+            id: conv.id,
+            refereeId: conv.refereeId,
+            convertedAt: conv.convertedAt,
+            rewardAmount: conv.rewardAmount || 0,
+            isFlagged: conv.isFlagged,
+            status: conv.status,
+          })),
+          totalRewardAmount,
+          status: overallStatus, // Override status with calculated overall status
+        };
+      })
+    );
 
     return NextResponse.json({
       referrals,

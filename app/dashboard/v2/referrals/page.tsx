@@ -137,9 +137,11 @@ function ReferralsContent() {
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Referral Code</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Referrer ID</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Campaign</th>
+                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Clicks</th>
+                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Conversions</th>
+                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Converted Users</th>
+                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Total Rewards</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Reward</th>
-                  <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Activity</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Date</th>
                   <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
                 </tr>
@@ -151,93 +153,125 @@ function ReferralsContent() {
                       <td className="px-6 py-4"><Skeleton className="h-4 w-24 font-mono" /></td>
                       <td className="px-6 py-4"><Skeleton className="h-4 w-32 font-mono" /></td>
                       <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
                       <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
                       <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
                       <td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-4 w-20" /></td>
                     </tr>
                   ))
                 ) : referrals.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
                       {scopeAppId ? 'No referrals found for this app.' : 'No referrals found.'}
                     </td>
                   </tr>
                 ) : (
-                  referrals.map((referral: Referral) => (
-                    <tr key={referral.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
-                      <td className="px-6 py-4 font-mono font-medium text-blue-600">
-                        <div className="flex items-center">
-                          {referral.referralCode}
-                          {referral.isFlagged && (
-                            <ShieldAlert size={14} className="ml-2 text-red-500" />
+                  referrals.map((referral: any) => {
+                    const clicks = referral.clicks || 0;
+                    const conversions = referral.conversions || 0;
+                    const convertedUsers = referral.convertedUsers || [];
+                    const totalRewardAmount = referral.totalRewardAmount || referral.rewardAmount || 0;
+                    const hasFlaggedConversions = convertedUsers.some((u: any) => u.isFlagged);
+                    
+                    return (
+                      <tr key={referral.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group">
+                        <td className="px-6 py-4 font-mono font-medium text-blue-600">
+                          <div className="flex items-center">
+                            {referral.referralCode}
+                            {hasFlaggedConversions && (
+                              <ShieldAlert size={14} className="ml-2 text-red-500" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link href={`/dashboard/v2/users/${referral.referrerId}`} className="font-mono text-xs text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+                            {referral.referrerId}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="font-medium">{(referral.Campaign || referral.campaign)?.name || 'Unknown Campaign'}</div>
+                            {((referral.Campaign?.App || referral.campaign?.app)) && (
+                              <div className="text-xs text-gray-500 mt-0.5">{(referral.Campaign?.App || referral.campaign?.app)?.name}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center space-x-1">
+                            <MousePointerClick size={16} className={clicks > 0 ? 'text-blue-500' : 'text-gray-400'} />
+                            <span className="font-medium">{clicks}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center space-x-1">
+                            <CheckCircle size={16} className={conversions > 0 ? 'text-green-500' : 'text-gray-400'} />
+                            <span className="font-medium">{conversions}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {convertedUsers.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {convertedUsers.slice(0, 2).map((user: any) => (
+                                <Link
+                                  key={user.id}
+                                  href={`/dashboard/v2/users/${user.refereeId}`}
+                                  className="font-mono text-xs text-blue-600 hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {user.refereeId}
+                                  {user.isFlagged && <ShieldAlert size={12} className="inline ml-1 text-red-500" />}
+                                </Link>
+                              ))}
+                              {convertedUsers.length > 2 && (
+                                <span className="text-xs text-gray-500">+{convertedUsers.length - 2} more</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">—</span>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Link href={`/dashboard/v2/users/${referral.referrerId}`} className="font-mono text-xs text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()}>
-                          {referral.referrerId}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="font-medium">{(referral.Campaign || referral.campaign)?.name || 'Unknown Campaign'}</div>
-                          {((referral.Campaign?.App || referral.campaign?.app)) && (
-                            <div className="text-xs text-gray-500 mt-0.5">{(referral.Campaign?.App || referral.campaign?.app)?.name}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge
-                          variant={
-                            referral.status === 'CONVERTED' ? 'success' :
-                              referral.status === 'FLAGGED' ? 'error' :
-                                referral.status === 'PENDING' ? 'warning' : 'default'
-                          }
-                        >
-                          {referral.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 font-medium">
-                        {referral.rewardAmount ? `$${referral.rewardAmount}` : '—'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3 text-gray-400">
-                          <MousePointerClick
-                            size={16}
-                            className={referral.clickedAt ? 'text-blue-500' : ''}
+                        </td>
+                        <td className="px-6 py-4 font-medium">
+                          {totalRewardAmount > 0 ? `$${totalRewardAmount.toFixed(2)}` : '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge
+                            variant={
+                              referral.status === 'CONVERTED' ? 'success' :
+                                referral.status === 'FLAGGED' ? 'error' :
+                                  referral.status === 'PENDING' ? 'warning' : 'default'
+                            }
+                          >
+                            {referral.status}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          {new Date(referral.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <ActionDropdown
+                            onMarkSuspicious={referral.status !== 'FLAGGED' ? () => {
+                              setMarkSuspiciousModal({
+                                isOpen: true,
+                                referralId: referral.id,
+                                referralCode: referral.referralCode,
+                              });
+                            } : undefined}
+                            onResolve={referral.status === 'FLAGGED' ? () => {
+                              setResolveModal({
+                                isOpen: true,
+                                referralId: referral.id,
+                                referralCode: referral.referralCode,
+                              });
+                            } : undefined}
+                            markSuspiciousLabel="Mark suspicious"
+                            resolveLabel="Resolve flag"
                           />
-                          <CheckCircle
-                            size={16}
-                            className={referral.convertedAt ? 'text-green-500' : ''}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                        {new Date(referral.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <ActionDropdown
-                          onMarkSuspicious={referral.status !== 'FLAGGED' ? () => {
-                            setMarkSuspiciousModal({
-                              isOpen: true,
-                              referralId: referral.id,
-                              referralCode: referral.referralCode,
-                            });
-                          } : undefined}
-                          onResolve={referral.status === 'FLAGGED' ? () => {
-                            setResolveModal({
-                              isOpen: true,
-                              referralId: referral.id,
-                              referralCode: referral.referralCode,
-                            });
-                          } : undefined}
-                          markSuspiciousLabel="Mark suspicious"
-                          resolveLabel="Resolve flag"
-                        />
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

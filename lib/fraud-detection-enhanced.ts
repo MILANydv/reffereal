@@ -254,44 +254,61 @@ export async function detectConversionFraud(
   const reasons: string[] = [];
   let riskScore = 0;
 
-  // Fetch referral to check timing
-  const referral = await prisma.referral.findUnique({
+  // Fetch original referral to check timing and referrer info
+  const originalReferral = await prisma.referral.findUnique({
     where: { id: referralId },
-    select: { createdAt: true, ipAddress: true, referrerId: true },
+    select: { createdAt: true, referrerId: true },
   });
 
-  if (!referral) return { isFraud: false, reasons: [], riskScore: 0 };
+  if (!originalReferral) return { isFraud: false, reasons: [], riskScore: 0 };
 
-  // 1. Impossible conversion time (e.g. < 5 seconds from creation)
-  const timeDiff = Date.now() - referral.createdAt.getTime();
+  // Check if this refereeId has already converted with this code
+  const existingConversion = await prisma.referral.findFirst({
+    where: {
+      originalReferralCode: referralCode,
+      refereeId,
+      isConversionReferral: true,
+      status: 'CONVERTED',
+    },
+  });
+
+  if (existingConversion) {
+    reasons.push('Duplicate conversion attempt');
+    riskScore += 50;
+    // Don't create fraud flag here - conversion endpoint will reject it
+  }
+
+  // 1. Impossible conversion time - check against most recent click or original referral creation
+  const latestClick = await prisma.click.findFirst({
+    where: { referralCode, refereeId },
+    orderBy: { clickedAt: 'desc' },
+  });
+  
+  const referenceTime = latestClick?.clickedAt || originalReferral.createdAt;
+  const timeDiff = Date.now() - referenceTime.getTime();
+  
   if (timeDiff < 5000) {
     reasons.push('Impossible conversion time (< 5s)');
     riskScore += 100; // Almost certainly a bot
-
-    await createFraudFlag(
-      appId,
-      referralCode,
-      FraudType.IMPOSSIBLE_CONVERSION_TIME,
-      `Conversion happened ${timeDiff}ms after referral creation. Bots likely.`,
-      { timeDiffMs: timeDiff }
-    );
+    // Note: Fraud flag will be created for the conversion referral code after it's created
   }
 
-  // 2. IP Match Check (Referrer IP == Converter IP)
-  if (ipAddress && referral.ipAddress && ipAddress === referral.ipAddress) {
-    // If not self-referral (already checked at creation), this might be same household or testing
-    // We flag it but maybe with lower score effectively than self-referral
-    if (referral.referrerId !== refereeId) {
+  // 2. IP Match Check - check against clicks from this referee or original referrer's clicks
+  if (ipAddress) {
+    // Check if referee's IP matches any click from the referrer
+    const referrerClicks = await prisma.click.findMany({
+      where: {
+        referralCode,
+        referrerId: originalReferral.referrerId,
+      },
+      select: { ipAddress: true },
+    });
+    
+    const referrerIps = referrerClicks.map(c => c.ipAddress).filter(Boolean);
+    if (referrerIps.includes(ipAddress) && originalReferral.referrerId !== refereeId) {
       reasons.push('Conversion from same IP as Referrer');
       riskScore += 60;
-
-      await createFraudFlag(
-        appId,
-        referralCode,
-        FraudType.DUPLICATE_IP,
-        'Conversion IP matches Referrer IP',
-        { ipAddress }
-      );
+      // Note: Fraud flag will be created for the conversion referral code after it's created
     }
   }
 

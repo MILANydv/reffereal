@@ -43,10 +43,17 @@ interface UserStats {
     createdAt: string;
     clicks: number;
     conversions: number;
-    rewardAmount: number;
+    totalRewardAmount: number;
+    convertedUsers: Array<{
+      refereeId: string;
+      convertedAt: string;
+      rewardAmount: number;
+      isFlagged: boolean;
+    }>;
   }>;
   referralCodesUsed: Array<{
     referralCode: string;
+    conversionReferralCode?: string;
     referrerId: string;
     campaignId: string;
     campaignName: string;
@@ -54,7 +61,9 @@ interface UserStats {
     appName?: string;
     status: string;
     usedAt: string;
+    convertedAt?: string;
     rewardEarned: number;
+    isFlagged?: boolean;
   }>;
 }
 
@@ -290,9 +299,12 @@ export default function UserDetailPage() {
                         <Badge variant={code.status === 'CONVERTED' ? 'success' : code.status === 'CLICKED' ? 'info' : 'default'}>
                           {code.status}
                         </Badge>
+                        {code.isFlagged && (
+                          <Badge variant="error">Flagged</Badge>
+                        )}
                       </div>
                       <span className="text-sm text-gray-500">
-                        {new Date(code.usedAt).toLocaleDateString()}
+                        {code.convertedAt ? new Date(code.convertedAt).toLocaleDateString() : new Date(code.usedAt).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-sm">

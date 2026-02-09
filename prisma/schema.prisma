@@ -70,9 +70,28 @@ model Campaign {
   updatedAt            DateTime            @updatedAt
   App                  App                 @relation(fields: [appId], references: [id], onDelete: Cascade)
   Referral             Referral[]
+  Click                Click[]
 
   @@index([appId])
   @@index([status])
+}
+
+model Click {
+  id                String   @id @default(cuid())
+  referralCode      String
+  refereeId         String?
+  ipAddress         String?
+  deviceFingerprint String?
+  userAgent         String?
+  clickedAt         DateTime @default(now())
+  campaignId        String
+  referrerId         String
+  Campaign          Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([referralCode])
+  @@index([referrerId])
+  @@index([campaignId])
+  @@index([clickedAt])
 }
 
 model Conversion {
@@ -219,39 +238,43 @@ model PricingPlan {
 }
 
 model Referral {
-  id                String         @id @default(cuid())
-  campaignId        String
-  referralCode      String         @unique
-  referrerId        String
-  refereeId         String?
-  status            ReferralStatus @default(PENDING)
-  clickedAt         DateTime?
-  convertedAt       DateTime?
-  rewardAmount      Float?
-  level             Int            @default(1)
-  parentReferralId  String?
-  ipAddress         String?
-  isFlagged         Boolean        @default(false)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  country           String?
-  deviceFingerprint String?
-  flaggedAt         DateTime?
-  flaggedBy         String?
-  userAgent         String?
-  Conversion        Conversion[]
-  Campaign          Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  Referral          Referral?      @relation("ReferralToReferral", fields: [parentReferralId], references: [id])
-  other_Referral    Referral[]     @relation("ReferralToReferral")
-  Reward            Reward[]
+  id                  String         @id @default(cuid())
+  campaignId          String
+  referralCode        String         @unique
+  referrerId          String
+  refereeId           String?
+  status              ReferralStatus @default(PENDING)
+  clickedAt           DateTime?
+  convertedAt         DateTime?
+  rewardAmount        Float?
+  level               Int            @default(1)
+  parentReferralId    String?
+  ipAddress           String?
+  isFlagged           Boolean        @default(false)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  country             String?
+  deviceFingerprint   String?
+  flaggedAt           DateTime?
+  flaggedBy           String?
+  userAgent           String?
+  originalReferralCode String?       // Links conversion referrals to original code
+  isConversionReferral Boolean       @default(false) // true for conversion records, false for code generation
+  Conversion          Conversion[]
+  Campaign            Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Referral            Referral?      @relation("ReferralToReferral", fields: [parentReferralId], references: [id])
+  other_Referral      Referral[]     @relation("ReferralToReferral")
+  Reward              Reward[]
 
   @@index([campaignId])
   @@index([deviceFingerprint])
   @@index([ipAddress])
+  @@index([originalReferralCode])
+  @@index([isConversionReferral])
+  @@index([referrerId])
   @@index([parentReferralId])
   @@index([refereeId])
   @@index([referralCode])
-  @@index([referrerId])
   @@index([status, campaignId])
   @@index([status])
 }

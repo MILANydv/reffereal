@@ -26,8 +26,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const referral = await prisma.referral.findUnique({
-      where: { referralCode },
+    // Find the original referral code generation record (not conversion referrals)
+    const originalReferral = await prisma.referral.findFirst({
+      where: {
+        referralCode,
+        isConversionReferral: false, // Only find the original code generation record
+      },
       include: {
         Campaign: {
           include: { App: true },
@@ -35,22 +39,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!referral) {
+    if (!originalReferral) {
       return NextResponse.json({ error: 'Referral code not found' }, { status: 404 });
     }
 
-    if (referral.Campaign.appId !== app.id) {
+    if (originalReferral.Campaign.appId !== app.id) {
       return NextResponse.json(
         { error: 'Referral does not belong to this app' },
         { status: 403 }
       );
     }
 
-    if (referral.Campaign.status !== 'ACTIVE') {
+    if (originalReferral.Campaign.status !== 'ACTIVE') {
       return NextResponse.json({ error: 'Campaign is not active' }, { status: 400 });
     }
 
-    const campaign = referral.Campaign;
+    const campaign = originalReferral.Campaign;
     const now = new Date();
 
     if (campaign.endDate && now > campaign.endDate) {
@@ -60,8 +64,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if this refereeId has already converted with this code
+    const existingConversion = await prisma.referral.findFirst({
+      where: {
+        originalReferralCode: referralCode,
+        refereeId,
+        isConversionReferral: true,
+        status: 'CONVERTED',
+      },
+    });
+
+    if (existingConversion) {
+      return NextResponse.json(
+        { error: 'This user has already converted with this referral code' },
+        { status: 400 }
+      );
+    }
+
+    // Check conversion window - use most recent click or original referral creation
     if (campaign.conversionWindow != null && campaign.conversionWindow > 0) {
-      const cutoff = referral.clickedAt || referral.createdAt;
+      const latestClick = await prisma.click.findFirst({
+        where: { referralCode, refereeId },
+        orderBy: { clickedAt: 'desc' },
+      });
+      const cutoff = latestClick?.clickedAt || originalReferral.createdAt;
       const windowEnd = new Date(cutoff.getTime() + campaign.conversionWindow * 24 * 60 * 60 * 1000);
       if (now > windowEnd) {
         return NextResponse.json(
@@ -86,10 +112,12 @@ export async function POST(request: NextRequest) {
       } catch {
         tiers = [];
       }
+      // Count conversion referrals (not code generation records) for this referrer
       const convertedCount = await prisma.referral.count({
         where: {
           campaignId: campaign.id,
-          referrerId: referral.referrerId,
+          referrerId: originalReferral.referrerId,
+          isConversionReferral: true,
           status: 'CONVERTED',
         },
       });
@@ -135,6 +163,80 @@ export async function POST(request: NextRequest) {
     let status = 'CONVERTED';
     if (fraudCheck.isFraud) {
       status = 'FLAGGED';
+    }
+
+    // Generate a unique referral code for this conversion record
+    const conversionReferralCode = generateReferralCode();
+    
+    // Create a NEW Referral record for this conversion
+    const [conversionReferral, conversion] = await prisma.$transaction(async (tx) => {
+      // Create new Referral record for this conversion
+      const newReferral = await tx.referral.create({
+        data: {
+          Campaign: { connect: { id: campaign.id } },
+          referralCode: conversionReferralCode,
+          referrerId: originalReferral.referrerId, // Original referrer (User A) gets credit
+          refereeId, // The user who converted (D or E)
+          status: status as any,
+          convertedAt: new Date(),
+          rewardAmount,
+          isFlagged: fraudCheck.isFraud,
+          originalReferralCode: referralCode, // Link to original code
+          isConversionReferral: true, // Mark as conversion record
+          level: 1,
+          ipAddress: ipAddress || null,
+        },
+      });
+      
+      const conv = await tx.conversion.create({
+        data: {
+          Referral: { connect: { id: newReferral.id } },
+          amount,
+          metadata: metadata ? JSON.stringify(metadata) : null,
+        },
+      });
+      
+      if (status === 'CONVERTED') {
+        await tx.reward.create({
+          data: {
+            referralId: newReferral.id,
+            conversionId: conv.id,
+            appId: app.id,
+            userId: originalReferral.referrerId, // Credit original referrer (User A)
+            amount: rewardAmount,
+            currency: 'USD',
+            status: 'PENDING',
+            level: 1,
+          },
+        });
+      }
+      
+      return [newReferral, conv];
+    });
+
+    // Create fraud flags for the conversion referral (not the original referrer)
+    if (fraudCheck.isFraud) {
+      const { createFraudFlag } = await import('@/lib/fraud-detection-enhanced');
+      const { FraudType } = await import('@prisma/client');
+      
+      for (const reason of fraudCheck.reasons) {
+        let fraudType = FraudType.SUSPICIOUS_PATTERN;
+        if (reason.includes('Impossible conversion time')) {
+          fraudType = FraudType.IMPOSSIBLE_CONVERSION_TIME;
+        } else if (reason.includes('same IP')) {
+          fraudType = FraudType.DUPLICATE_IP;
+        } else if (reason.includes('Duplicate')) {
+          fraudType = FraudType.SELF_REFERRAL;
+        }
+        
+        await createFraudFlag(
+          app.id,
+          conversionReferral.referralCode, // Flag the conversion referral, not original code
+          fraudType,
+          `Conversion fraud: ${reason}`,
+          { refereeId, originalReferralCode: referralCode }
+        );
+      }
 
       // Notify Partner
       try {
@@ -144,7 +246,7 @@ export async function POST(request: NextRequest) {
         });
         if (partner?.User) {
           await notifyPartnerFraud(partner.User.id, {
-            referralCode,
+            referralCode: originalReferral.referralCode,
             appName: app.name,
             fraudType: fraudCheck.reasons[0] || 'Unknown Fraud',
           });
@@ -157,10 +259,12 @@ export async function POST(request: NextRequest) {
       try {
         await notifyAdminFraud(
           'Conversion Fraud Detected',
-          `High risk conversion in app "${app.name}" for code "${referralCode}". Reason: ${fraudCheck.reasons.join(', ')}`,
+          `High risk conversion in app "${app.name}" for code "${referralCode}". Referee: ${refereeId}. Reason: ${fraudCheck.reasons.join(', ')}`,
           {
             appId: app.id,
-            referralCode,
+            referralCode: originalReferral.referralCode,
+            conversionReferralCode: conversionReferral.referralCode,
+            refereeId,
             riskScore: fraudCheck.riskScore,
             reasons: fraudCheck.reasons,
           }
@@ -169,41 +273,6 @@ export async function POST(request: NextRequest) {
         console.error('Error notifying admins of fraud:', err);
       }
     }
-
-    const [updatedReferral, conversion] = await prisma.$transaction(async (tx) => {
-      const updated = await tx.referral.update({
-        where: { id: referral.id },
-        data: {
-          status: status as any,
-          refereeId,
-          convertedAt: new Date(),
-          rewardAmount,
-          isFlagged: fraudCheck.isFraud,
-        },
-      });
-      const conv = await tx.conversion.create({
-        data: {
-          Referral: { connect: { id: referral.id } },
-          amount,
-          metadata: metadata ? JSON.stringify(metadata) : null,
-        },
-      });
-      if (status === 'CONVERTED') {
-        await tx.reward.create({
-          data: {
-            referralId: updated.id,
-            conversionId: conv.id,
-            appId: app.id,
-            userId: referral.referrerId,
-            amount: rewardAmount,
-            currency: 'USD',
-            status: 'PENDING',
-            level: 1,
-          },
-        });
-      }
-      return [updated, conv];
-    });
 
     // Multi-level: if referrer was referred by someone in this campaign, credit level-2 reward
     if (
@@ -231,20 +300,22 @@ export async function POST(request: NextRequest) {
             data: {
               Campaign: { connect: { id: campaign.id } },
               referrerId: parentReferral.referrerId,
-              refereeId: referral.referrerId,
+              refereeId: originalReferral.referrerId,
               referralCode: l2Code,
               status: 'CONVERTED',
               convertedAt: new Date(),
               rewardAmount: level2Amount,
               level: 2,
-              parentReferralId: referral.id,
+              parentReferralId: conversionReferral.id,
+              originalReferralCode: referralCode,
+              isConversionReferral: true,
             },
           });
           const l2Conversion = await tx.conversion.create({
             data: {
               Referral: { connect: { id: r.id } },
               amount: null,
-              metadata: JSON.stringify({ type: 'level2', parentReferralId: referral.id }),
+              metadata: JSON.stringify({ type: 'level2', parentReferralId: conversionReferral.id }),
             },
           });
           await tx.reward.create({
@@ -299,8 +370,8 @@ export async function POST(request: NextRequest) {
 
       if (partner?.User) {
         await notifyReferralConversion(partner.User.id, {
-          code: updatedReferral.referralCode,
-          rewardAmount: updatedReferral.rewardAmount || undefined,
+          code: originalReferral.referralCode,
+          rewardAmount: conversionReferral.rewardAmount || undefined,
           campaignName: campaign.name,
         });
       }
@@ -311,10 +382,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      referralId: updatedReferral.id,
+      referralId: conversionReferral.id,
+      originalReferralCode: originalReferral.referralCode,
       conversionId: conversion.id,
-      rewardAmount: updatedReferral.rewardAmount,
-      status: updatedReferral.status,
+      rewardAmount: conversionReferral.rewardAmount,
+      status: conversionReferral.status,
+      refereeId, // Who converted
+      referrerId: originalReferral.referrerId, // Who gets credit (User A)
     }, { status: 201 });
   } catch (error) {
     console.error('Error tracking conversion:', error);

@@ -31,16 +31,33 @@ export async function GET(request: NextRequest) {
       whereClause.campaignId = campaignId;
     }
 
+    // Count code generation records (original referrals)
+    const codeGenerationWhere = {
+      ...whereClause,
+      isConversionReferral: false,
+    };
+
+    // Count clicks from Click table
+    const clicksWhere = {
+      Campaign: whereClause.Campaign,
+    };
+    if (campaignId) {
+      clicksWhere.campaignId = campaignId;
+    }
+
+    // Count conversion referrals
+    const conversionsWhere = {
+      ...whereClause,
+      isConversionReferral: true,
+      status: 'CONVERTED',
+    };
+
     const [totalReferrals, totalClicks, totalConversions, totalRewardValue] = await Promise.all([
-      prisma.referral.count({ where: whereClause }),
-      prisma.referral.count({
-        where: { ...whereClause, status: { in: ['CLICKED', 'CONVERTED'] } },
-      }),
-      prisma.referral.count({
-        where: { ...whereClause, status: 'CONVERTED' },
-      }),
+      prisma.referral.count({ where: codeGenerationWhere }),
+      prisma.click.count({ where: clicksWhere }),
+      prisma.referral.count({ where: conversionsWhere }),
       prisma.referral.aggregate({
-        where: { ...whereClause, status: 'CONVERTED' },
+        where: conversionsWhere,
         _sum: { rewardAmount: true },
       }),
     ]);

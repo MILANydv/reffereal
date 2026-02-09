@@ -49,15 +49,19 @@ export async function GET(request: NextRequest) {
 
 async function getMetricsForPeriod(partnerId: string, startDate: Date, endDate: Date) {
   const [referrals, conversions, apiCalls] = await Promise.all([
+    // Count code generation records (original referrals)
     prisma.referral.count({
       where: {
         Campaign: { App: { partnerId } },
+        isConversionReferral: false,
         createdAt: { gte: startDate, lte: endDate },
       },
     }),
+    // Count conversion referrals
     prisma.referral.count({
       where: {
         Campaign: { App: { partnerId } },
+        isConversionReferral: true,
         status: 'CONVERTED',
         convertedAt: { gte: startDate, lte: endDate },
       },
@@ -73,6 +77,7 @@ async function getMetricsForPeriod(partnerId: string, startDate: Date, endDate: 
   const rewardSum = await prisma.referral.aggregate({
     where: {
       Campaign: { App: { partnerId } },
+      isConversionReferral: true,
       status: 'CONVERTED',
       convertedAt: { gte: startDate, lte: endDate },
     },

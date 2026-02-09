@@ -89,18 +89,32 @@ export async function GET(request: NextRequest) {
       const campaignAnalytics = await Promise.all(
         campaigns.map(async (campaign: { id: string; name: string; status: string }) => {
           const [totalReferrals, totalClicks, totalConversions, totalReward] = await Promise.all([
-            prisma.referral.count({ where: { campaignId: campaign.id } }),
+            // Count code generation records (original referrals)
             prisma.referral.count({
               where: {
                 campaignId: campaign.id,
-                status: { in: ['CLICKED', 'CONVERTED'] },
+                isConversionReferral: false,
               },
             }),
-            prisma.referral.count({
-              where: { campaignId: campaign.id, status: 'CONVERTED' },
+            // Count clicks from Click table
+            prisma.click.count({
+              where: { campaignId: campaign.id },
             }),
+            // Count conversion referrals
+            prisma.referral.count({
+              where: {
+                campaignId: campaign.id,
+                isConversionReferral: true,
+                status: 'CONVERTED',
+              },
+            }),
+            // Sum rewards from conversion referrals
             prisma.referral.aggregate({
-              where: { campaignId: campaign.id, status: 'CONVERTED' },
+              where: {
+                campaignId: campaign.id,
+                isConversionReferral: true,
+                status: 'CONVERTED',
+              },
               _sum: { rewardAmount: true },
             }),
           ]);

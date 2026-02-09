@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { referralCode } = body;
+    const { referralCode, refereeId } = body;
 
     if (!referralCode) {
       return NextResponse.json(
@@ -24,8 +24,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const referral = await prisma.referral.findUnique({
-      where: { referralCode },
+    // Find the original referral code generation record (not conversion referrals)
+    const referral = await prisma.referral.findFirst({
+      where: {
+        referralCode,
+        isConversionReferral: false, // Only find the original code generation record
+      },
       include: {
         Campaign: {
           include: { App: true },
@@ -53,31 +57,35 @@ export async function POST(request: NextRequest) {
     const { generateDeviceFingerprint } = await import('@/lib/fraud-detection-enhanced');
     const deviceFingerprint = userAgent ? generateDeviceFingerprint(userAgent, ipAddress, acceptLanguage) : null;
 
-    const updatedReferral = await prisma.referral.update({
-      where: { id: referral.id },
+    // Create a Click record instead of updating the Referral record
+    const click = await prisma.click.create({
       data: {
-        status: 'CLICKED',
-        clickedAt: new Date(),
-        // Update IP and device fingerprint if not already set (or update if click provides better data)
-        ipAddress: ipAddress || undefined,
-        deviceFingerprint: deviceFingerprint || undefined,
-        userAgent: userAgent || undefined,
+        referralCode,
+        refereeId: refereeId || null,
+        ipAddress: ipAddress || null,
+        deviceFingerprint: deviceFingerprint || null,
+        userAgent: userAgent || null,
+        campaignId: referral.campaignId,
+        referrerId: referral.referrerId, // Original referrer (User A)
       },
     });
 
     await logApiUsage(app.id, '/api/v1/clicks', request);
 
     await triggerWebhook(app.id, 'REFERRAL_CLICKED', {
-      referralId: updatedReferral.id,
-      referralCode: updatedReferral.referralCode,
-      clickedAt: updatedReferral.clickedAt,
+      referralId: referral.id,
+      referralCode: referral.referralCode,
+      clickId: click.id,
+      clickedAt: click.clickedAt,
       campaignId: referral.campaignId,
+      refereeId: refereeId || null,
     });
 
     return NextResponse.json({
       success: true,
-      referralId: updatedReferral.id,
-      status: updatedReferral.status,
+      clickId: click.id,
+      referralCode: referral.referralCode,
+      clickedAt: click.clickedAt,
     });
   } catch (error) {
     console.error('Error tracking click:', error);

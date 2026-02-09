@@ -69,24 +69,55 @@ export async function GET(request: NextRequest) {
     }
 
     const totalApps = partner.App.length;
-    let totalReferrals = 0;
-    let totalClicks = 0;
-    let totalConversions = 0;
-    let totalRewards = 0;
-
-    for (const app of partner.App || []) {
-      for (const campaign of app.Campaign || []) {
-        totalReferrals += campaign.Referral?.length || 0;
-        totalClicks += (campaign.Referral?.filter((r) => r.clickedAt) || []).length;
-        totalConversions += (campaign.Referral?.filter((r) => r.convertedAt) || []).length;
-        totalRewards += campaign.Referral?.reduce((sum, r) => sum + (r.rewardAmount || 0), 0) || 0;
-      }
-    }
+    
+    // Build where clauses for accurate counting
+    const appsIds = partner.App.map(app => app.id);
+    const campaignsIds = partner.App.flatMap(app => app.Campaign.map(c => c.id));
+    
+    const [totalReferrals, totalClicks, totalConversions, totalRewardsAgg] = await Promise.all([
+      // Count code generation records (original referrals)
+      prisma.referral.count({
+        where: {
+          campaignId: { in: campaignsIds },
+          isConversionReferral: false,
+          ...(dateFilter.gte || dateFilter.lte ? { createdAt: dateFilter } : {}),
+        },
+      }),
+      // Count clicks from Click table
+      prisma.click.count({
+        where: {
+          campaignId: { in: campaignsIds },
+          ...(dateFilter.gte || dateFilter.lte ? { clickedAt: dateFilter } : {}),
+        },
+      }),
+      // Count conversion referrals
+      prisma.referral.count({
+        where: {
+          campaignId: { in: campaignsIds },
+          isConversionReferral: true,
+          status: 'CONVERTED',
+          ...(dateFilter.gte || dateFilter.lte ? { convertedAt: dateFilter } : {}),
+        },
+      }),
+      // Sum rewards from conversion referrals
+      prisma.referral.aggregate({
+        where: {
+          campaignId: { in: campaignsIds },
+          isConversionReferral: true,
+          status: 'CONVERTED',
+          ...(dateFilter.gte || dateFilter.lte ? { convertedAt: dateFilter } : {}),
+        },
+        _sum: { rewardAmount: true },
+      }),
+    ]);
+    
+    const totalRewards = totalRewardsAgg._sum.rewardAmount || 0;
 
     const apiUsageCurrent = partner.App?.reduce((sum, app) => sum + (app.ApiUsageLog?.length || 0), 0) || 0;
     const apiUsageLimit = partner.Subscription?.PricingPlan.apiLimit || 10000;
     const apiUsagePercentage = (apiUsageCurrent / apiUsageLimit) * 100;
 
+    // Get recent referrals (both code generation and conversions)
     const recentReferralsWhere: any = {
       Campaign: {
         App: appId ? { partnerId, id: appId } : { partnerId },

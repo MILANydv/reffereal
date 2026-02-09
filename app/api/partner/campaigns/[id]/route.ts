@@ -41,20 +41,34 @@ export async function GET(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
 
-    // Get referral statistics
+    // Get referral statistics using new structure
     const [totalReferrals, totalClicks, totalConversions, totalReward] = await Promise.all([
-      prisma.referral.count({ where: { campaignId: campaign.id } }),
+      // Count code generation records (original referrals)
       prisma.referral.count({
         where: {
           campaignId: campaign.id,
-          status: { in: ['CLICKED', 'CONVERTED'] },
+          isConversionReferral: false,
         },
       }),
-      prisma.referral.count({
-        where: { campaignId: campaign.id, status: 'CONVERTED' },
+      // Count clicks from Click table
+      prisma.click.count({
+        where: { campaignId: campaign.id },
       }),
+      // Count conversion referrals
+      prisma.referral.count({
+        where: {
+          campaignId: campaign.id,
+          isConversionReferral: true,
+          status: 'CONVERTED',
+        },
+      }),
+      // Sum rewards from conversion referrals
       prisma.referral.aggregate({
-        where: { campaignId: campaign.id, status: 'CONVERTED' },
+        where: {
+          campaignId: campaign.id,
+          isConversionReferral: true,
+          status: 'CONVERTED',
+        },
         _sum: { rewardAmount: true },
       }),
     ]);
@@ -62,9 +76,12 @@ export async function GET(
     const clickRate = totalReferrals > 0 ? (totalClicks / totalReferrals) * 100 : 0;
     const conversionRate = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
 
-    // Get recent referrals
+    // Get recent referrals (code generation records)
     const recentReferrals = await prisma.referral.findMany({
-      where: { campaignId: campaign.id },
+      where: {
+        campaignId: campaign.id,
+        isConversionReferral: false,
+      },
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: {
@@ -79,17 +96,30 @@ export async function GET(
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const allReferrals = await prisma.referral.findMany({
-      where: {
-        campaignId: campaign.id,
-        createdAt: { gte: thirtyDaysAgo },
-      },
-      select: {
-        createdAt: true,
-        convertedAt: true,
-        status: true,
-      },
-    });
+    // Get code generation records and conversion referrals for daily stats
+    const [codeGenerationRecords, conversionRecords] = await Promise.all([
+      prisma.referral.findMany({
+        where: {
+          campaignId: campaign.id,
+          isConversionReferral: false,
+          createdAt: { gte: thirtyDaysAgo },
+        },
+        select: {
+          createdAt: true,
+        },
+      }),
+      prisma.referral.findMany({
+        where: {
+          campaignId: campaign.id,
+          isConversionReferral: true,
+          status: 'CONVERTED',
+          convertedAt: { gte: thirtyDaysAgo },
+        },
+        select: {
+          convertedAt: true,
+        },
+      }),
+    ]);
 
     // Format daily data
     const dailyStats = [];
@@ -97,17 +127,15 @@ export async function GET(
       const date = new Date();
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
       
-      const referrals = allReferrals.filter(r => {
+      const referrals = codeGenerationRecords.filter(r => {
         const rDate = new Date(r.createdAt);
         rDate.setHours(0, 0, 0, 0);
         return rDate.getTime() === date.getTime();
       }).length;
       
-      const conversions = allReferrals.filter(r => {
-        if (!r.convertedAt || r.status !== 'CONVERTED') return false;
+      const conversions = conversionRecords.filter(r => {
+        if (!r.convertedAt) return false;
         const cDate = new Date(r.convertedAt);
         cDate.setHours(0, 0, 0, 0);
         return cDate.getTime() === date.getTime();
