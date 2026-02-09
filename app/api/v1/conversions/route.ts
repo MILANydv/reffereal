@@ -170,33 +170,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const [updatedReferral, conversion] = await prisma.$transaction([
-      prisma.referral.update({
+    const [updatedReferral, conversion] = await prisma.$transaction(async (tx) => {
+      const updated = await tx.referral.update({
         where: { id: referral.id },
         data: {
-          status: status as any, // Cast to avoid type issues if enum not updated in context
+          status: status as any,
           refereeId,
           convertedAt: new Date(),
           rewardAmount,
           isFlagged: fraudCheck.isFraud,
         },
-      }),
-      prisma.conversion.create({
+      });
+      const conv = await tx.conversion.create({
         data: {
           Referral: { connect: { id: referral.id } },
           amount,
           metadata: metadata ? JSON.stringify(metadata) : null,
         },
-      }),
-    ]);
-
-    // Create Reward ledger row for level-1 (only if CONVERTED; FLAGGED rewards stay out of payout flow until resolved)
-    if (status === 'CONVERTED') {
-      try {
-        await prisma.reward.create({
+      });
+      if (status === 'CONVERTED') {
+        await tx.reward.create({
           data: {
-            referralId: updatedReferral.id,
-            conversionId: conversion.id,
+            referralId: updated.id,
+            conversionId: conv.id,
             appId: app.id,
             userId: referral.referrerId,
             amount: rewardAmount,
@@ -205,11 +201,9 @@ export async function POST(request: NextRequest) {
             level: 1,
           },
         });
-      } catch (err) {
-        // Reward table may not exist (migration not applied), or DB constraint error
-        console.error('[Conversion] Reward create failed:', err);
       }
-    }
+      return [updated, conv];
+    });
 
     // Multi-level: if referrer was referred by someone in this campaign, credit level-2 reward
     if (
@@ -253,13 +247,10 @@ export async function POST(request: NextRequest) {
               metadata: JSON.stringify({ type: 'level2', parentReferralId: referral.id }),
             },
           });
-          return { r, l2Conversion };
-        });
-        try {
-          await prisma.reward.create({
+          await tx.reward.create({
             data: {
-              referralId: l2Referral.r.id,
-              conversionId: l2Referral.l2Conversion.id,
+              referralId: r.id,
+              conversionId: l2Conversion.id,
               appId: app.id,
               userId: parentReferral.referrerId,
               amount: level2Amount,
@@ -268,9 +259,8 @@ export async function POST(request: NextRequest) {
               level: 2,
             },
           });
-        } catch (err) {
-          console.error('[Conversion] Level-2 reward create failed:', err);
-        }
+          return { r, l2Conversion };
+        });
         const l2ReferralForWebhook = l2Referral.r;
         await triggerWebhook(app.id, 'REWARD_CREATED', {
           referralId: l2ReferralForWebhook.id,
