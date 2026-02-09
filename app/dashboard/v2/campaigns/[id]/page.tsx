@@ -21,6 +21,8 @@ interface CampaignData {
   rewardCap?: number | null;
   startDate: string | null;
   endDate: string | null;
+  referralCodePrefix?: string | null;
+  referralCodeFormat?: string | null;
   app: {
     id: string;
     name: string;
@@ -158,10 +160,13 @@ export default function CampaignDetailPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="flex items-center px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors font-medium text-sm">
+            <Link
+              href={`/dashboard/v2/campaigns/${campaign.id}/edit`}
+              className="flex items-center px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors font-medium text-sm"
+            >
               <Edit3 size={18} className="mr-2" />
               Edit
-            </button>
+            </Link>
             <button className="flex items-center px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors font-medium text-sm">
               <Trash2 size={18} className="mr-2" />
               Delete
@@ -285,6 +290,23 @@ export default function CampaignDetailPage() {
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-500">Reward Cap</span>
                         <span className="font-medium">${campaign.rewardCap}</span>
+                      </div>
+                    )}
+                    {(campaign.referralCodePrefix || campaign.referralCodeFormat) && (
+                      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                        <div className="text-xs text-gray-500 font-bold uppercase">Referral code</div>
+                        {campaign.referralCodePrefix && (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500">Prefix</span>
+                            <span className="font-mono font-medium">{campaign.referralCodePrefix}</span>
+                          </div>
+                        )}
+                        {campaign.referralCodeFormat && campaign.referralCodeFormat !== 'RANDOM' && (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500">Format</span>
+                            <span className="font-medium capitalize">{campaign.referralCodeFormat.toLowerCase().replace('_', ' ')}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
