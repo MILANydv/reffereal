@@ -43,8 +43,9 @@ interface UserStats {
     createdAt: string;
     clicks: number;
     conversions: number;
-    totalRewardAmount: number;
-    convertedUsers: Array<{
+    totalRewardAmount?: number;
+    rewardAmount?: number; // Legacy field for backward compatibility
+    convertedUsers?: Array<{
       refereeId: string;
       convertedAt: string;
       rewardAmount: number;
@@ -267,8 +268,8 @@ export default function UserDetailPage() {
                         <p className="font-medium">{code.conversions}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Reward</p>
-                        <p className="font-medium">${code.rewardAmount.toFixed(2)}</p>
+                        <p className="text-gray-500">Total Rewards</p>
+                        <p className="font-medium">${(code.totalRewardAmount || 0).toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
