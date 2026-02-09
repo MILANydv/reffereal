@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
 
     let totalItems = 0;
     let rewards: any[] = [];
+    let rewardTableExists = false;
     try {
       [totalItems, rewards] = await Promise.all([
         prisma.reward.count({ where }),
@@ -73,8 +74,82 @@ export async function GET(request: NextRequest) {
           take: limit,
         }),
       ]);
+      rewardTableExists = true;
     } catch (_err) {
       // Reward table may not exist yet (migration not applied)
+    }
+
+    // Backfill: create Reward rows for CONVERTED referrals that don't have one yet (e.g. table was added later)
+    if (rewardTableExists && totalItems === 0) {
+      try {
+        const conversionsWithoutReward = await prisma.conversion.findMany({
+          where: {
+            Referral: {
+              status: 'CONVERTED',
+              rewardAmount: { not: null, gt: 0 },
+              Campaign: {
+                App: {
+                  partnerId: session.user.partnerId,
+                  ...(appId ? { id: appId } : {}),
+                },
+              },
+            },
+            Reward: null,
+          },
+          include: {
+            Referral: {
+              select: {
+                id: true,
+                referrerId: true,
+                rewardAmount: true,
+                campaignId: true,
+                Campaign: { select: { appId: true } },
+              },
+            },
+          },
+        });
+        for (const conv of conversionsWithoutReward) {
+          const ref = conv.Referral;
+          const appIdForReward = ref.Campaign?.appId;
+          if (!appIdForReward || ref.rewardAmount == null || ref.rewardAmount <= 0) continue;
+          await prisma.reward.create({
+            data: {
+              referralId: ref.id,
+              conversionId: conv.id,
+              appId: appIdForReward,
+              userId: ref.referrerId,
+              amount: ref.rewardAmount,
+              currency: 'USD',
+              status: 'PENDING',
+              level: 1,
+            },
+          });
+        }
+        if (conversionsWithoutReward.length > 0) {
+          [totalItems, rewards] = await Promise.all([
+            prisma.reward.count({ where }),
+            prisma.reward.findMany({
+              where,
+              include: {
+                Referral: {
+                  select: {
+                    referralCode: true,
+                    campaignId: true,
+                    createdAt: true,
+                    Campaign: { select: { name: true } },
+                  },
+                },
+                App: { select: { id: true, name: true } },
+              },
+              orderBy: { createdAt: 'desc' },
+              skip: (page - 1) * limit,
+              take: limit,
+            }),
+          ]);
+        }
+      } catch (backfillErr) {
+        console.warn('Rewards backfill skipped or failed:', backfillErr);
+      }
     }
 
     const totalPages = Math.ceil(totalItems / limit) || 1;
