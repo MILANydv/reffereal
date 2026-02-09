@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { resolveFraudFlag } from '@/lib/fraud-detection';
 import { triggerWebhook } from '@/lib/webhooks';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/partner/referrals/[id]/resolve
@@ -165,6 +165,13 @@ export async function POST(
         });
 
         if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
+          await logger.info('Reward created', 'api.reward.created', {
+            appId,
+            referralId: referral.id,
+            conversionId: conversion.id,
+            level: 1,
+            amount: referral.rewardAmount,
+          });
           // Trigger webhook for level-1 reward
           try {
             await triggerWebhook(appId, 'REWARD_CREATED', {
@@ -193,6 +200,13 @@ export async function POST(
           });
 
           if (!existingL2Reward) {
+            await logger.info('Reward created', 'api.reward.created', {
+              appId,
+              referralId: referral.id,
+              conversionId: l2Conversion.id,
+              level: 2,
+              amount: referral.rewardAmount ?? 0,
+            });
             try {
               await triggerWebhook(appId, 'REWARD_CREATED', {
                 referralId: referral.id,

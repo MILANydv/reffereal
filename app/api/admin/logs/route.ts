@@ -13,21 +13,35 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const level = searchParams.get('level');
     const search = searchParams.get('search');
+    const source = searchParams.get('source');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    const where: Record<string, unknown> = {};
-    
+    const conditions: Record<string, unknown>[] = [];
     if (level && level !== 'all') {
-      where.level = level.toUpperCase();
+      conditions.push({ level: level.toUpperCase() });
     }
-    
+    if (source && source !== '') {
+      if (source === 'system') {
+        conditions.push({
+          OR: [
+            { source: null },
+            { source: { not: { startsWith: 'api' } } },
+          ],
+        });
+      } else {
+        conditions.push({ source: { startsWith: source } });
+      }
+    }
     if (search) {
-      where.OR = [
-        { message: { contains: search } },
-        { source: { contains: search } },
-      ];
+      conditions.push({
+        OR: [
+          { message: { contains: search } },
+          { source: { contains: search } },
+        ],
+      });
     }
+    const where = conditions.length > 0 ? { AND: conditions } : {};
 
     const [logs, total] = await Promise.all([
       prisma.systemLog.findMany({

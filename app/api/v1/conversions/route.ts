@@ -5,6 +5,7 @@ import { generateReferralCode } from '@/lib/api-key';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralConversion } from '@/lib/notifications';
 import { getClientIp } from '@/lib/client-ip';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -368,10 +369,36 @@ export async function POST(request: NextRequest) {
           campaignId: campaign.id,
           level: 2,
         });
+        await logger.info('Reward created', 'api.reward.created', {
+          appId: app.id,
+          referralId: l2Referral.r.id,
+          conversionId: l2Referral.l2Conversion.id,
+          level: 2,
+          amount: level2Amount,
+        });
       }
     }
 
     await logApiUsage(app.id, '/api/v1/conversions', request);
+
+    await logger.info('Conversion recorded', 'api.v1.conversions', {
+      appId: app.id,
+      referralId: conversionReferral.id,
+      conversionId: conversion.id,
+      refereeId,
+      referrerId: originalReferral.referrerId,
+      rewardsCreated: status === 'CONVERTED',
+    });
+
+    if (status === 'CONVERTED' && conversionReferral.rewardAmount != null && conversionReferral.rewardAmount > 0) {
+      await logger.info('Reward created', 'api.reward.created', {
+        appId: app.id,
+        referralId: conversionReferral.id,
+        conversionId: conversion.id,
+        level: 1,
+        amount: conversionReferral.rewardAmount,
+      });
+    }
 
     await triggerWebhook(app.id, 'REFERRAL_CONVERTED', {
       referralId: conversionReferral.id,

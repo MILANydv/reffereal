@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -65,6 +66,8 @@ export async function GET(request: NextRequest) {
     const conversionRate = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
 
     await logApiUsage(app.id, '/api/v1/stats', request);
+
+    await logger.info('Stats fetched', 'api.v1.stats', { appId: app.id });
 
     return NextResponse.json({
       totalReferrals,

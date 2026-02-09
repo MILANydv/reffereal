@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -179,6 +180,8 @@ export async function GET(
     const totalRewards = pendingAmount + paidAmount;
 
     await logApiUsage(app.id, `/api/v1/users/${userId}/stats`, request);
+
+    await logger.info('User stats fetched', 'api.v1.users.stats', { appId: app.id, userId });
 
     return NextResponse.json({
       userId,

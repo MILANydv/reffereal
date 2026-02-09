@@ -42,23 +42,35 @@ const levelIcons: Record<string, React.ReactNode> = {
   DEBUG: <Bug size={14} />,
 };
 
+const SOURCE_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'All' },
+  { value: 'api.v1.referrals', label: 'API – Referrals' },
+  { value: 'api.v1.clicks', label: 'API – Clicks' },
+  { value: 'api.v1.conversions', label: 'API – Conversions' },
+  { value: 'api.reward.created', label: 'API – Rewards' },
+  { value: 'api.v1', label: 'API – Stats & users' },
+  { value: 'system', label: 'System' },
+];
+
 export default function AdminLogsPage() {
-  const { logs, fetchLogs: fetchStoreLogs, isLoading, invalidate } = useAdminStore();
+  const { logs, logsPagination, fetchLogs: fetchStoreLogs, invalidate } = useAdminStore();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [level, setLevel] = useState('all');
+  const [source, setSource] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+
+  const total = logsPagination?.total ?? 0;
+  const totalPages = logsPagination?.totalPages ?? 1;
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      await fetchStoreLogs({ page, level, search });
+      await fetchStoreLogs({ page, level, search, source: source || undefined });
     } finally {
       setLoading(false);
     }
-  }, [page, level, search, fetchStoreLogs]);
+  }, [page, level, search, source, fetchStoreLogs]);
 
   useEffect(() => {
     fetchLogs();
@@ -173,8 +185,18 @@ export default function AdminLogsPage() {
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Filter size={16} className="text-gray-400" />
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter size={16} className="text-gray-400 shrink-0" />
+              <select
+                value={source}
+                onChange={(e) => { setSource(e.target.value); setPage(1); }}
+                className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                aria-label="Filter by source"
+              >
+                {SOURCE_OPTIONS.map((opt) => (
+                  <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
               <select
                 value={level}
                 onChange={(e) => { setLevel(e.target.value); setPage(1); }}

@@ -896,6 +896,7 @@ interface AdminStore {
   apps: AdminApp[];
   features: FeatureFlag[];
   logs: SystemLog[];
+  logsPagination: { page: number; limit: number; total: number; totalPages: number } | null;
   fraud: FraudFlag[];
   stats: DashboardStats | null;
   usage: UsageStats | null;
@@ -909,7 +910,7 @@ interface AdminStore {
   fetchPartners: (force?: boolean) => Promise<void>;
   fetchApps: (force?: boolean) => Promise<void>;
   fetchFeatures: (force?: boolean) => Promise<void>;
-  fetchLogs: (filters?: { page?: number; level?: string; search?: string }, force?: boolean) => Promise<void>;
+  fetchLogs: (filters?: { page?: number; level?: string; search?: string; source?: string }, force?: boolean) => Promise<void>;
   fetchFraud: (force?: boolean) => Promise<void>;
   fetchStats: (force?: boolean) => Promise<void>;
   fetchUsage: (force?: boolean) => Promise<void>;
@@ -926,6 +927,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   apps: [],
   features: [],
   logs: [],
+  logsPagination: null,
   fraud: [],
   stats: null,
   usage: null,
@@ -995,8 +997,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   fetchLogs: async (filters, force = false) => {
     const key = 'logs';
-    if (!force && get().logs.length > 0) return;
-
     set((state) => ({ isLoading: { ...state.isLoading, [key]: true } }));
 
     try {
@@ -1004,11 +1004,15 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.level) params.append('level', filters.level);
       if (filters?.search) params.append('search', filters.search);
+      if (filters?.source) params.append('source', filters.source);
 
       const response = await fetch(`/api/admin/logs?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        set({ logs: data.logs || [] });
+        set({
+          logs: data.logs || [],
+          logsPagination: data.pagination ?? null,
+        });
       }
     } catch (error) {
       console.error('Error fetching logs:', error);
@@ -1181,7 +1185,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     } else if (key === 'features') {
       set({ features: [] });
     } else if (key === 'logs') {
-      set({ logs: [] });
+      set({ logs: [], logsPagination: null });
     } else if (key === 'fraud') {
       set({ fraud: [] });
     } else if (key === 'stats') {

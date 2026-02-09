@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/v1/users/[userId]/rewards
@@ -73,6 +74,8 @@ export async function GET(
     }
 
     await logApiUsage(app.id, `/api/v1/users/${userId}/rewards`, request);
+
+    await logger.info('User rewards fetched', 'api.v1.users.rewards', { appId: app.id, userId });
 
     return NextResponse.json({
       rewards,

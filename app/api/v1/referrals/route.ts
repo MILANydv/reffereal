@@ -6,6 +6,7 @@ import { detectFraudEnhanced } from '@/lib/fraud-detection-enhanced';
 import { triggerWebhook } from '@/lib/webhooks';
 import { notifyReferralCodeGenerated } from '@/lib/notifications';
 import { getClientIp } from '@/lib/client-ip';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -156,6 +157,14 @@ export async function POST(request: NextRequest) {
     }
 
     await logApiUsage(app.id, '/api/v1/referrals', request);
+
+    await logger.info('Referral created', 'api.v1.referrals', {
+      appId: app.id,
+      campaignId,
+      referralId: referral.id,
+      referralCode: referral.referralCode,
+      referrerId,
+    });
 
     await triggerWebhook(app.id, 'REFERRAL_CREATED', {
       referralId: referral.id,

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { authenticateApiKey, logApiUsage } from '@/lib/api-middleware';
 import { triggerWebhook } from '@/lib/webhooks';
 import { getClientIp } from '@/lib/client-ip';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const authResult = await authenticateApiKey(request);
@@ -71,6 +72,14 @@ export async function POST(request: NextRequest) {
     });
 
     await logApiUsage(app.id, '/api/v1/clicks', request);
+
+    await logger.info('Click recorded', 'api.v1.clicks', {
+      appId: app.id,
+      referralCode,
+      clickId: click.id,
+      refereeId: click.refereeId ?? undefined,
+      campaignId: referral.campaignId,
+    });
 
     await triggerWebhook(app.id, 'REFERRAL_CLICKED', {
       referralId: referral.id,
