@@ -6,7 +6,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useAppStore } from '@/lib/store';
 import { ArrowLeft, Megaphone, Settings, Gift, Shield, BarChart3, Edit3, Trash2, Calendar, Users, MousePointerClick, CheckCircle, TrendingUp, DollarSign } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { PageHeaderSkeleton, StatCardSkeleton, CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
@@ -61,32 +61,41 @@ export default function CampaignDetailPage() {
   const { selectedApp } = useAppStore();
   const router = useRouter();
   const { id } = useParams();
+  const mounted = useRef(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [campaign, setCampaign] = useState<CampaignData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchCampaign = useCallback(async () => {
-    if (!id) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/partner/campaigns/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCampaign(data);
-      } else {
-        console.error('Failed to fetch campaign');
-      }
-    } catch (error) {
-      console.error('Error fetching campaign:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
-    fetchCampaign();
-  }, [fetchCampaign]);
+    if (!id) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setCampaign(null);
+    fetch(`/api/partner/campaigns/${id}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch campaign');
+        return res.json();
+      })
+      .then((data) => {
+        if (mounted.current) setCampaign(data);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError' && mounted.current) {
+          console.error('Error fetching campaign:', err);
+        }
+      })
+      .finally(() => {
+        if (mounted.current) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [id]);
 
   if (loading) {
     return (

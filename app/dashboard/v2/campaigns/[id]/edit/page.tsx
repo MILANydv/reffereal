@@ -4,114 +4,100 @@ import Link from 'next/link';
 import { DashboardLayout } from '@/components/ui/DashboardLayout';
 import { Card, CardBody } from '@/components/ui/Card';
 import { ArrowLeft, Megaphone, Gift, Shield, Save } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import {
+  type CampaignFormData,
+  campaignApiToFormData,
+  campaignFormToPatchPayload,
+  validateCampaignPatchForm,
+  REWARD_VALUE_MAX,
+  REWARD_VALUE_MIN,
+} from '@/lib/campaign-form';
 
-function toDateInputValue(date: string | Date | null): string {
-  if (!date) return '';
-  const d = new Date(date);
-  return d.toISOString().slice(0, 10);
-}
+const initialFormState: CampaignFormData = {
+  name: '',
+  status: 'ACTIVE',
+  rewardValue: 10,
+  rewardCap: null,
+  firstTimeUserOnly: true,
+  startDate: '',
+  endDate: '',
+  conversionWindow: null,
+  rewardExpiration: null,
+  level1Reward: null,
+  level2Reward: null,
+  level1Cap: null,
+  level2Cap: null,
+  tierConfig: '',
+  referralCodePrefix: '',
+  referralCodeFormat: 'RANDOM',
+};
 
 export default function EditCampaignPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
+  const mounted = useRef(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    status: 'ACTIVE' as 'ACTIVE' | 'PAUSED' | 'SCHEDULED' | 'EXPIRED',
-    rewardValue: 10,
-    rewardCap: null as number | null,
-    firstTimeUserOnly: true,
-    startDate: '',
-    endDate: '',
-    conversionWindow: null as number | null,
-    rewardExpiration: null as number | null,
-    level1Reward: null as number | null,
-    level2Reward: null as number | null,
-    level1Cap: null as number | null,
-    level2Cap: null as number | null,
-    tierConfig: '',
-    referralCodePrefix: '',
-    referralCodeFormat: 'RANDOM' as 'RANDOM' | 'USERNAME' | 'EMAIL_PREFIX',
-  });
+  const [initialData, setInitialData] = useState<string | null>(null);
+  const [formData, setFormData] = useState<CampaignFormData>(initialFormState);
+
+  const updateField = useCallback(<K extends keyof CampaignFormData>(key: K, value: CampaignFormData[K]) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
-    fetch(`/api/partner/campaigns/${id}`)
+    fetch(`/api/partner/campaigns/${id}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error('Campaign not found');
         return res.json();
       })
       .then((data) => {
-        if (cancelled) return;
-        setFormData({
-          name: data.name ?? '',
-          status: data.status ?? 'ACTIVE',
-          rewardValue: data.rewardValue ?? 10,
-          rewardCap: data.rewardCap ?? null,
-          firstTimeUserOnly: data.firstTimeUserOnly ?? true,
-          startDate: toDateInputValue(data.startDate),
-          endDate: toDateInputValue(data.endDate),
-          conversionWindow: data.conversionWindow ?? null,
-          rewardExpiration: data.rewardExpiration ?? null,
-          level1Reward: data.level1Reward ?? null,
-          level2Reward: data.level2Reward ?? null,
-          level1Cap: data.level1Cap ?? null,
-          level2Cap: data.level2Cap ?? null,
-          tierConfig: typeof data.tierConfig === 'string' ? data.tierConfig : (data.tierConfig ? JSON.stringify(data.tierConfig, null, 2) : ''),
-          referralCodePrefix: data.referralCodePrefix ?? '',
-          referralCodeFormat: (data.referralCodeFormat ?? 'RANDOM') as 'RANDOM' | 'USERNAME' | 'EMAIL_PREFIX',
-        });
+        const next = campaignApiToFormData(data);
+        setFormData(next);
+        setInitialData(JSON.stringify(next));
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || 'Failed to load campaign');
+        if (err.name !== 'AbortError' && mounted.current) {
+          setError(err.message || 'Failed to load campaign');
+        }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (mounted.current) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [id]);
+
+  const isDirty = useMemo(() => {
+    if (initialData == null) return false;
+    return JSON.stringify(formData) !== initialData;
+  }, [formData, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
+    const validationError = validateCampaignPatchForm(formData);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSaving(true);
     setError(null);
-    const payload: Record<string, unknown> = {
-      name: formData.name,
-      status: formData.status,
-      rewardValue: formData.rewardValue,
-      firstTimeUserOnly: formData.firstTimeUserOnly,
-    };
-    if (formData.rewardCap != null && formData.rewardCap !== '') payload.rewardCap = Number(formData.rewardCap);
-    if (formData.startDate) payload.startDate = formData.startDate;
-    if (formData.endDate) payload.endDate = formData.endDate;
-    if (formData.conversionWindow != null && formData.conversionWindow !== '') payload.conversionWindow = Number(formData.conversionWindow);
-    if (formData.rewardExpiration != null && formData.rewardExpiration !== '') payload.rewardExpiration = Number(formData.rewardExpiration);
-    if (formData.level1Reward != null && formData.level1Reward !== '') payload.level1Reward = Number(formData.level1Reward);
-    if (formData.level2Reward != null && formData.level2Reward !== '') payload.level2Reward = Number(formData.level2Reward);
-    if (formData.level1Cap != null && formData.level1Cap !== '') payload.level1Cap = Number(formData.level1Cap);
-    if (formData.level2Cap != null && formData.level2Cap !== '') payload.level2Cap = Number(formData.level2Cap);
-    if (formData.tierConfig.trim()) {
-      try {
-        payload.tierConfig = JSON.parse(formData.tierConfig);
-      } catch {
-        payload.tierConfig = formData.tierConfig;
-      }
-    } else {
-      payload.tierConfig = null;
-    }
-    if (formData.referralCodePrefix.trim()) payload.referralCodePrefix = formData.referralCodePrefix.trim();
-    else payload.referralCodePrefix = null;
-    payload.referralCodeFormat = formData.referralCodeFormat === 'RANDOM' ? null : formData.referralCodeFormat;
-
+    const payload = campaignFormToPatchPayload(formData);
     try {
       const res = await fetch(`/api/partner/campaigns/${id}`, {
         method: 'PATCH',
@@ -120,13 +106,15 @@ export default function EditCampaignPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to update campaign');
+        throw new Error((err as { error?: string }).error || 'Failed to update campaign');
       }
-      router.push(`/dashboard/v2/campaigns/${id}`);
+      if (mounted.current) router.push(`/dashboard/v2/campaigns/${id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update campaign');
+      if (mounted.current) {
+        setError(err instanceof Error ? err.message : 'Failed to update campaign');
+      }
     } finally {
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   };
 
@@ -174,7 +162,6 @@ export default function EditCampaignPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basics */}
           <Card>
             <CardBody className="p-6 space-y-6">
               <div className="flex items-center space-x-3">
@@ -190,7 +177,7 @@ export default function EditCampaignPage() {
                   required
                   className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => updateField('name', e.target.value)}
                 />
               </div>
               <div>
@@ -198,7 +185,7 @@ export default function EditCampaignPage() {
                 <select
                   className="w-full max-w-[200px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ACTIVE' | 'PAUSED' | 'SCHEDULED' | 'EXPIRED' })}
+                  onChange={(e) => updateField('status', e.target.value as CampaignFormData['status'])}
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="PAUSED">Paused</option>
@@ -209,7 +196,6 @@ export default function EditCampaignPage() {
             </CardBody>
           </Card>
 
-          {/* Rewards */}
           <Card>
             <CardBody className="p-6 space-y-6">
               <div className="flex items-center space-x-3">
@@ -223,12 +209,17 @@ export default function EditCampaignPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Reward value</label>
                   <input
                     type="number"
-                    min={0}
+                    min={REWARD_VALUE_MIN}
+                    max={REWARD_VALUE_MAX}
                     step={0.01}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.rewardValue}
-                    onChange={(e) => setFormData({ ...formData, rewardValue: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      updateField('rewardValue', val === '' ? 0 : Number(val));
+                    }}
                   />
+                  <p className="mt-1 text-xs text-gray-500">Between {REWARD_VALUE_MIN} and {REWARD_VALUE_MAX}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Reward cap (optional)</label>
@@ -239,7 +230,7 @@ export default function EditCampaignPage() {
                     placeholder="None"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.rewardCap ?? ''}
-                    onChange={(e) => setFormData({ ...formData, rewardCap: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    onChange={(e) => updateField('rewardCap', e.target.value === '' ? null : Number(e.target.value))}
                   />
                 </div>
               </div>
@@ -253,7 +244,7 @@ export default function EditCampaignPage() {
                     placeholder="Uses main"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
                     value={formData.level1Reward ?? ''}
-                    onChange={(e) => setFormData({ ...formData, level1Reward: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    onChange={(e) => updateField('level1Reward', e.target.value === '' ? null : Number(e.target.value))}
                   />
                 </div>
                 <div>
@@ -264,7 +255,7 @@ export default function EditCampaignPage() {
                     step={0.01}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
                     value={formData.level1Cap ?? ''}
-                    onChange={(e) => setFormData({ ...formData, level1Cap: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    onChange={(e) => updateField('level1Cap', e.target.value === '' ? null : Number(e.target.value))}
                   />
                 </div>
                 <div>
@@ -276,7 +267,7 @@ export default function EditCampaignPage() {
                     placeholder="e.g. 5"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
                     value={formData.level2Reward ?? ''}
-                    onChange={(e) => setFormData({ ...formData, level2Reward: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    onChange={(e) => updateField('level2Reward', e.target.value === '' ? null : Number(e.target.value))}
                   />
                 </div>
                 <div>
@@ -287,7 +278,7 @@ export default function EditCampaignPage() {
                     step={0.01}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg"
                     value={formData.level2Cap ?? ''}
-                    onChange={(e) => setFormData({ ...formData, level2Cap: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                    onChange={(e) => updateField('level2Cap', e.target.value === '' ? null : Number(e.target.value))}
                   />
                 </div>
               </div>
@@ -298,14 +289,13 @@ export default function EditCampaignPage() {
                   placeholder='{"tiers": [{"minConversions": 0, "rewardValue": 10}]}'
                   className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg font-mono text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={formData.tierConfig}
-                  onChange={(e) => setFormData({ ...formData, tierConfig: e.target.value })}
+                  onChange={(e) => updateField('tierConfig', e.target.value)}
                 />
                 <p className="mt-1 text-xs text-gray-500">Tiers ordered by minConversions; first matching tier applies. Leave empty to clear.</p>
               </div>
             </CardBody>
           </Card>
 
-          {/* Rules */}
           <Card>
             <CardBody className="p-6 space-y-6">
               <div className="flex items-center space-x-3">
@@ -321,7 +311,7 @@ export default function EditCampaignPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, firstTimeUserOnly: !formData.firstTimeUserOnly })}
+                  onClick={() => updateField('firstTimeUserOnly', !formData.firstTimeUserOnly)}
                   className={`w-12 h-6 rounded-full transition-colors relative ${formData.firstTimeUserOnly ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.firstTimeUserOnly ? 'right-1' : 'left-1'}`} />
@@ -334,7 +324,7 @@ export default function EditCampaignPage() {
                     type="date"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    onChange={(e) => updateField('startDate', e.target.value)}
                   />
                 </div>
                 <div>
@@ -343,7 +333,7 @@ export default function EditCampaignPage() {
                     type="date"
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    onChange={(e) => updateField('endDate', e.target.value)}
                   />
                 </div>
               </div>
@@ -356,7 +346,14 @@ export default function EditCampaignPage() {
                     placeholder="e.g. 30"
                     className="w-full max-w-[140px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.conversionWindow ?? ''}
-                    onChange={(e) => setFormData({ ...formData, conversionWindow: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
+                    onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '') updateField('conversionWindow', null);
+                    else {
+                      const n = parseInt(v, 10);
+                      if (!Number.isNaN(n) && n >= 0) updateField('conversionWindow', n);
+                    }
+                  }}
                   />
                   <p className="mt-1 text-xs text-gray-500">0 = no limit.</p>
                 </div>
@@ -368,7 +365,14 @@ export default function EditCampaignPage() {
                     placeholder="None"
                     className="w-full max-w-[140px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={formData.rewardExpiration ?? ''}
-                    onChange={(e) => setFormData({ ...formData, rewardExpiration: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
+                    onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '') updateField('rewardExpiration', null);
+                    else {
+                      const n = parseInt(v, 10);
+                      if (!Number.isNaN(n) && n >= 0) updateField('rewardExpiration', n);
+                    }
+                  }}
                   />
                 </div>
               </div>
@@ -383,7 +387,7 @@ export default function EditCampaignPage() {
                     maxLength={24}
                     className="w-full max-w-[280px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-sm"
                     value={formData.referralCodePrefix}
-                    onChange={(e) => setFormData({ ...formData, referralCodePrefix: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
+                    onChange={(e) => updateField('referralCodePrefix', e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
                   />
                 </div>
                 <div>
@@ -393,7 +397,7 @@ export default function EditCampaignPage() {
                       <button
                         key={fmt}
                         type="button"
-                        onClick={() => setFormData({ ...formData, referralCodeFormat: fmt })}
+                        onClick={() => updateField('referralCodeFormat', fmt)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${formData.referralCodeFormat === fmt ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600'}`}
                       >
                         {fmt === 'RANDOM' ? 'Random' : fmt === 'USERNAME' ? 'Username' : 'Email prefix'}
@@ -414,8 +418,8 @@ export default function EditCampaignPage() {
             </Link>
             <button
               type="submit"
-              disabled={saving}
-              className="flex items-center px-8 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              disabled={saving || !isDirty}
+              className="flex items-center px-8 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Save size={18} className="mr-2" />
               {saving ? 'Saving…' : 'Save changes'}
