@@ -64,23 +64,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if this refereeId has already converted with this code
-    const existingConversion = await prisma.referral.findFirst({
-      where: {
-        originalReferralCode: referralCode,
-        refereeId,
-        isConversionReferral: true,
-        status: 'CONVERTED',
-      },
-    });
-
-    if (existingConversion) {
-      return NextResponse.json(
-        { error: 'This user has already converted with this referral code' },
-        { status: 400 }
-      );
-    }
-
     // Check conversion window - use most recent click or original referral creation
     if (campaign.conversionWindow != null && campaign.conversionWindow > 0) {
       const latestClick = await prisma.click.findFirst({
@@ -97,58 +80,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let rewardAmount = 0;
-
-    if (campaign.rewardModel === 'FIXED_CURRENCY') {
-      rewardAmount = campaign.rewardValue;
-    } else if (campaign.rewardModel === 'PERCENTAGE' && amount) {
-      rewardAmount = (amount * campaign.rewardValue) / 100;
-    } else if (campaign.rewardModel === 'TIERED' && campaign.tierConfig) {
-      type Tier = { minConversions: number; rewardValue: number; rewardCap?: number };
-      let tiers: Tier[] = [];
-      try {
-        const parsed = JSON.parse(campaign.tierConfig) as { tiers?: Tier[] };
-        tiers = Array.isArray(parsed?.tiers) ? parsed.tiers : [];
-      } catch {
-        tiers = [];
-      }
-      // Count conversion referrals (not code generation records) for this referrer
-      const convertedCount = await prisma.referral.count({
-        where: {
-          campaignId: campaign.id,
-          referrerId: originalReferral.referrerId,
-          isConversionReferral: true,
-          status: 'CONVERTED',
-        },
-      });
-      tiers.sort((a, b) => (b.minConversions ?? 0) - (a.minConversions ?? 0));
-      let tier: Tier | null = null;
-      for (const t of tiers) {
-        if (convertedCount >= (t.minConversions ?? 0)) {
-          tier = t;
-          break;
-        }
-      }
-      if (tier) {
-        rewardAmount = tier.rewardValue;
-        if (tier.rewardCap != null && rewardAmount > tier.rewardCap) {
-          rewardAmount = tier.rewardCap;
-        }
-      } else {
-        rewardAmount = campaign.rewardValue;
-        if (campaign.rewardCap != null && rewardAmount > campaign.rewardCap) {
-          rewardAmount = campaign.rewardCap;
-        }
-      }
-    }
-
-    if (campaign.rewardCap != null && rewardAmount > campaign.rewardCap) {
-      rewardAmount = campaign.rewardCap;
-    }
-
-    // Fraud Detection Check
+    // Fraud Detection Check (before transaction)
     const ipAddress = getClientIp(request);
-
     const { detectConversionFraud } = await import('@/lib/fraud-detection-enhanced');
     const { notifyPartnerFraud, notifyAdminFraud } = await import('@/lib/notifications');
 
@@ -165,12 +98,92 @@ export async function POST(request: NextRequest) {
       status = 'FLAGGED';
     }
 
-    // Generate a unique referral code for this conversion record
-    const conversionReferralCode = generateReferralCode();
+    // Generate conversion referral code with retry logic
+    let conversionReferralCode: string;
+    let conversionCodeAttempts = 0;
+    const maxConversionCodeAttempts = 5;
     
     // Create a NEW Referral record for this conversion
-    const [conversionReferral, conversion] = await prisma.$transaction(async (tx) => {
-      // Create new Referral record for this conversion
+    // All critical operations happen inside this transaction with Serializable isolation
+    const [conversionReferral, conversion, fraudFlags] = await prisma.$transaction(async (tx) => {
+      // 1. Check for duplicate INSIDE transaction (prevents race condition)
+      const existingConversion = await tx.referral.findFirst({
+        where: {
+          originalReferralCode: referralCode,
+          refereeId,
+          isConversionReferral: true,
+          status: { in: ['CONVERTED', 'FLAGGED'] },
+        },
+      });
+
+      if (existingConversion) {
+        throw new Error('DUPLICATE_CONVERSION');
+      }
+
+      // 2. Generate unique conversion referral code (with retry inside transaction)
+      do {
+        conversionReferralCode = generateReferralCode();
+        conversionCodeAttempts++;
+        const codeExists = await tx.referral.findUnique({
+          where: { referralCode: conversionReferralCode },
+        });
+        if (!codeExists) break;
+        if (conversionCodeAttempts >= maxConversionCodeAttempts) {
+          throw new Error('FAILED_TO_GENERATE_CONVERSION_CODE');
+        }
+      } while (true);
+
+      // 3. Calculate reward amount (including tiered calculation INSIDE transaction)
+      let rewardAmount = 0;
+
+      if (campaign.rewardModel === 'FIXED_CURRENCY') {
+        rewardAmount = campaign.rewardValue;
+      } else if (campaign.rewardModel === 'PERCENTAGE' && amount) {
+        rewardAmount = (amount * campaign.rewardValue) / 100;
+      } else if (campaign.rewardModel === 'TIERED' && campaign.tierConfig) {
+        type Tier = { minConversions: number; rewardValue: number; rewardCap?: number };
+        let tiers: Tier[] = [];
+        try {
+          const parsed = JSON.parse(campaign.tierConfig) as { tiers?: Tier[] };
+          tiers = Array.isArray(parsed?.tiers) ? parsed.tiers : [];
+        } catch {
+          tiers = [];
+        }
+        // Count conversion referrals INSIDE transaction (prevents race condition)
+        const convertedCount = await tx.referral.count({
+          where: {
+            campaignId: campaign.id,
+            referrerId: originalReferral.referrerId,
+            isConversionReferral: true,
+            status: 'CONVERTED',
+          },
+        });
+        tiers.sort((a, b) => (b.minConversions ?? 0) - (a.minConversions ?? 0));
+        let tier: Tier | null = null;
+        for (const t of tiers) {
+          if (convertedCount >= (t.minConversions ?? 0)) {
+            tier = t;
+            break;
+          }
+        }
+        if (tier) {
+          rewardAmount = tier.rewardValue;
+          if (tier.rewardCap != null && rewardAmount > tier.rewardCap) {
+            rewardAmount = tier.rewardCap;
+          }
+        } else {
+          rewardAmount = campaign.rewardValue;
+          if (campaign.rewardCap != null && rewardAmount > campaign.rewardCap) {
+            rewardAmount = campaign.rewardCap;
+          }
+        }
+      }
+
+      if (campaign.rewardCap != null && rewardAmount > campaign.rewardCap) {
+        rewardAmount = campaign.rewardCap;
+      }
+
+      // 4. Create new Referral record for this conversion
       const newReferral = await tx.referral.create({
         data: {
           Campaign: { connect: { id: campaign.id } },
@@ -188,6 +201,7 @@ export async function POST(request: NextRequest) {
         },
       });
       
+      // 5. Create Conversion record
       const conv = await tx.conversion.create({
         data: {
           Referral: { connect: { id: newReferral.id } },
@@ -196,6 +210,7 @@ export async function POST(request: NextRequest) {
         },
       });
       
+      // 6. Create Reward if CONVERTED (inside transaction)
       if (status === 'CONVERTED') {
         await tx.reward.create({
           data: {
@@ -210,34 +225,45 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+
+      // 7. Create FraudFlags INSIDE transaction (atomic with conversion)
+      const flags = [];
+      if (fraudCheck.isFraud) {
+        const { FraudType } = await import('@prisma/client');
+        
+        for (const reason of fraudCheck.reasons) {
+          let fraudType = FraudType.SUSPICIOUS_PATTERN;
+          if (reason.includes('Impossible conversion time')) {
+            fraudType = FraudType.IMPOSSIBLE_CONVERSION_TIME;
+          } else if (reason.includes('same IP')) {
+            fraudType = FraudType.DUPLICATE_IP;
+          } else if (reason.includes('Duplicate')) {
+            fraudType = FraudType.SELF_REFERRAL;
+          }
+          
+          const flag = await tx.fraudFlag.create({
+            data: {
+              appId: app.id,
+              referralCode: conversionReferralCode, // Flag the conversion referral, not original code
+              fraudType,
+              description: `Conversion fraud: ${reason}`,
+              metadata: JSON.stringify({ refereeId, originalReferralCode: referralCode }),
+            },
+          });
+          flags.push(flag);
+        }
+      }
       
-      return [newReferral, conv];
+      return [newReferral, conv, flags];
+    }, {
+      isolationLevel: 'Serializable', // Prevent phantom reads and ensure consistency
+      maxWait: 5000,
+      timeout: 10000,
     });
 
-    // Create fraud flags for the conversion referral (not the original referrer)
-    if (fraudCheck.isFraud) {
-      const { createFraudFlag } = await import('@/lib/fraud-detection-enhanced');
-      const { FraudType } = await import('@prisma/client');
-      
-      for (const reason of fraudCheck.reasons) {
-        let fraudType = FraudType.SUSPICIOUS_PATTERN;
-        if (reason.includes('Impossible conversion time')) {
-          fraudType = FraudType.IMPOSSIBLE_CONVERSION_TIME;
-        } else if (reason.includes('same IP')) {
-          fraudType = FraudType.DUPLICATE_IP;
-        } else if (reason.includes('Duplicate')) {
-          fraudType = FraudType.SELF_REFERRAL;
-        }
-        
-        await createFraudFlag(
-          app.id,
-          conversionReferral.referralCode, // Flag the conversion referral, not original code
-          fraudType,
-          `Conversion fraud: ${reason}`,
-          { refereeId, originalReferralCode: referralCode }
-        );
-      }
-
+    // Fraud flags are now created inside the transaction
+    // Send notifications if fraud was detected
+    if (fraudCheck.isFraud && fraudFlags.length > 0) {
       // Notify Partner
       try {
         const partner = await prisma.partner.findUnique({
@@ -396,8 +422,32 @@ export async function POST(request: NextRequest) {
       refereeId, // Who converted
       referrerId: originalReferral.referrerId, // Who gets credit (User A)
     }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error tracking conversion:', error);
+    
+    // Handle specific transaction errors
+    if (error.message === 'DUPLICATE_CONVERSION') {
+      return NextResponse.json(
+        { error: 'This user has already converted with this referral code' },
+        { status: 400 }
+      );
+    }
+    
+    if (error.message === 'FAILED_TO_GENERATE_CONVERSION_CODE') {
+      return NextResponse.json(
+        { error: 'Failed to generate unique conversion code. Please try again.' },
+        { status: 500 }
+      );
+    }
+    
+    // Handle Prisma unique constraint violation (database-level duplicate check)
+    if (error.code === 'P2002' && error.meta?.target?.includes('originalReferralCode')) {
+      return NextResponse.json(
+        { error: 'This user has already converted with this referral code' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

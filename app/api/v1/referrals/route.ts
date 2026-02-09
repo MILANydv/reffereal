@@ -64,58 +64,96 @@ export async function POST(request: NextRequest) {
     const prefix = campaign.referralCodePrefix ?? undefined;
     const format = (campaign.referralCodeFormat ?? 'RANDOM') as 'RANDOM' | 'USERNAME' | 'EMAIL_PREFIX';
 
-    let referralCode: string;
-    const maxAttempts = 5;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (format === 'RANDOM' && !prefix) {
-        referralCode = generateReferralCode();
-      } else {
-        referralCode = generateReferralCodeWithRules({
-          prefix: prefix || undefined,
-          format,
-          referrerUsername: referrerUsername ?? undefined,
-          referrerEmail: referrerEmail ?? undefined,
-        });
-      }
-      const existing = await prisma.referral.findUnique({ where: { referralCode } });
-      if (!existing) break;
-      if (attempt === maxAttempts - 1) {
-        do {
-          referralCode = generateReferralCode();
-        } while (await prisma.referral.findUnique({ where: { referralCode } }));
-      }
-    }
     const ipAddress = getClientIp(request);
     const userAgent = request.headers.get('user-agent') || null;
     const acceptLanguage = request.headers.get('accept-language') || null;
-
-    const fraudCheck = await detectFraudEnhanced(
-      app.id,
-      referralCode,
-      referrerId,
-      refereeId || null,
-      ipAddress,
-      userAgent,
-      acceptLanguage
-    );
 
     // Generate device fingerprint
     const { generateDeviceFingerprint } = await import('@/lib/fraud-detection-enhanced');
     const deviceFingerprint = userAgent ? generateDeviceFingerprint(userAgent, ipAddress, acceptLanguage) : null;
 
-    const referral = await prisma.referral.create({
-      data: {
-        Campaign: { connect: { id: campaignId } },
-        referrerId,
-        refereeId,
-        referralCode,
-        status: fraudCheck.isFraud ? 'FLAGGED' : 'PENDING',
-        ipAddress,
-        isFlagged: fraudCheck.isFraud,
-        deviceFingerprint,
-        userAgent,
-      },
-    });
+    // Generate referral code with transaction and proper error handling
+    let referral: any;
+    let fraudCheck: { isFraud: boolean; reasons: string[]; riskScore: number } | null = null;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      try {
+        // Generate code
+        let referralCode: string;
+        if (format === 'RANDOM' && !prefix) {
+          referralCode = generateReferralCode();
+        } else {
+          referralCode = generateReferralCodeWithRules({
+            prefix: prefix || undefined,
+            format,
+            referrerUsername: referrerUsername ?? undefined,
+            referrerEmail: referrerEmail ?? undefined,
+          });
+        }
+
+        // Fraud check (before transaction - only run once per code attempt)
+        if (!fraudCheck || attempts > 0) {
+          fraudCheck = await detectFraudEnhanced(
+            app.id,
+            referralCode,
+            referrerId,
+            refereeId || null,
+            ipAddress,
+            userAgent,
+            acceptLanguage
+          );
+        }
+
+        // Try to create referral in transaction - database will enforce uniqueness
+        referral = await prisma.$transaction(async (tx) => {
+          return await tx.referral.create({
+            data: {
+              Campaign: { connect: { id: campaignId } },
+              referrerId,
+              refereeId,
+              referralCode,
+              status: fraudCheck!.isFraud ? 'FLAGGED' : 'PENDING',
+              ipAddress,
+              isFlagged: fraudCheck!.isFraud,
+              deviceFingerprint,
+              userAgent,
+            },
+          });
+        }, {
+          isolationLevel: 'ReadCommitted',
+          maxWait: 2000,
+          timeout: 5000,
+        });
+        
+        // Success - break out of retry loop
+        break;
+      } catch (error: any) {
+        // Handle unique constraint violation (P2002 is Prisma's unique constraint error code)
+        if (error.code === 'P2002' && error.meta?.target?.includes('referralCode')) {
+          // Unique constraint violation - reset fraud check and retry with new code
+          fraudCheck = null;
+          attempts++;
+          if (attempts >= maxAttempts) {
+            return NextResponse.json(
+              { error: 'Failed to generate unique referral code after multiple attempts. Please try again.' },
+              { status: 500 }
+            );
+          }
+          continue; // Retry with new code
+        }
+        // Other error - rethrow
+        throw error;
+      }
+    }
+
+    if (!referral || !fraudCheck) {
+      return NextResponse.json(
+        { error: 'Failed to create referral' },
+        { status: 500 }
+      );
+    }
 
     await logApiUsage(app.id, '/api/v1/referrals', request);
 

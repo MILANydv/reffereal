@@ -53,19 +53,6 @@ export async function POST(
     const appId = referral.Campaign.App.id;
     const campaign = referral.Campaign;
 
-    // Resolve all unresolved fraud flags for this referral (appId + referralCode)
-    const flags = await prisma.fraudFlag.findMany({
-      where: {
-        appId,
-        referralCode: referral.referralCode,
-        isResolved: false,
-      },
-    });
-
-    for (const flag of flags) {
-      await resolveFraudFlag(flag.id, session.user.id!);
-    }
-
     // Restore referral: clear flag and set status from conversion/click state
     const newStatus = referral.convertedAt
       ? 'CONVERTED'
@@ -73,31 +60,50 @@ export async function POST(
         ? 'CLICKED'
         : 'PENDING';
 
-    // Update referral status and clear flags
-    const updatedReferral = await prisma.referral.update({
-      where: { id },
-      data: {
-        isFlagged: false,
-        flaggedBy: null,
-        flaggedAt: null,
-        status: newStatus,
-      },
-    });
+    // Wrap entire resolve operation in a single atomic transaction
+    const updatedReferral = await prisma.$transaction(async (tx) => {
+      // 1. Resolve all unresolved fraud flags atomically
+      await tx.fraudFlag.updateMany({
+        where: {
+          appId,
+          referralCode: referral.referralCode,
+          isResolved: false,
+        },
+        data: {
+          isResolved: true,
+          resolvedBy: session.user.id!,
+          resolvedAt: new Date(),
+        },
+      });
 
-    // If resolving to CONVERTED and conversion exists, ensure Reward(s) are created
-    if (newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
-      // Find the most recent conversion (or all if multiple)
-      const conversions = referral.Conversion;
+      // 2. Update referral status and clear flags
+      const updated = await tx.referral.update({
+        where: { id },
+        data: {
+          isFlagged: false,
+          flaggedBy: null,
+          flaggedAt: null,
+          status: newStatus,
+        },
+        include: {
+          Conversion: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
 
-      for (const conversion of conversions) {
-        // Check if Reward already exists for this conversion
-        const existingReward = await prisma.reward.findUnique({
-          where: { conversionId: conversion.id },
-        });
+      // 3. Create rewards if resolving to CONVERTED (inside same transaction)
+      if (newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
+        const conversions = updated.Conversion;
 
-        if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
-          // Create level-1 reward in a transaction
-          await prisma.$transaction(async (tx) => {
+        for (const conversion of conversions) {
+          // Check if Reward already exists for this conversion
+          const existingReward = await tx.reward.findUnique({
+            where: { conversionId: conversion.id },
+          });
+
+          if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
+            // Create level-1 reward
             await tx.reward.create({
               data: {
                 referralId: referral.id,
@@ -110,34 +116,21 @@ export async function POST(
                 level: 1,
               },
             });
-          });
-
-          // Trigger webhook
-          await triggerWebhook(appId, 'REWARD_CREATED', {
-            referralId: referral.id,
-            referrerId: referral.referrerId,
-            rewardAmount: referral.rewardAmount,
-            campaignId: campaign.id,
-            level: 1,
-          });
+          }
         }
-      }
 
-      // Multi-level: if this referral is level-2, ensure level-2 reward exists for the parent advocate
-      if (referral.level === 2 && referral.rewardAmount != null && referral.rewardAmount > 0) {
-        // Level-2 referral: referrerId is the parent advocate (who should get the reward)
-        // Find conversion for this level-2 referral (most recent)
-        const l2Conversion = conversions[0];
-        if (l2Conversion) {
-          const existingL2Reward = await prisma.reward.findFirst({
-            where: {
-              referralId: referral.id,
-              level: 2,
-            },
-          });
+        // Multi-level: if this referral is level-2, ensure level-2 reward exists
+        if (referral.level === 2 && referral.rewardAmount != null && referral.rewardAmount > 0) {
+          const l2Conversion = conversions[0];
+          if (l2Conversion) {
+            const existingL2Reward = await tx.reward.findFirst({
+              where: {
+                referralId: referral.id,
+                level: 2,
+              },
+            });
 
-          if (!existingL2Reward) {
-            await prisma.$transaction(async (tx) => {
+            if (!existingL2Reward) {
               await tx.reward.create({
                 data: {
                   referralId: referral.id,
@@ -150,15 +143,68 @@ export async function POST(
                   level: 2,
                 },
               });
-            });
+            }
+          }
+        }
+      }
 
+      return updated;
+    }, {
+      isolationLevel: 'ReadCommitted', // Sufficient for resolve operation
+      maxWait: 5000,
+      timeout: 10000,
+    });
+
+    // Trigger webhooks after transaction succeeds (outside transaction for reliability)
+    if (newStatus === 'CONVERTED' && referral.convertedAt && referral.Conversion.length > 0) {
+      const conversions = referral.Conversion;
+      
+      for (const conversion of conversions) {
+        const existingReward = await prisma.reward.findUnique({
+          where: { conversionId: conversion.id },
+        });
+
+        if (!existingReward && referral.rewardAmount != null && referral.rewardAmount > 0) {
+          // Trigger webhook for level-1 reward
+          try {
             await triggerWebhook(appId, 'REWARD_CREATED', {
               referralId: referral.id,
               referrerId: referral.referrerId,
               rewardAmount: referral.rewardAmount,
               campaignId: campaign.id,
-              level: 2,
+              level: 1,
             });
+          } catch (err) {
+            console.error('Error triggering reward webhook:', err);
+            // Don't fail the request if webhook fails
+          }
+        }
+      }
+
+      // Multi-level webhook
+      if (referral.level === 2 && referral.rewardAmount != null && referral.rewardAmount > 0) {
+        const l2Conversion = conversions[0];
+        if (l2Conversion) {
+          const existingL2Reward = await prisma.reward.findFirst({
+            where: {
+              referralId: referral.id,
+              level: 2,
+            },
+          });
+
+          if (!existingL2Reward) {
+            try {
+              await triggerWebhook(appId, 'REWARD_CREATED', {
+                referralId: referral.id,
+                referrerId: referral.referrerId,
+                rewardAmount: referral.rewardAmount,
+                campaignId: campaign.id,
+                level: 2,
+              });
+            } catch (err) {
+              console.error('Error triggering level-2 reward webhook:', err);
+              // Don't fail the request if webhook fails
+            }
           }
         }
       }
