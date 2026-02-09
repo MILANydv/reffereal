@@ -48,12 +48,12 @@ export async function GET(
       clicksWhere.campaignId = campaignId;
     }
 
-    // Conversion referrals where this user is the referrer
+    // Conversion referrals where this user is the referrer (both CONVERTED and FLAGGED)
     const conversionsWhere = {
       ...baseWhere,
       referrerId: userId,
       isConversionReferral: true,
-      status: 'CONVERTED',
+      status: { in: ['CONVERTED', 'FLAGGED'] },
     };
 
     const [referralsMadeTotal, referralsMadeClicked, referralsMadeConverted, rewardsLegacyAgg] = await Promise.all([
@@ -158,6 +158,31 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
     });
 
+    // Get all conversion referrals as referrer (flat list for the new table)
+    const conversionsAsReferrer = await prisma.referral.findMany({
+      where: conversionsWhere,
+      include: {
+        Campaign: {
+          include: {
+            App: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { convertedAt: 'desc' },
+    });
+
+    // Get all partner app IDs for FraudFlag lookup
+    const partnerApps = await prisma.app.findMany({
+      where: { partnerId },
+      select: { id: true },
+    });
+    const partnerAppIds = partnerApps.map(app => app.id);
+
     // Calculate clicks and conversions for each generated code
     const codesGeneratedWithStats = await Promise.all(
       referralCodesGenerated.map(async (ref) => {
@@ -168,27 +193,30 @@ export async function GET(
           },
         });
 
-        // Count conversion referrals for this code
+        // Count conversion referrals for this code (both CONVERTED and FLAGGED)
         const conversions = await prisma.referral.count({
           where: {
             originalReferralCode: ref.referralCode,
             isConversionReferral: true,
-            status: 'CONVERTED',
+            status: { in: ['CONVERTED', 'FLAGGED'] },
           },
         });
 
-        // Get list of who converted (refereeIds)
+        // Get list of who converted (refereeIds) - both CONVERTED and FLAGGED
         const conversionRecords = await prisma.referral.findMany({
           where: {
             originalReferralCode: ref.referralCode,
             isConversionReferral: true,
-            status: 'CONVERTED',
+            status: { in: ['CONVERTED', 'FLAGGED'] },
           },
           select: {
+            id: true,
+            referralCode: true,
             refereeId: true,
             convertedAt: true,
             rewardAmount: true,
             isFlagged: true,
+            status: true,
           },
           orderBy: { convertedAt: 'desc' },
         });
@@ -208,14 +236,60 @@ export async function GET(
           conversions,
           totalRewardAmount,
           convertedUsers: conversionRecords.map(conv => ({
+            id: conv.id,
+            referralCode: conv.referralCode,
             refereeId: conv.refereeId,
             convertedAt: conv.convertedAt,
             rewardAmount: conv.rewardAmount || 0,
             isFlagged: conv.isFlagged,
+            status: conv.status,
+            flagReasons: [], // Will be populated after we query FraudFlags
           })),
         };
       })
     );
+
+    // Collect all flagged conversion referral codes (for FraudFlag lookup)
+    const flaggedConversionCodesSet = new Set<string>();
+    conversionsAsReferrer.filter(c => c.isFlagged).forEach(c => flaggedConversionCodesSet.add(c.referralCode));
+    referralCodesUsed.filter(c => c.isFlagged).forEach(c => flaggedConversionCodesSet.add(c.referralCode));
+    codesGeneratedWithStats.forEach(ref => {
+      ref.convertedUsers?.filter(u => u.isFlagged).forEach(u => {
+        flaggedConversionCodesSet.add(u.referralCode);
+      });
+    });
+
+    // Query FraudFlags for all flagged conversion codes
+    const flaggedConversionCodes = Array.from(flaggedConversionCodesSet);
+    const fraudFlags = flaggedConversionCodes.length > 0
+      ? await prisma.fraudFlag.findMany({
+          where: {
+            appId: { in: partnerAppIds },
+            referralCode: { in: flaggedConversionCodes },
+            isResolved: false,
+          },
+          select: {
+            referralCode: true,
+            description: true,
+            fraudType: true,
+          },
+        })
+      : [];
+
+    // Create a map of referralCode -> flagReasons
+    const flagReasonsMap = new Map<string, string[]>();
+    for (const flag of fraudFlags) {
+      const reasons = flagReasonsMap.get(flag.referralCode) || [];
+      reasons.push(flag.description);
+      flagReasonsMap.set(flag.referralCode, reasons);
+    }
+
+    // Update convertedUsers with flagReasons
+    codesGeneratedWithStats.forEach(ref => {
+      ref.convertedUsers?.forEach(user => {
+        user.flagReasons = flagReasonsMap.get(user.referralCode) || [];
+      });
+    });
 
     const totalRewards = pendingAmount + paidAmount;
 
@@ -230,13 +304,14 @@ export async function GET(
         ? {
             total: referralsReceived.length,
             referrerId: referralsReceived[0].referrerId,
-            referralCode: referralsReceived[0].referralCode,
+            referralCode: referralsReceived[0].originalReferralCode || referralsReceived[0].referralCode, // Show original code
             campaignId: referralsReceived[0].campaignId,
             campaignName: referralsReceived[0].Campaign.name,
             appId: referralsReceived[0].Campaign.App.id,
             appName: referralsReceived[0].Campaign.App.name,
             converted: referralsReceived[0].status === 'CONVERTED',
             receivedAt: referralsReceived[0].createdAt,
+            convertedAt: referralsReceived[0].convertedAt,
           }
         : null,
       rewardsEarned: {
@@ -245,7 +320,23 @@ export async function GET(
         paid: paidAmount,
       },
       referralCodesGenerated: codesGeneratedWithStats,
+      conversionsAsReferrer: conversionsAsReferrer.map((conv) => ({
+        id: conv.id,
+        refereeId: conv.refereeId,
+        originalReferralCode: conv.originalReferralCode || conv.referralCode,
+        referralCode: conv.referralCode, // Conversion record code
+        campaignId: conv.campaignId,
+        campaignName: conv.Campaign.name,
+        appId: conv.Campaign.App.id,
+        appName: conv.Campaign.App.name,
+        convertedAt: conv.convertedAt,
+        rewardAmount: conv.rewardAmount || 0,
+        status: conv.status,
+        isFlagged: conv.isFlagged,
+        flagReasons: flagReasonsMap.get(conv.referralCode) || [],
+      })),
       referralCodesUsed: referralCodesUsed.map((ref) => ({
+        id: ref.id,
         referralCode: ref.originalReferralCode || ref.referralCode, // Show original code
         conversionReferralCode: ref.referralCode, // Conversion record code
         referrerId: ref.referrerId,
@@ -258,6 +349,7 @@ export async function GET(
         convertedAt: ref.convertedAt,
         rewardEarned: ref.rewardAmount || 0,
         isFlagged: ref.isFlagged,
+        flagReasons: flagReasonsMap.get(ref.referralCode) || [],
       })),
     });
   } catch (error) {

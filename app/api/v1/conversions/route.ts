@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     const fraudCheck = await detectConversionFraud(
       app.id,
-      referral.id,
+      originalReferral.id,
       referralCode,
       refereeId,
       ipAddress
@@ -284,7 +284,9 @@ export async function POST(request: NextRequest) {
       const parentReferral = await prisma.referral.findFirst({
         where: {
           campaignId: campaign.id,
-          refereeId: referral.referrerId,
+          refereeId: originalReferral.referrerId,
+          isConversionReferral: true,
+          status: 'CONVERTED',
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -307,7 +309,7 @@ export async function POST(request: NextRequest) {
               rewardAmount: level2Amount,
               level: 2,
               parentReferralId: conversionReferral.id,
-              originalReferralCode: referralCode,
+              originalReferralCode: originalReferral.referralCode,
               isConversionReferral: true,
             },
           });
@@ -346,20 +348,24 @@ export async function POST(request: NextRequest) {
     await logApiUsage(app.id, '/api/v1/conversions', request);
 
     await triggerWebhook(app.id, 'REFERRAL_CONVERTED', {
-      referralId: updatedReferral.id,
-      referralCode: updatedReferral.referralCode,
+      referralId: conversionReferral.id,
+      referralCode: originalReferral.referralCode, // Original code
+      conversionReferralCode: conversionReferral.referralCode, // Conversion record code
       conversionId: conversion.id,
-      rewardAmount: updatedReferral.rewardAmount,
-      convertedAt: updatedReferral.convertedAt,
-      campaignId: referral.campaignId,
+      rewardAmount: conversionReferral.rewardAmount,
+      convertedAt: conversionReferral.convertedAt,
+      campaignId: originalReferral.campaignId,
+      refereeId, // Who converted
     });
 
-    await triggerWebhook(app.id, 'REWARD_CREATED', {
-      referralId: updatedReferral.id,
-      referrerId: referral.referrerId,
-      rewardAmount: updatedReferral.rewardAmount,
-      campaignId: referral.campaignId,
-    });
+    if (status === 'CONVERTED') {
+      await triggerWebhook(app.id, 'REWARD_CREATED', {
+        referralId: conversionReferral.id,
+        referrerId: originalReferral.referrerId, // Original referrer (User A)
+        rewardAmount: conversionReferral.rewardAmount,
+        campaignId: originalReferral.campaignId,
+      });
+    }
 
     // Send notification to partner
     try {
