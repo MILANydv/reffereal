@@ -8,6 +8,17 @@ export const REWARD_VALUE_MIN = 0;
 
 export type CampaignStatus = 'ACTIVE' | 'PAUSED' | 'SCHEDULED' | 'EXPIRED';
 export type ReferralCodeFormat = 'RANDOM' | 'USERNAME' | 'EMAIL_PREFIX';
+export type PayoutType = 'CASH' | 'STORE_CREDIT' | 'IN_APP_DISCOUNT' | 'COUPON_CODE' | 'POINTS' | 'OTHER' | null;
+
+export const PAYOUT_TYPE_OPTIONS: { value: string; label: string; description: string }[] = [
+  { value: '', label: 'Not set', description: 'No default payout type; assign when claiming.' },
+  { value: 'IN_APP_DISCOUNT', label: 'In-App Discount', description: 'System generates a unique discount code the user can apply at checkout.' },
+  { value: 'COUPON_CODE', label: 'Coupon Code', description: 'Partner provides external coupon codes assigned to users on claim.' },
+  { value: 'STORE_CREDIT', label: 'Store Credit', description: 'Credit added to the user\'s account balance.' },
+  { value: 'CASH', label: 'Cash', description: 'Direct payment via PayPal, bank transfer, etc.' },
+  { value: 'POINTS', label: 'Points', description: 'Loyalty points credited to the user\'s account.' },
+  { value: 'OTHER', label: 'Other', description: 'Custom fulfillment handled externally.' },
+];
 
 export interface CampaignFormData {
   name: string;
@@ -26,6 +37,7 @@ export interface CampaignFormData {
   tierConfig: string;
   referralCodePrefix: string;
   referralCodeFormat: ReferralCodeFormat;
+  payoutType: PayoutType;
 }
 
 /** Timezone-safe: use local date for input[type=date] (avoids UTC off-by-one e.g. Nepal UTC+5:45). */
@@ -61,6 +73,7 @@ export function campaignApiToFormData(data: Record<string, unknown>): CampaignFo
           : '',
     referralCodePrefix: (data.referralCodePrefix as string) ?? '',
     referralCodeFormat: (data.referralCodeFormat as ReferralCodeFormat) ?? 'RANDOM',
+    payoutType: (data.payoutType as PayoutType) ?? null,
   };
 }
 
@@ -81,6 +94,7 @@ export interface CampaignPatchPayload {
   tierConfig?: unknown;
   referralCodePrefix?: string | null;
   referralCodeFormat?: 'USERNAME' | 'EMAIL_PREFIX' | null;
+  payoutType?: string | null;
 }
 
 function toNum(v: number | null): number | null {
@@ -126,6 +140,7 @@ export function campaignFormToPatchPayload(form: CampaignFormData): CampaignPatc
   if (form.referralCodePrefix.trim()) payload.referralCodePrefix = form.referralCodePrefix.trim();
   else payload.referralCodePrefix = null;
   payload.referralCodeFormat = form.referralCodeFormat === 'RANDOM' ? null : form.referralCodeFormat;
+  payload.payoutType = form.payoutType || null;
   return payload;
 }
 
@@ -166,6 +181,7 @@ export interface CampaignCreatePayload {
   tierConfig?: unknown;
   referralCodePrefix?: string;
   referralCodeFormat?: ReferralCodeFormat;
+  payoutType?: string | null;
 }
 
 /** Map create form to POST body. Sanitizes numbers to avoid NaN. */
@@ -206,6 +222,7 @@ export function campaignFormToCreatePayload(form: CampaignCreateFormData, appId:
   }
   if (form.referralCodePrefix.trim()) payload.referralCodePrefix = form.referralCodePrefix.trim();
   if (form.referralCodeFormat !== 'RANDOM') payload.referralCodeFormat = form.referralCodeFormat;
+  if (form.payoutType) payload.payoutType = form.payoutType;
   return payload;
 }
 

@@ -12,6 +12,7 @@ import {
   validateCampaignCreateForm,
   REWARD_VALUE_MAX,
   REWARD_VALUE_MIN,
+  PAYOUT_TYPE_OPTIONS,
 } from '@/lib/campaign-form';
 
 const steps = [
@@ -40,6 +41,7 @@ const initialCreateForm: CampaignCreateFormData = {
   tierConfig: '',
   referralCodePrefix: '',
   referralCodeFormat: 'RANDOM',
+  payoutType: null,
   status: 'ACTIVE',
 };
 
@@ -81,7 +83,7 @@ export default function NewCampaignPage() {
     setSubmitError(null);
     const normalized = {
       ...formData,
-      conversionWindow: formData.conversionWindow === '' || formData.conversionWindow == null ? null : Number(formData.conversionWindow),
+      conversionWindow: formData.conversionWindow == null ? null : Number(formData.conversionWindow),
     } as CampaignCreateFormData;
     const payload = campaignFormToCreatePayload(normalized, selectedApp.id);
     try {
@@ -349,6 +351,26 @@ export default function NewCampaignPage() {
                       </div>
                     </div>
                   )}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Payout Type</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {PAYOUT_TYPE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => updateField('payoutType', opt.value === '' ? null : opt.value as CampaignCreateFormData['payoutType'])}
+                          className={`p-3 border-2 rounded-xl text-left transition-all ${
+                            (formData.payoutType ?? '') === opt.value
+                              ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/10'
+                              : 'border-gray-100 dark:border-gray-800'
+                          }`}
+                        >
+                          <div className="font-medium text-sm">{opt.label}</div>
+                          <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -510,6 +532,12 @@ export default function NewCampaignPage() {
                     <div>
                       <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Level 2 reward</div>
                       <div className="font-medium">${formData.level2Reward}{formData.level2Cap ? ` (cap $${formData.level2Cap})` : ''}</div>
+                    </div>
+                  )}
+                  {formData.payoutType && (
+                    <div>
+                      <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">Payout Type</div>
+                      <div className="font-medium">{PAYOUT_TYPE_OPTIONS.find(o => o.value === formData.payoutType)?.label ?? formData.payoutType}</div>
                     </div>
                   )}
                   {(formData.referralCodePrefix || formData.referralCodeFormat !== 'RANDOM') && (

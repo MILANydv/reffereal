@@ -266,6 +266,7 @@ export async function POST(request: NextRequest) {
             currency: 'USD',
             status: 'PENDING',
             level: 1,
+            fulfillmentType: campaign.payoutType ?? undefined,
           },
         });
         rewardCreated = true;
@@ -378,6 +379,7 @@ export async function POST(request: NextRequest) {
               currency: 'USD',
               status: 'PENDING',
               level: 2,
+              fulfillmentType: campaign.payoutType ?? undefined,
             },
           });
         } catch (l2RewardErr: unknown) {

@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
       tierConfig,
       referralCodePrefix,
       referralCodeFormat,
+      payoutType,
     } = body;
 
     if (!appId || !name || !referralType || !rewardModel || rewardValue === undefined) {
@@ -156,6 +157,7 @@ export async function POST(request: NextRequest) {
         tierConfig: typeof tierConfig === 'string' ? tierConfig : (tierConfig ? JSON.stringify(tierConfig) : undefined),
         referralCodePrefix: referralCodePrefix != null && referralCodePrefix !== '' ? String(referralCodePrefix).trim() : undefined,
         referralCodeFormat: referralCodeFormat != null && ['RANDOM', 'USERNAME', 'EMAIL_PREFIX'].includes(referralCodeFormat) ? referralCodeFormat : undefined,
+        payoutType: payoutType != null && ['CASH', 'STORE_CREDIT', 'IN_APP_DISCOUNT', 'COUPON_CODE', 'POINTS', 'OTHER'].includes(payoutType) ? payoutType : undefined,
       },
     });
 

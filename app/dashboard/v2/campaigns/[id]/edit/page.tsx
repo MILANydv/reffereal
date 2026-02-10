@@ -13,6 +13,7 @@ import {
   validateCampaignPatchForm,
   REWARD_VALUE_MAX,
   REWARD_VALUE_MIN,
+  PAYOUT_TYPE_OPTIONS,
 } from '@/lib/campaign-form';
 
 const initialFormState: CampaignFormData = {
@@ -32,6 +33,7 @@ const initialFormState: CampaignFormData = {
   tierConfig: '',
   referralCodePrefix: '',
   referralCodeFormat: 'RANDOM',
+  payoutType: null,
 };
 
 export default function EditCampaignPage() {
@@ -292,6 +294,26 @@ export default function EditCampaignPage() {
                   onChange={(e) => updateField('tierConfig', e.target.value)}
                 />
                 <p className="mt-1 text-xs text-gray-500">Tiers ordered by minConversions; first matching tier applies. Leave empty to clear.</p>
+              </div>
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Payout Type</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {PAYOUT_TYPE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => updateField('payoutType', opt.value === '' ? null : opt.value as CampaignFormData['payoutType'])}
+                      className={`p-3 border-2 rounded-xl text-left transition-all ${
+                        (formData.payoutType ?? '') === opt.value
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/10'
+                          : 'border-gray-100 dark:border-gray-800'
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{opt.label}</div>
+                      <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             </CardBody>
           </Card>

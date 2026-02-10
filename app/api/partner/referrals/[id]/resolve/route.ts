@@ -118,6 +118,7 @@ export async function POST(
                 currency: 'USD',
                 status: 'PENDING',
                 level: 1,
+                fulfillmentType: campaign.payoutType ?? undefined,
               },
             });
           }
@@ -139,19 +140,23 @@ export async function POST(
                   currency: 'USD',
                   status: 'PENDING',
                   level: 2,
+                  fulfillmentType: campaign.payoutType ?? undefined,
                 },
               });
             }
           }
         }
       } catch (rewardErr: unknown) {
-        const code = (rewardErr as { code?: string })?.code;
-        if (code === 'P2021') {
+        const errObj = rewardErr as { code?: string; message?: string; meta?: unknown };
+        console.error('Reward creation error on resolve:', {
+          code: errObj.code,
+          message: errObj.message,
+          meta: errObj.meta,
+        });
+        if (errObj.code === 'P2021') {
           rewardTableMissing = true;
-          console.warn('Reward table does not exist; resolve succeeded but rewards were not created. Run: npx prisma migrate deploy');
-        } else {
-          throw rewardErr;
         }
+        // Don't throw -- resolve already succeeded; reward creation failure is non-fatal
       }
     }
 
@@ -213,8 +218,20 @@ export async function POST(
       }
     }
 
+    // Include reward creation status in response
+    let rewardStatus: string;
+    if (newStatus !== 'CONVERTED' || !referral.convertedAt || referral.Conversion.length === 0) {
+      rewardStatus = 'not_applicable';
+    } else if (rewardTableMissing) {
+      rewardStatus = 'skipped_table_missing';
+    } else {
+      rewardStatus = 'created';
+    }
+
     return NextResponse.json({
       success: true,
+      newStatus,
+      rewardStatus,
       ...(rewardTableMissing && {
         warning: 'Reward table not found. Referral resolved; run `npx prisma migrate deploy` to enable reward creation.',
       }),

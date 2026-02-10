@@ -45,7 +45,7 @@ export async function PATCH(
       status?: 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
       paidAt?: Date | null;
       payoutReference?: string | null;
-      fulfillmentType?: 'CASH' | 'STORE_CREDIT' | 'THIRD_PARTY_OFFER' | 'OTHER' | null;
+      fulfillmentType?: 'CASH' | 'STORE_CREDIT' | 'IN_APP_DISCOUNT' | 'COUPON_CODE' | 'POINTS' | 'OTHER' | null;
       fulfillmentReference?: string | null;
     } = {};
 

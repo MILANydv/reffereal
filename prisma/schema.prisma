@@ -66,6 +66,7 @@ model Campaign {
   tierConfig           String?
   referralCodePrefix  String?
   referralCodeFormat  ReferralCodeFormat?
+  payoutType           FulfillmentType?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   App                  App                 @relation(fields: [appId], references: [id], onDelete: Cascade)
@@ -293,6 +294,9 @@ model Reward {
   payoutReference      String?
   fulfillmentType      FulfillmentType?
   fulfillmentReference String?
+  discountCode         String?          @unique
+  expiresAt            DateTime?
+  claimedAt            DateTime?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   Referral             Referral         @relation(fields: [referralId], references: [id], onDelete: Cascade)
@@ -304,6 +308,7 @@ model Reward {
   @@index([status])
   @@index([referralId])
   @@index([createdAt])
+  @@index([discountCode])
 }
 
 model Subscription {
@@ -482,7 +487,9 @@ enum RewardStatus {
 enum FulfillmentType {
   CASH
   STORE_CREDIT
-  THIRD_PARTY_OFFER
+  IN_APP_DISCOUNT
+  COUPON_CODE
+  POINTS
   OTHER
 }
 
@@ -527,6 +534,8 @@ enum WebhookEventType {
   REFERRAL_CLICKED
   REFERRAL_CONVERTED
   REWARD_CREATED
+  REWARD_CLAIMED
+  REWARD_REDEEMED
   USAGE_LIMIT_EXCEEDED
 }
 

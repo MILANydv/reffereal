@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
                 referrerId: true,
                 rewardAmount: true,
                 campaignId: true,
-                Campaign: { select: { appId: true } },
+                Campaign: { select: { appId: true, payoutType: true } },
               },
             },
           },
@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
               currency: 'USD',
               status: 'PENDING',
               level: 1,
+              fulfillmentType: ref.Campaign?.payoutType ?? undefined,
             },
           });
         }

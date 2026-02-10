@@ -222,6 +222,7 @@ export async function PATCH(
       firstTimeUserOnly,
       referralCodePrefix,
       referralCodeFormat,
+      payoutType,
     } = body;
 
     if (startDate !== undefined && endDate !== undefined && new Date(endDate) < new Date(startDate)) {
@@ -248,6 +249,7 @@ export async function PATCH(
     if (firstTimeUserOnly !== undefined) data.firstTimeUserOnly = firstTimeUserOnly;
     if (referralCodePrefix !== undefined) data.referralCodePrefix = referralCodePrefix == null || referralCodePrefix === '' ? null : String(referralCodePrefix).trim();
     if (referralCodeFormat !== undefined) data.referralCodeFormat = referralCodeFormat == null || !['RANDOM', 'USERNAME', 'EMAIL_PREFIX'].includes(referralCodeFormat) ? null : referralCodeFormat;
+    if (payoutType !== undefined) data.payoutType = payoutType == null || !['CASH', 'STORE_CREDIT', 'IN_APP_DISCOUNT', 'COUPON_CODE', 'POINTS', 'OTHER'].includes(payoutType) ? null : payoutType;
 
     const updated = await prisma.campaign.update({
       where: { id },
