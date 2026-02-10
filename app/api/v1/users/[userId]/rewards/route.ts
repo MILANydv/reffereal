@@ -30,7 +30,7 @@ export async function GET(
     const where: {
       userId: string;
       appId: string;
-      status?: string;
+      status?: 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
       Referral?: { campaignId?: string };
     } = {
       userId,

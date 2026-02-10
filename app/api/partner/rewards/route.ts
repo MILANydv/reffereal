@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const where: {
       App: { partnerId: string; id?: string };
       Referral?: { campaignId?: string };
-      status?: string;
+      status?: 'PENDING' | 'APPROVED' | 'PAID' | 'CANCELLED';
       userId?: string;
       createdAt?: { gte?: Date; lte?: Date };
     } = {

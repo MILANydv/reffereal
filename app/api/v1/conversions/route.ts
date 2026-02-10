@@ -210,22 +210,9 @@ export async function POST(request: NextRequest) {
           metadata: metadata ? JSON.stringify(metadata) : null,
         },
       });
-      
-      // 6. Create Reward if CONVERTED (inside transaction)
-      if (status === 'CONVERTED') {
-        await tx.reward.create({
-          data: {
-            referralId: newReferral.id,
-            conversionId: conv.id,
-            appId: app.id,
-            userId: originalReferral.referrerId, // Credit original referrer (User A)
-            amount: rewardAmount,
-            currency: 'USD',
-            status: 'PENDING',
-            level: 1,
-          },
-        });
-      }
+
+      // 6. Reward is created after transaction (so conversion always persists even if Reward table is missing)
+      //    CONVERTED → create reward after tx; FLAGGED → reward created on resolve.
 
       // 7. Create FraudFlags INSIDE transaction (atomic with conversion)
       const flags = [];
@@ -233,7 +220,7 @@ export async function POST(request: NextRequest) {
         const { FraudType } = await import('@prisma/client');
         
         for (const reason of fraudCheck.reasons) {
-          let fraudType = FraudType.SUSPICIOUS_PATTERN;
+          let fraudType: (typeof FraudType)[keyof typeof FraudType] = FraudType.SUSPICIOUS_PATTERN;
           if (reason.includes('Impossible conversion time')) {
             fraudType = FraudType.IMPOSSIBLE_CONVERSION_TIME;
           } else if (reason.includes('same IP')) {
@@ -264,6 +251,33 @@ export async function POST(request: NextRequest) {
 
     // Alias for code paths that expect a variable named "referral" (e.g. notifications)
     const referral = conversionReferral;
+
+    // Create level-1 reward when conversion is CONVERTED (not flagged). If flagged, reward is created on resolve.
+    let rewardCreated = false;
+    if (status === 'CONVERTED' && conversionReferral.rewardAmount != null && conversionReferral.rewardAmount > 0) {
+      try {
+        await prisma.reward.create({
+          data: {
+            referralId: conversionReferral.id,
+            conversionId: conversion.id,
+            appId: app.id,
+            userId: originalReferral.referrerId,
+            amount: conversionReferral.rewardAmount,
+            currency: 'USD',
+            status: 'PENDING',
+            level: 1,
+          },
+        });
+        rewardCreated = true;
+      } catch (rewardErr: unknown) {
+        const code = (rewardErr as { code?: string })?.code;
+        if (code === 'P2021') {
+          console.warn('Reward table missing; conversion saved. Run: npx prisma migrate deploy. Reward will be created on resolve or via backfill.');
+        } else {
+          throw rewardErr;
+        }
+      }
+    }
 
     // Fraud flags are now created inside the transaction
     // Send notifications if fraud was detected
@@ -331,6 +345,7 @@ export async function POST(request: NextRequest) {
           const r = await tx.referral.create({
             data: {
               Campaign: { connect: { id: campaign.id } },
+              Referral: { connect: { id: conversionReferral.id } },
               referrerId: parentReferral.referrerId,
               refereeId: originalReferral.referrerId,
               referralCode: l2Code,
@@ -338,7 +353,6 @@ export async function POST(request: NextRequest) {
               convertedAt: new Date(),
               rewardAmount: level2Amount,
               level: 2,
-              parentReferralId: conversionReferral.id,
               originalReferralCode: originalReferral.referralCode,
               isConversionReferral: true,
             },
@@ -350,10 +364,14 @@ export async function POST(request: NextRequest) {
               metadata: JSON.stringify({ type: 'level2', parentReferralId: conversionReferral.id }),
             },
           });
-          await tx.reward.create({
+          return { r, l2Conversion };
+        });
+        const l2ReferralForWebhook = l2Referral.r;
+        try {
+          await prisma.reward.create({
             data: {
-              referralId: r.id,
-              conversionId: l2Conversion.id,
+              referralId: l2Referral.r.id,
+              conversionId: l2Referral.l2Conversion.id,
               appId: app.id,
               userId: parentReferral.referrerId,
               amount: level2Amount,
@@ -362,9 +380,11 @@ export async function POST(request: NextRequest) {
               level: 2,
             },
           });
-          return { r, l2Conversion };
-        });
-        const l2ReferralForWebhook = l2Referral.r;
+        } catch (l2RewardErr: unknown) {
+          const code = (l2RewardErr as { code?: string })?.code;
+          if (code !== 'P2021') throw l2RewardErr;
+          console.warn('Reward table missing; level-2 referral/conversion saved.');
+        }
         await triggerWebhook(app.id, 'REWARD_CREATED', {
           referralId: l2ReferralForWebhook.id,
           referrerId: l2ReferralForWebhook.referrerId,
@@ -448,9 +468,13 @@ export async function POST(request: NextRequest) {
       originalReferralCode: originalReferral.referralCode,
       conversionId: conversion.id,
       rewardAmount: conversionReferral.rewardAmount,
+      rewardCreated,
       status: conversionReferral.status,
       refereeId, // Who converted
       referrerId: originalReferral.referrerId, // Who gets credit (User A)
+      ...(status === 'FLAGGED' && {
+        warning: 'Conversion flagged for review. Reward will be created when resolved.',
+      }),
     }, { status: 201 });
   } catch (error: any) {
     console.error('Error tracking conversion:', error);

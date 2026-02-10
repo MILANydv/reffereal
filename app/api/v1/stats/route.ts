@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Count clicks from Click table
-    const clicksWhere = {
+    const clicksWhere: Record<string, unknown> = {
       Campaign: whereClause.Campaign,
     };
     if (campaignId) {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const conversionsWhere = {
       ...whereClause,
       isConversionReferral: true,
-      status: 'CONVERTED',
+      status: 'CONVERTED' as const,
     };
 
     const [totalReferrals, totalClicks, totalConversions, totalRewardValue] = await Promise.all([
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       totalClicks,
       totalConversions,
       conversionRate: Number(conversionRate.toFixed(2)),
-      totalRewardValue: totalRewardValue._sum.rewardAmount || 0,
+      totalRewardValue: totalRewardValue._sum?.rewardAmount || 0,
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
