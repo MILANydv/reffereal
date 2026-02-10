@@ -67,8 +67,8 @@ export default function AdminRewardsPage() {
       if (partnerIdFilter.trim()) params.set('partnerId', partnerIdFilter.trim());
       if (appIdFilter.trim()) params.set('appId', appIdFilter.trim());
       if (userIdSearch.trim()) params.set('userId', userIdSearch.trim());
-      if (dateRange.startDate) params.set('startDate', dateRange.startDate);
-      if (dateRange.endDate) params.set('endDate', dateRange.endDate);
+      if (dateRange.startDate) params.set('startDate', dateRange.startDate instanceof Date ? dateRange.startDate.toISOString() : String(dateRange.startDate));
+      if (dateRange.endDate) params.set('endDate', dateRange.endDate instanceof Date ? dateRange.endDate.toISOString() : String(dateRange.endDate));
       const res = await fetch(`/api/admin/rewards?${params}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -133,7 +133,7 @@ export default function AdminRewardsPage() {
               <AlertCircle size={20} aria-hidden />
               <span className="text-sm font-medium">{loadError}</span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => loadRewards()} className="flex items-center gap-2 shrink-0" aria-label="Retry loading rewards">
+            <Button variant="secondary" size="sm" onClick={() => loadRewards()} className="flex items-center gap-2 shrink-0" aria-label="Retry loading rewards">
               <RefreshCw size={16} />
               Retry
             </Button>
@@ -319,7 +319,7 @@ export default function AdminRewardsPage() {
               </div>
               <div className="flex justify-end gap-2 mt-6">
                 <Button variant="ghost" onClick={() => setMarkPaidModal({ isOpen: false, reward: null })} disabled={updating}>Cancel</Button>
-                <Button onClick={() => updateStatus(markPaidModal.reward.id, 'PAID', { payoutReference: payoutRef || undefined, fulfillmentType: fulfillmentType || undefined, fulfillmentReference: fulfillmentRef || undefined })} disabled={updating}>
+                <Button onClick={() => markPaidModal.reward && updateStatus(markPaidModal.reward.id, 'PAID', { payoutReference: payoutRef || undefined, fulfillmentType: fulfillmentType || undefined, fulfillmentReference: fulfillmentRef || undefined })} disabled={updating}>
                   {updating ? 'Saving…' : 'Mark paid'}
                 </Button>
               </div>

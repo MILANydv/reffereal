@@ -323,7 +323,7 @@ export default function UserDetailPage() {
                           {conv.isFlagged && (
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="secondary"
                               onClick={() => {
                                 setResolveModal({
                                   isOpen: true,
@@ -453,7 +453,7 @@ export default function UserDetailPage() {
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="secondary"
                           onClick={() => {
                             setResolveModal({
                               isOpen: true,

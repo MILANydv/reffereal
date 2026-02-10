@@ -242,6 +242,7 @@ export interface Webhook {
 }
 
 export interface Analytics {
+  appName?: string;
   funnelData?: Array<{
     stage: string;
     count: number;
@@ -348,6 +349,10 @@ export interface AdminApp {
   monthlyLimit: number;
   currentUsage: number;
   createdAt: string;
+  _count?: {
+    ApiUsageLog?: number;
+    apiUsageLogs?: number;
+  };
   Partner?: {
     companyName?: string | null;
     User?: {
