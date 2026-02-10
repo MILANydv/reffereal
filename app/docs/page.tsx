@@ -527,6 +527,216 @@ const { rewards, pagination } = await res.json();`,
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY']);`
         }} />
       </section>
+
+      {/* ─── REWARDS & PAYOUTS ─── */}
+      <section className="space-y-8 pt-20 border-t-4 border-primary/20">
+        <div className="mb-12 space-y-4">
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.4em] text-primary">Reward Payouts</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-navy tracking-tight leading-tight">Claim, Validate &amp; Redeem</h2>
+          <p className="text-slate-500 font-medium max-w-2xl">Manage the full reward lifecycle. Campaigns define a <strong>payout type</strong> (In-App Discount, Coupon Code, Store Credit, Cash, Points). Use these endpoints to claim rewards, generate discount codes, validate them at checkout, and redeem them.</p>
+        </div>
+
+        <div className="p-6 rounded-2xl border-2 border-primary/10 bg-primary/5 space-y-3">
+          <h4 className="font-extrabold text-navy text-sm">Payout types</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-xs text-slate-600">
+            <div><strong className="text-navy">IN_APP_DISCOUNT</strong> — System auto-generates a unique discount code on claim.</div>
+            <div><strong className="text-navy">COUPON_CODE</strong> — You provide an external coupon code when claiming.</div>
+            <div><strong className="text-navy">STORE_CREDIT</strong> — Credit the user&apos;s account; you handle the crediting.</div>
+            <div><strong className="text-navy">CASH</strong> — Direct payment (PayPal, bank); you handle the transfer.</div>
+            <div><strong className="text-navy">POINTS</strong> — Loyalty points; you handle crediting to the user.</div>
+            <div><strong className="text-navy">OTHER</strong> — Custom fulfillment handled externally.</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-8 pt-12 border-t border-slate-100">
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
+          <h3 className="text-2xl font-extrabold text-navy">/rewards</h3>
+        </div>
+        <p className="text-slate-500 font-medium">List all rewards for your app. Supports filtering by user, status, and fulfillment type.</p>
+
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Query parameters</h4>
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">userId</span><span className="text-slate-400">string (optional)</span><span className="text-slate-500 italic">Filter by user ID.</span></div>
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">status</span><span className="text-slate-400">string (optional)</span><span className="text-slate-500 italic">PENDING | APPROVED | PAID | CANCELLED</span></div>
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">fulfillmentType</span><span className="text-slate-400">string (optional)</span><span className="text-slate-500 italic">IN_APP_DISCOUNT | COUPON_CODE | STORE_CREDIT | CASH | POINTS | OTHER</span></div>
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">page, limit</span><span className="text-slate-400">number (optional)</span><span className="text-slate-500 italic">Defaults: page=1, limit=25, max=100</span></div>
+          </div>
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (200)</h4>
+          <div className="font-mono text-xs text-slate-600">rewards (array with id, userId, amount, currency, status, fulfillmentType, discountCode, expiresAt, claimedAt, paidAt), pagination</div>
+        </div>
+        <CodeBlock title="List app rewards" snippets={{
+          curl: `curl -X GET "${BASE_URL}/api/v1/rewards?userId=user_123&status=PENDING" \\
+  -H "Authorization: Bearer YOUR_API_KEY"`,
+          nodejs: `const res = await fetch('${BASE_URL}/api/v1/rewards?userId=user_123&status=PENDING', {
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+});
+const { rewards, pagination } = await res.json();`,
+          python: `r = requests.get('${BASE_URL}/api/v1/rewards',
+    params={'userId': 'user_123', 'status': 'PENDING'},
+    headers={'Authorization': 'Bearer YOUR_API_KEY'})`,
+          php: `$ch = curl_init('${BASE_URL}/api/v1/rewards?userId=user_123&status=PENDING');
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY']);`
+        }} />
+      </section>
+
+      <section className="space-y-8 pt-12 border-t border-slate-100">
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
+          <h3 className="text-2xl font-extrabold text-navy">/rewards/{'{rewardId}'}</h3>
+        </div>
+        <p className="text-slate-500 font-medium">Get full details of a single reward, including discount code, referral info, and conversion data.</p>
+        <CodeBlock title="Get reward detail" snippets={{
+          curl: `curl -X GET "${BASE_URL}/api/v1/rewards/REWARD_ID" \\
+  -H "Authorization: Bearer YOUR_API_KEY"`,
+          nodejs: `const res = await fetch('${BASE_URL}/api/v1/rewards/REWARD_ID', {
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+});
+const { reward } = await res.json();
+// reward.discountCode, reward.fulfillmentType, reward.Referral, reward.Conversion`,
+          python: `r = requests.get('${BASE_URL}/api/v1/rewards/REWARD_ID',
+    headers={'Authorization': 'Bearer YOUR_API_KEY'})`,
+          php: `$ch = curl_init('${BASE_URL}/api/v1/rewards/REWARD_ID');
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY']);`
+        }} />
+      </section>
+
+      <section className="space-y-8 pt-12 border-t border-slate-100">
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg font-extrabold text-[10px] tracking-widest">POST</span>
+          <h3 className="text-2xl font-extrabold text-navy">/rewards/{'{rewardId}'}/claim</h3>
+        </div>
+        <p className="text-slate-500 font-medium">Claim a PENDING reward. For <strong>IN_APP_DISCOUNT</strong>, a unique discount code is auto-generated. For <strong>COUPON_CODE</strong>, you provide your external coupon. Other types are simply marked as APPROVED.</p>
+
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Request body (varies by type)</h4>
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">couponCode</span><span className="text-slate-400">string</span><span className="text-slate-500 italic">Required for COUPON_CODE type. Your external coupon code.</span></div>
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">reference</span><span className="text-slate-400">string (optional)</span><span className="text-slate-500 italic">Optional ref for STORE_CREDIT / POINTS types.</span></div>
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">payoutReference</span><span className="text-slate-400">string (optional)</span><span className="text-slate-500 italic">Optional ref for CASH type (e.g. PayPal transaction ID).</span></div>
+          </div>
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (200)</h4>
+          <div className="font-mono text-xs text-slate-600">success, reward (id, status: APPROVED, discountCode, fulfillmentType, claimedAt, expiresAt)</div>
+        </div>
+        <CodeBlock title="Claim reward (IN_APP_DISCOUNT)" snippets={{
+          curl: `# IN_APP_DISCOUNT — no body needed, code is auto-generated
+curl -X POST "${BASE_URL}/api/v1/rewards/REWARD_ID/claim" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json"
+
+# Response: { "success": true, "reward": { "discountCode": "A3K7YN9P", "status": "APPROVED", ... } }`,
+          nodejs: `// IN_APP_DISCOUNT — code auto-generated
+const res = await fetch('${BASE_URL}/api/v1/rewards/REWARD_ID/claim', {
+  method: 'POST',
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json' }
+});
+const { reward } = await res.json();
+console.log(reward.discountCode); // "A3K7YN9P"
+
+// COUPON_CODE — provide your own code
+const res2 = await fetch('${BASE_URL}/api/v1/rewards/REWARD_ID/claim', {
+  method: 'POST',
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ couponCode: 'SUMMER2026-50OFF' })
+});`,
+          python: `# IN_APP_DISCOUNT
+r = requests.post('${BASE_URL}/api/v1/rewards/REWARD_ID/claim',
+    headers={'Authorization': 'Bearer YOUR_API_KEY'})
+print(r.json()['reward']['discountCode'])  # "A3K7YN9P"
+
+# COUPON_CODE
+r = requests.post('${BASE_URL}/api/v1/rewards/REWARD_ID/claim',
+    json={'couponCode': 'SUMMER2026-50OFF'},
+    headers={'Authorization': 'Bearer YOUR_API_KEY'})`,
+          php: `// IN_APP_DISCOUNT
+$ch = curl_init('${BASE_URL}/api/v1/rewards/REWARD_ID/claim');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY', 'Content-Type: application/json']);
+
+// COUPON_CODE
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['couponCode' => 'SUMMER2026-50OFF']));`
+        }} />
+      </section>
+
+      <section className="space-y-8 pt-12 border-t border-slate-100">
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-extrabold text-[10px] tracking-widest">GET</span>
+          <h3 className="text-2xl font-extrabold text-navy">/rewards/validate</h3>
+        </div>
+        <p className="text-slate-500 font-medium">Validate a discount or coupon code <strong>without consuming it</strong>. Use at checkout to show the user if their code is valid and what discount they&apos;ll get.</p>
+
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Query parameters</h4>
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">code</span><span className="text-slate-400">string (required)</span><span className="text-slate-500 italic">The discount or coupon code to validate.</span></div>
+          </div>
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (200)</h4>
+          <div className="font-mono text-xs text-slate-600">valid (boolean), rewardId, userId, amount, currency, fulfillmentType, status, isExpired, isRedeemed, isCancelled, expiresAt</div>
+        </div>
+        <CodeBlock title="Validate discount code" snippets={{
+          curl: `curl -X GET "${BASE_URL}/api/v1/rewards/validate?code=A3K7YN9P" \\
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+# Response: { "valid": true, "amount": 10.00, "currency": "USD", "isExpired": false, "isRedeemed": false }`,
+          nodejs: `const res = await fetch('${BASE_URL}/api/v1/rewards/validate?code=A3K7YN9P', {
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+});
+const { valid, amount, currency, isExpired } = await res.json();
+if (valid) {
+  // Apply discount of \${amount} \${currency} to cart
+}`,
+          python: `r = requests.get('${BASE_URL}/api/v1/rewards/validate',
+    params={'code': 'A3K7YN9P'},
+    headers={'Authorization': 'Bearer YOUR_API_KEY'})
+data = r.json()
+if data['valid']:
+    apply_discount(data['amount'], data['currency'])`,
+          php: `$ch = curl_init('${BASE_URL}/api/v1/rewards/validate?code=A3K7YN9P');
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY']);
+$data = json_decode(curl_exec($ch), true);
+if ($data['valid']) { /* apply discount */ }`
+        }} />
+      </section>
+
+      <section className="space-y-8 pt-12 border-t border-slate-100">
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg font-extrabold text-[10px] tracking-widest">POST</span>
+          <h3 className="text-2xl font-extrabold text-navy">/rewards/redeem</h3>
+        </div>
+        <p className="text-slate-500 font-medium">Redeem (consume) a discount or coupon code. Call this when the user completes their purchase with the code applied. The reward is marked as PAID.</p>
+
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Request body</h4>
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">code</span><span className="text-slate-400">string (required)</span><span className="text-slate-500 italic">The discount/coupon code to redeem.</span></div>
+            <div className="flex gap-4 flex-wrap"><span className="text-navy font-bold w-32">orderReference</span><span className="text-slate-400">string (optional)</span><span className="text-slate-500 italic">Your order/transaction ID for reconciliation.</span></div>
+          </div>
+          <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mt-4 mb-2">Response (200)</h4>
+          <div className="font-mono text-xs text-slate-600">success, reward (id, status: PAID, paidAt, payoutReference)</div>
+        </div>
+        <CodeBlock title="Redeem discount code" snippets={{
+          curl: `curl -X POST "${BASE_URL}/api/v1/rewards/redeem" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"code": "A3K7YN9P", "orderReference": "order_12345"}'`,
+          nodejs: `const res = await fetch('${BASE_URL}/api/v1/rewards/redeem', {
+  method: 'POST',
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ code: 'A3K7YN9P', orderReference: 'order_12345' })
+});
+const { success, reward } = await res.json();
+// reward.status === 'PAID', reward.paidAt`,
+          python: `r = requests.post('${BASE_URL}/api/v1/rewards/redeem',
+    json={'code': 'A3K7YN9P', 'orderReference': 'order_12345'},
+    headers={'Authorization': 'Bearer YOUR_API_KEY'})`,
+          php: `$ch = curl_init('${BASE_URL}/api/v1/rewards/redeem');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['code' => 'A3K7YN9P', 'orderReference' => 'order_12345']));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer YOUR_API_KEY', 'Content-Type: application/json']);`
+        }} />
+      </section>
     </div>
   );
 }
@@ -586,9 +796,10 @@ is_valid = verify_webhook(
         <h3 className="text-lg font-bold text-navy mb-4">Payload shape (all events)</h3>
         <pre className="font-mono text-xs text-slate-600 overflow-x-auto">
 {`{
-  "event": "REFERRAL_CREATED" | "REFERRAL_CLICKED" | "REFERRAL_CONVERTED" | "REWARD_CREATED",
+  "event": "REFERRAL_CREATED" | "REFERRAL_CLICKED" | "REFERRAL_CONVERTED"
+         | "REWARD_CREATED" | "REWARD_CLAIMED" | "REWARD_REDEEMED",
   "data": { ... },
-  "timestamp": "2025-01-31T12:00:00.000Z"
+  "timestamp": "2026-01-31T12:00:00.000Z"
 }`}
         </pre>
       </div>
@@ -607,6 +818,12 @@ is_valid = verify_webhook(
           </li>
           <li>
             <strong className="text-navy font-mono">REWARD_CREATED</strong> — When a reward is created for the referrer (and optionally L2). data: referralId, referrerId, rewardAmount, campaignId, level (1 or 2).
+          </li>
+          <li>
+            <strong className="text-navy font-mono">REWARD_CLAIMED</strong> — When a reward is claimed via <code className="font-mono text-navy text-xs">POST /rewards/:id/claim</code>. data: rewardId, userId, amount, currency, fulfillmentType, discountCode, claimedAt.
+          </li>
+          <li>
+            <strong className="text-navy font-mono">REWARD_REDEEMED</strong> — When a discount/coupon code is redeemed via <code className="font-mono text-navy text-xs">POST /rewards/redeem</code>. data: rewardId, userId, amount, currency, fulfillmentType, discountCode, paidAt, payoutReference.
           </li>
         </ul>
       </div>
